@@ -1,0 +1,89 @@
+:root{
+  /* Paleta accesible */
+  --brand:#0597ad;      /* turquesa botón */
+  --brand-2:#2b6cb0;    /* azul secundario */
+  --bg:#0f1115;         /* fondo app */
+  --card:#171c25;       /* paneles (un poco más claro que antes) */
+  --card-2:#1d2330;     /* resalte sutil */
+  --text:#f4f7fb;       /* texto claro */
+  --muted:#b7c0cf;      /* texto tenue legible */
+  --border:#2b3342;     /* bordes visibles */
+  --ok:#22c55e;         /* aprobado */
+  --warn:#f59e0b;       /* observado */
+  --info:#3b82f6;       /* en análisis */
+  --bad:#ef4444;        /* rechazado */
+}
+
+html,body{
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* Cards y contenedores */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius: 14px;
+}
+.card .text-muted{ color:var(--muted) !important; }
+
+/* Títulos */
+h1,h2,h3,h4,h5{ color:var(--text); }
+
+/* Sidebar */
+.sidebar{ width:260px; background:#0c0f14; }
+.sidebar a{ color:#cfd6e4; text-decoration:none; }
+.sidebar a.active,.sidebar a:hover{ color:#fff; font-weight:600; }
+
+/* Botón brand (texto blanco sí o sí) */
+.btn-brand{
+  background:var(--brand);
+  border-color:var(--brand);
+  color:#fff !important;
+}
+.btn-brand:hover{ filter:brightness(1.06); }
+
+/* Inputs en modo dark (para que no queden negros sobre negro si los usamos) */
+.form-control, .form-select, .form-control:focus{
+  background:#0f141d;
+  color:var(--text);
+  border:1px solid var(--border);
+}
+.form-control::placeholder{ color:#91a0b8; }
+
+/* Tablas legibles */
+.table{ color:var(--text); }
+.table-dark{ --bs-table-bg: var(--card); --bs-table-border-color: var(--border); }
+.table-hover tbody tr:hover{ background: var(--card-2); }
+
+/* Badges de estado con buen contraste */
+.status{
+  padding:.28rem .55rem; border-radius:.6rem; font-weight:700; font-size:.8rem;
+  border:1px solid transparent; display:inline-block;
+}
+.status.recibido{ background:#233044; color:#c9e1ff; border-color:#314156; }
+.status.analisis{ background:#1a2a4b; color:#9ec5ff; border-color:#29406c; }
+.status.observado{ background:#3a2b0c; color:#ffd26a; border-color:#5a4315; }
+.status.aprobado{ background:#11351f; color:#9ef2b6; border-color:#1b5530; }
+.status.rechazado{ background:#3b1214; color:#ffb3b8; border-color:#5a1b1f; }
+
+/* Tarjetas de métrica grandes (Dashboard) */
+.metric{
+  background: linear-gradient(180deg, var(--card), #121722) padding-box;
+  border:1px solid var(--border);
+  border-radius:14px;
+}
+.metric .label{ color:var(--muted); letter-spacing:.2px; }
+.metric .value{ color:#ffffff; }
+
+/* Contenedores “placeholder” (turnos / gráficos) */
+.placeholder-box{
+  background:#0e1219; border:1px dashed var(--border); color:var(--muted);
+  border-radius:12px; padding:1rem;
+
+/* calendario */
+.table-dark th, .table-dark td { border-color: var(--border); }
+.table-dark td { background: var(--card); }
+.table-dark tbody tr:hover td { background: var(--card-2); }
+}
