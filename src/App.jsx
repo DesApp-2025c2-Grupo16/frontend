@@ -12,7 +12,6 @@ import { AuthProvider } from "./auth/AuthContext.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import SolicitudesAutorizaciones from "./pages/SolicitudesAutorizaciones.jsx";
 import SolicitudesRecetas from "./pages/SolicitudesRecetas.jsx";
-import BusquedaAfiliado from "./pages/BusquedaAfiliado";
 
 export default function App() {
   return (
