@@ -11,15 +11,14 @@ export default function Header() {
       className="d-flex align-items-center justify-content-between"
       style={{
         background: "var(--header-bg, #242424)",
-        height: "80px",          // header más grueso y estático
-        padding: "0 20px",       // espacio desde los bordes
+        height: "80px",           // header más grueso y estático
+        padding: "0 20px",
         margin: 0,
         position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         zIndex: 1000,
-        borderBottomLeftRadius: "15px"
       }}
     >
       {/* Logo + Título */}

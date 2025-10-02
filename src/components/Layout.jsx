@@ -36,19 +36,19 @@ export default function Layout() {
       <aside
         className="d-none d-md-block"
         style={{
-          width: 190,
+          width: 170,
           background: "var(--sidebar, #242424)",
-          marginTop: "100px",
-          height: "calc(100vh - 60px)",
+          marginTop: "80px",               // altura del header
+          height: "calc(100vh - 80px)",
           position: "fixed",
           left: 0,
           top: 0,
           overflowY: "auto",
           border: "none",
-          borderTopRightRadius: "15px"
+          borderTopRightRadius: "15px",    // esquina superior derecha redondeada
         }}
       >
-        <nav className="p-2 m-0">
+        <nav className="p-0 m-0">
           <ul className="nav flex-column gap-3 m-2 p-2">
             {/* Dashboard */}
             <li className="nav-item">
@@ -150,12 +150,14 @@ export default function Layout() {
       {/* Contenido principal */}
       <main
         style={{
-          marginTop: "60px",
-          marginLeft: "190px",
-          minHeight: "calc(100vh - 60px)",
+          marginTop: "80px",   // altura del header
+          marginLeft: "170px", // ancho del sidebar
+          minHeight: "calc(100vh - 80px)",
           background: "#ffffff",
           color: "#242424",
           padding: "20px",
+          borderTopLeftRadius: "15px",  // esquina superior izquierda redondeada
+          overflow: "hidden",
         }}
       >
         <div className="p-3 m-0">
@@ -165,3 +167,4 @@ export default function Layout() {
     </div>
   );
 }
+
