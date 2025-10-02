@@ -34,13 +34,23 @@ export default function Situaciones() {
   const startEdit = (r) => { setEditing(r.id); setTemp({ ...r }); };
   const cancel = () => { setEditing(null); setTemp({}); };
   const save = () => {
-    if (editing === "new") {
-      setRows(prev => [temp, ...prev]);
-    } else {
-      setRows(prev => prev.map(r => r.id === editing ? temp : r));
-    }
-    cancel();
-  };
+  if (!temp.nombre.trim()) {
+    alert("El campo 'Nombre' es obligatorio.");
+    return;
+  }
+  if (!temp.situacion.trim()) {
+    alert("El campo 'Situación' es obligatorio.");
+    return;
+  }
+
+  if (editing === "new") {
+    setRows(prev => [temp, ...prev]);
+  } else {
+    setRows(prev => prev.map(r => r.id === editing ? temp : r));
+  }
+  cancel();
+};
+
   const bajaIndefinido = (id) => {
     setRows(prev => prev.map(r => r.id === id ? { ...r, hasta: "" } : r));
   };
@@ -51,7 +61,7 @@ export default function Situaciones() {
   return (
     <div className="text-center mt-4">
       <h2
-        className="text-white fw-bold py-2 px-4 mx-auto rounded-pill"
+        className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
         style={{ background: "#242424", display: "inline-block" }}
       >
         SITUACIÓN TERAPÉUTICA

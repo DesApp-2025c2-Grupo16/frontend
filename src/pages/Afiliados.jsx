@@ -26,7 +26,7 @@ export default function BusquedaAfiliado() {
   return (
     <div className="text-center mt-5">
       <h2
-        className="text-white fw-bold py-2 px-4 mx-auto rounded-pill"
+        className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
         style={{ background: "#242424", display: "inline-block" }}
       >
         BÚSQUEDA DE AFILIADO
