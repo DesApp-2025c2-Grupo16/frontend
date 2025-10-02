@@ -12,6 +12,7 @@ import { AuthProvider } from "./auth/AuthContext.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import SolicitudesAutorizaciones from "./pages/SolicitudesAutorizaciones.jsx";
 import SolicitudesRecetas from "./pages/SolicitudesRecetas.jsx";
+import BusquedaAfiliado from "./pages/BusquedaAfiliado";
 
 export default function App() {
   return (
@@ -32,7 +33,7 @@ export default function App() {
           <Route path="/afiliados" element={<Afiliados />} />
           <Route path="/afiliados/turnos" element={<Turnos />} />
           <Route path="/afiliados/historia" element={<HistoriaClinica />} />
-          <Route path="/afiliados/situaciones" element={<Situaciones />} /> {/* NUEVO */}
+          <Route path="/afiliados/situaciones" element={<Situaciones />} />
 
           {/* Solicitudes */}
           <Route path="/solicitudes" element={<Navigate to="/solicitudes/reintegros" replace />} />
