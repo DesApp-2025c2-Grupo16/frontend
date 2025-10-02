@@ -1,9 +1,11 @@
 // src/pages/BusquedaAfiliado.jsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function BusquedaAfiliado() {
   const [q, setQ] = useState("");
   const [resultado, setResultado] = useState(null);
+  const navigate = useNavigate();
 
   const buscar = (e) => {
     e.preventDefault();
@@ -48,6 +50,7 @@ export default function BusquedaAfiliado() {
           style={{
             borderRadius: "50px",
             marginRight: "10px",
+            background: "#242424",
           }}
         />
         <button
@@ -61,28 +64,88 @@ export default function BusquedaAfiliado() {
 
       {resultado && (
         <div className="mt-4 d-flex flex-column align-items-center">
-          {/* Tabla de resultado */}
-          <table className="table table-dark table-striped" style={{ width: "60%" }}>
-            <thead>
-              <tr>
-                <th>Clasificación</th>
-                <th>Nombre</th>
-                <th>Situación</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{resultado.clasificacion}</td>
-                <td>{resultado.nombre}</td>
-                <td>{resultado.situacion}</td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Cuadro personalizado */}
+          <div
+            style={{
+              borderRadius: "20px",
+              overflow: "hidden",
+              width: "400px",
+              boxShadow: "0px 4px 6px rgba(0,0,0,0.2)",
+            }}
+          >
+            {/* Encabezado negro */}
+            <div
+              style={{
+                backgroundColor: "#242424",
+                color: "white",
+                display: "flex",
+                justifyContent: "space-between",
+                fontWeight: "bold",
+                padding: "10px 20px",
+              }}
+            >
+              <span>Clasificación</span>
+              <span>Nombre</span>
+              <span>Situación</span>
+            </div>
 
-          {/* Botones Turnos y Historia Clínica */}
-          <div className="mt-3 d-flex gap-3">
-            <button className="btn btn-outline-dark">TURNOS</button>
-            <button className="btn btn-dark">HISTORIA CLÍNICA</button>
+            {/* Contenido blanco */}
+            <div
+              style={{
+                backgroundColor: "white",
+                color: "black",
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "10px 20px",
+              }}
+            >
+              <span>{resultado.clasificacion}</span>
+              <span
+                style={{ 
+                  cursor: "pointer", 
+                  color: "blue", 
+                  textDecoration: "underline" 
+                }}
+                onClick={() => navigate("/afiliados/situaciones")}
+              >
+                {resultado.nombre}
+              </span>
+              <span>{resultado.situacion}</span>
+            </div>
+          </div>
+
+          {/* Botones Turnos e Historia Clínica */}
+          <div className="mt-4 d-flex gap-3">
+            <button
+              style={{
+                border: "2px solid black",
+                borderRadius: "12px",
+                padding: "10px 25px",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                textDecoration: "underline",
+                backgroundColor: "white",
+                boxShadow: "3px 3px 0px rgba(0,0,0,0.4)",
+              }}
+              onClick={() => navigate("/afiliados/turnos")}
+            >
+              Turnos
+            </button>
+            <button
+              style={{
+                border: "2px solid black",
+                borderRadius: "12px",
+                padding: "10px 25px",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                textDecoration: "underline",
+                backgroundColor: "white",
+                boxShadow: "3px 3px 0px rgba(0,0,0,0.4)",
+              }}
+              onClick={() => navigate("/afiliados/historia")}
+            >
+              Historia Clínica
+            </button>
           </div>
         </div>
       )}

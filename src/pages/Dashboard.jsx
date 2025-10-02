@@ -12,7 +12,10 @@ export default function Dashboard(){
 
   return (
     <div className="row g-3">
-      <div className="col-12"><h2 className="mb-3">Dashboard</h2></div>
+      <div className="col-12 text-center mt-5">
+        <h2 className="mb-3 text-white fw-bold py-2pill px-4 mx-auto rounded-" style={{ background: "#242424", display: "inline-block" }}
+        >Dashboard</h2>
+      </div>
 
       <div className="col-12 col-md-4">
         <div className="metric p-3">
