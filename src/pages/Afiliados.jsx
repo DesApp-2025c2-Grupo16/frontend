@@ -1,4 +1,3 @@
-// src/pages/BusquedaAfiliado.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -24,7 +23,7 @@ export default function BusquedaAfiliado() {
   };
 
   return (
-    <div className="text-center mt-5">
+    <div className="text-center mt-4">
       <h2
         className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
         style={{ background: "#242424", display: "inline-block" }}
@@ -67,23 +66,26 @@ export default function BusquedaAfiliado() {
       </form>
 
       {resultado && (
-        <div className="mt-4 d-flex flex-column align-items-center">
+        <div className="mt-5 d-flex flex-column align-items-center">
+          {/* TABLA MEJORADA */}
           <div
             style={{
               borderRadius: "20px",
               overflow: "hidden",
-              width: "400px",
+              width: "500px",
               boxShadow: "0px 4px 6px rgba(0,0,0,0.2)",
+              border: "20px solid #242424",
             }}
           >
             <div
               style={{
                 backgroundColor: "#242424",
                 color: "white",
-                display: "flex",
-                justifyContent: "space-between",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr", //
                 fontWeight: "bold",
-                padding: "10px 20px",
+                padding: "10px 25px",
+                textAlign: "center",
               }}
             >
               <span>Clasificación</span>
@@ -95,27 +97,31 @@ export default function BusquedaAfiliado() {
               style={{
                 backgroundColor: "white",
                 color: "black",
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "10px 20px",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                padding: "10px 25px",
+                textAlign: "center",
               }}
             >
               <span>{resultado.clasificacion}</span>
+
               <span
-                style={{ 
-                  cursor: "pointer", 
-                  color: "blue", 
-                  textDecoration: "underline" 
+                style={{
+                  cursor: "pointer",
+                  color: "black",
+                  fontWeight: "bold",
                 }}
                 onClick={() => navigate("/afiliados/situaciones")}
               >
                 {resultado.nombre}
               </span>
+
               <span>{resultado.situacion}</span>
             </div>
           </div>
 
-          <div className="mt-4 d-flex gap-3">
+          {/* Botones inferiores */}
+          <div className="mt-5 d-flex gap-3">
             <button
               style={{
                 border: "2px solid black",
@@ -123,7 +129,6 @@ export default function BusquedaAfiliado() {
                 padding: "10px 25px",
                 fontWeight: "bold",
                 textTransform: "uppercase",
-                textDecoration: "underline",
                 backgroundColor: "white",
                 boxShadow: "3px 3px 0px rgba(0,0,0,0.4)",
               }}
@@ -138,7 +143,6 @@ export default function BusquedaAfiliado() {
                 padding: "10px 25px",
                 fontWeight: "bold",
                 textTransform: "uppercase",
-                textDecoration: "underline",
                 backgroundColor: "white",
                 boxShadow: "3px 3px 0px rgba(0,0,0,0.4)",
               }}

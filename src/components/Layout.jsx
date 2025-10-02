@@ -156,7 +156,8 @@ export default function Layout() {
           background: "#ffffff",
           color: "#242424",
           padding: "20px",
-          borderTopLeftRadius: "15px",  // esquina superior izquierda redondeada
+          borderTopLeftRadius: "40px", // esquina superior izquierda redondeada
+          borderTopRightRadius: "40px", // esquina superior derecha redondeada
           overflow: "hidden",
         }}
       >
@@ -167,4 +168,3 @@ export default function Layout() {
     </div>
   );
 }
-
