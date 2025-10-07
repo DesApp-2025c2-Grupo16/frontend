@@ -23,16 +23,28 @@ export default function BusquedaAfiliado() {
   };
 
   return (
-    <div className="text-center mt-4">
+    <div className="mt-4 text-center">
+      {/* Barra pill larga y centrada */}
       <h2
         className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
-        style={{ background: "#242424", display: "inline-block" }}
+        style={{
+          background: "#242424",
+          display: "block",
+          width: "90%",       // Ocupa casi todo el ancho
+          textAlign: "center", // Texto centrado
+          margin: "0 auto",   // Centrado horizontal
+          lineHeight: "50px", // Altura consistente
+        }}
       >
         BÚSQUEDA DE AFILIADO
       </h2>
 
-      <hr className="border-dark border-5 rounded-pill" />
+      <hr
+        className="border-dark border-5 rounded-pill mt-4 mx-auto"
+        style={{ width: "90%" }}
+      />
 
+      {/* Formulario de búsqueda */}
       <form
         onSubmit={buscar}
         className="d-flex justify-content-center align-items-center mt-4"
@@ -42,6 +54,7 @@ export default function BusquedaAfiliado() {
           padding: "5px 10px",
           width: "500px",
           margin: "0 auto",
+          background: "#242424",
         }}
       >
         <input
@@ -72,7 +85,7 @@ export default function BusquedaAfiliado() {
             style={{
               borderRadius: "20px",
               overflow: "hidden",
-              width: "500px",
+              width: "1300px",
               boxShadow: "0px 4px 6px rgba(0,0,0,0.2)",
               border: "20px solid #242424",
             }}
@@ -82,9 +95,9 @@ export default function BusquedaAfiliado() {
                 backgroundColor: "#242424",
                 color: "white",
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr", //
+                gridTemplateColumns: "1fr 1fr 1fr",
                 fontWeight: "bold",
-                padding: "10px 25px",
+                padding: "10px 5px",
                 textAlign: "center",
               }}
             >

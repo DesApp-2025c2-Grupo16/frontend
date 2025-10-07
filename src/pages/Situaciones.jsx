@@ -1,4 +1,3 @@
-// src/pages/Situaciones.jsx
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import BackButton from "../components/BackButton.jsx";
@@ -34,40 +33,56 @@ export default function Situaciones() {
   const startEdit = (r) => { setEditing(r.id); setTemp({ ...r }); };
   const cancel = () => { setEditing(null); setTemp({}); };
   const save = () => {
-  if (!temp.nombre.trim()) {
-    alert("El campo 'Nombre' es obligatorio.");
-    return;
-  }
-  if (!temp.situacion.trim()) {
-    alert("El campo 'Situación' es obligatorio.");
-    return;
-  }
+    if (!temp.nombre.trim()) { alert("El campo 'Nombre' es obligatorio."); return; }
+    if (!temp.situacion.trim()) { alert("El campo 'Situación' es obligatorio."); return; }
 
-  if (editing === "new") {
-    setRows(prev => [temp, ...prev]);
-  } else {
-    setRows(prev => prev.map(r => r.id === editing ? temp : r));
-  }
-  cancel();
-};
-
-  const bajaIndefinido = (id) => {
-    setRows(prev => prev.map(r => r.id === id ? { ...r, hasta: "" } : r));
+    if (editing === "new") {
+      setRows(prev => [temp, ...prev]);
+    } else {
+      setRows(prev => prev.map(r => r.id === editing ? temp : r));
+    }
+    cancel();
   };
+
   const eliminar = (id) => {
-  setRows(prev => prev.filter(r => r.id !== id));
-};
+    setRows(prev => prev.filter(r => r.id !== id));
+  };
 
   return (
-    <div className="text-center mt-4">
-      <h2
+    <div className="mt-4">
+      {/* Barra pill con botón de volver */}
+      <div className="d-flex align-items-center gap-3 mb-3 px-3">
+        <BackButton 
+          to="/afiliados" 
+          title="Volver a Afiliados" 
+          style={{
+            height: "50px", 
+            lineHeight: "50px",
+            minWidth: "120px", 
+            borderRadius: "50px", 
+            fontWeight: "bold"
+          }} 
+        />
+        <h2
         className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
-        style={{ background: "#242424", display: "inline-block" }}
-      >
+        style={{
+          background: "#242424",
+          display: "block",
+          width: "90%",       // Ocupa casi todo el ancho
+          textAlign: "center", // Texto centrado
+          margin: "0 auto",   // Centrado horizontal
+          lineHeight: "50px", // Altura consistente
+        }}
+        >
         SITUACIÓN TERAPÉUTICA
-      </h2>
+        </h2>
+      </div>
 
-      <hr className="border-dark border-5 rounded-pill" />
+      {/* Barra divisora tipo pill */}
+      <hr
+        className="border-dark border-5 rounded-pill mt-4 mx-auto"
+        style={{ width: "90%" }}
+      />
 
       {/* Contenedor principal */}
       <div
@@ -76,8 +91,8 @@ export default function Situaciones() {
           border: "3px solid #242424",
           padding: "15px",
           background: "#242424",
-          marginTop: "20px",
-          color: "white"
+          color: "white",
+          margin: "0 20px 20px 20px"
         }}
       >
         <div className="d-flex flex-wrap gap-2 mb-3">
@@ -173,18 +188,6 @@ export default function Situaciones() {
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* Botón de retroceso fijo en esquina inferior izquierda */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          left: "20px",
-          zIndex: 1000,
-        }}
-      >
-        <BackButton />
       </div>
     </div>
   );
