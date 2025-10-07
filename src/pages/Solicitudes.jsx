@@ -39,8 +39,25 @@ export default function Solicitudes() {
   };
 
   return (
-    <div className="row g-3">
-      <div className="col-12"><h2>Solicitudes</h2></div>
+    <div className="mt-4">
+      <h2
+        className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
+        style={{
+          background: "#242424",
+          display: "block",
+          width: "90%",       // Ocupa casi todo el ancho
+          textAlign: "center", // Texto centrado
+          margin: "0 auto",   // Centrado horizontal
+          lineHeight: "50px", // Altura consistente
+        }}
+      >
+        SOLICITUDES - REINTEGROS
+      </h2>
+
+      <hr
+        className="border-dark border-5 rounded-pill mt-4 mx-auto"
+        style={{ width: "90%" }}
+      />
 
       <div className="col-12 col-md-6">
         <div className="card">

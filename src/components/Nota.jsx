@@ -9,7 +9,7 @@ export default function Nota(props){
     }
 
     return(
-        <div className="row g-3 mb-2 align-items-center">
+        <div className="row g-3 mb-4 align-items-center">
             <h4 className="col-11 text-dark" >
             {nota.fecha} - {nota.turno}
             </h4>
