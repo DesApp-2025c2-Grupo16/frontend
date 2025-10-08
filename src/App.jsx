@@ -39,6 +39,9 @@ export default function App() {
           <Route path="/solicitudes/reintegros" element={<SolicitudesReintegros />} />
           <Route path="/solicitudes/autorizaciones" element={<SolicitudesAutorizaciones />} />
           <Route path="/solicitudes/recetas" element={<SolicitudesRecetas />} />
+
+          {/* Historia Clinica */}
+          
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

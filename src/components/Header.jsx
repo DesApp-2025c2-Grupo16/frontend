@@ -1,7 +1,7 @@
 // src/components/Header.jsx
 import { useState } from "react";
 import { FaSun, FaMoon, FaEnvelope, FaUser } from "react-icons/fa";
-import logo from "../assets/logo.png"; // <-- reemplaza con la ruta de tu logo
+import logo from "../assets/logo.png";
 
 export default function Header() {
   const [dark, setDark] = useState(true);
@@ -11,7 +11,7 @@ export default function Header() {
       className="d-flex align-items-center justify-content-between"
       style={{
         background: "var(--header-bg, #242424)",
-        height: "80px",           // header más grueso y estático
+        height: "80px",           
         padding: "0 20px",
         margin: 0,
         position: "fixed",
