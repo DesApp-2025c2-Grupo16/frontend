@@ -11,7 +11,7 @@ export default function DetalleSolicitudReintegros() {
   if (!solicitud) {
     return (
       <div className="p-4 text-center">
-        <h4>Solicitud no encontrada</h4>
+        <h4 style={{color: "#000"}}>Solicitud no encontrada</h4>
         <button className="btn btn-dark mt-3" onClick={() => navigate(-1)}>
           Volver
         </button>
@@ -38,7 +38,17 @@ export default function DetalleSolicitudReintegros() {
 
       <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
 
-      <div className="container card p-4 shadow">
+      <div
+        className="container"
+        style={{
+            backgroundColor: "white",
+            border: "20px solid #242424",
+            borderRadius: "20px",
+            padding: "20px",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+        }}
+    >
+        <h5 style={{ color: "#000" }}>Datos de Paciente</h5>
         <p><strong>Afiliado:</strong> {solicitud.afiliado}</p>
         <p><strong>Fecha de la prestación:</strong> {solicitud.fechaPrestacion}</p>
         <p><strong>Integrante:</strong> {solicitud.integrante}</p>
@@ -48,7 +58,7 @@ export default function DetalleSolicitudReintegros() {
 
         <hr />
 
-        <h5>Datos de Factura</h5>
+        <h5 style={{ color: "#000" }}>Datos de Factura</h5>
         <p><strong>Fecha:</strong> {solicitud.factura.fecha}</p>
         <p><strong>CUIT:</strong> {solicitud.factura.cuit}</p>
         <p><strong>Valor Total:</strong> ${solicitud.factura.total}</p>
@@ -56,7 +66,7 @@ export default function DetalleSolicitudReintegros() {
 
         <hr />
 
-        <h5>Forma de Pago</h5>
+        <h5 style={{ color: "#000" }}>Forma de Pago</h5>
         <p><strong>Tipo:</strong> {solicitud.formaPago.tipo}</p>
         {solicitud.formaPago.cbu && <p><strong>CBU:</strong> {solicitud.formaPago.cbu}</p>}
 
