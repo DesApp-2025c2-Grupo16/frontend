@@ -1,18 +1,18 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useSolicitudes } from "../components/SolicitudesContext.jsx";
 
-export default function DetalleSolicitudReintegros() {
+export default function DetalleSolicitudAutorizacion() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { solicitudes, actualizarEstado } = useSolicitudes();
-
-  const solicitud = solicitudes.find(s => s.id === parseInt(id) && s.tipo === "reintegro");
+  
+  const solicitud = solicitudes.find(s => s.id === parseInt(id) && s.tipo === "autorizacion");
 
   if (!solicitud) {
     return (
       <div className="p-4 text-center">
         <h4 style={{ color: "#000" }}>Solicitud no encontrada</h4>
-        <button className="btn btn-dark mt-3" onClick={() => navigate("/solicitudes")}>
+        <button className="btn btn-dark mt-3" onClick={() => navigate("/solicitudes/autorizaciones")}>
           Volver a la bandeja
         </button>
       </div>
@@ -21,12 +21,12 @@ export default function DetalleSolicitudReintegros() {
 
   const handleUpdate = (estado) => {
     actualizarEstado(solicitud.id, estado);
-    navigate("/solicitudes"); // vuelve a la bandeja
+    navigate("/solicitudes/autorizaciones");
   };
 
   return (
     <div className="mt-4">
-      <h2
+      <h2 
         className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
         style={{
           background: "#242424",
@@ -45,28 +45,17 @@ export default function DetalleSolicitudReintegros() {
       <div className="container" style={{ backgroundColor: "white", border: "20px solid #242424", borderRadius: "20px", padding: "20px", boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
         <h5 style={{ color: "#000" }}>Datos de Paciente</h5>
         <p><strong>Afiliado:</strong> {solicitud.afiliado}</p>
-        <p><strong>Fecha de la prestación:</strong> {solicitud.fechaPrestacion}</p>
-        <p><strong>Integrante:</strong> {solicitud.integrante}</p>
-        <p><strong>Médico:</strong> {solicitud.medico}</p>
-        <p><strong>Especialidad:</strong> {solicitud.especialidad}</p>
-        <p><strong>Lugar:</strong> {solicitud.lugar}</p>
+        <p><strong>Fecha prevista:</strong> {solicitud.detalle.fechaPrevista}</p>
+        <p><strong>Integrante:</strong> {solicitud.detalle.integrante}</p>
+        <p><strong>Médico:</strong> {solicitud.detalle.medico}</p>
+        <p><strong>Especialidad:</strong> {solicitud.detalle.especialidad}</p>
+        <p><strong>Lugar:</strong> {solicitud.detalle.lugar}</p>
+        <p><strong>Días de internación:</strong> {solicitud.detalle.dias}</p>
 
         <hr />
 
-        <h5 style={{ color: "#000" }}>Datos de Factura</h5>
-        <p><strong>Fecha:</strong> {solicitud.factura.fecha}</p>
-        <p><strong>CUIT:</strong> {solicitud.factura.cuit}</p>
-        <p><strong>Valor Total:</strong> ${solicitud.factura.total}</p>
-        <p><strong>Persona Facturada:</strong> {solicitud.factura.persona}</p>
-
-        <hr />
-
-        <h5 style={{ color: "#000" }}>Forma de Pago</h5>
-        <p><strong>Tipo:</strong> {solicitud.formaPago.tipo}</p>
-        {solicitud.formaPago.cbu && <p><strong>CBU:</strong> {solicitud.formaPago.cbu}</p>}
-        <hr />
         <h5 style={{ color: "#000" }}>Observaciones</h5>
-        <p>{solicitud.observaciones}</p>
+        <p>{solicitud.detalle.observaciones}</p>
 
         <div className="mt-4 d-flex justify-content-around">
           <button className="btn btn-success" onClick={() => handleUpdate("Aprobado")}>Aprobar</button>
@@ -75,7 +64,7 @@ export default function DetalleSolicitudReintegros() {
         </div>
 
         <div className="text-center mt-4">
-          <button className="btn btn-dark" onClick={() => navigate("/solicitudes")}>
+          <button className="btn btn-dark" onClick={() => navigate("/solicitudes/autorizaciones")}>
             Volver a la bandeja
           </button>
         </div>
