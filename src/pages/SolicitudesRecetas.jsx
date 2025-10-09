@@ -1,53 +1,41 @@
 // src/pages/SolicitudesRecetas.jsx
-import { useState } from "react";
-import ReasonModal from "../components/ReasonModal.jsx";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSolicitudes } from "../components/SolicitudesContext.jsx";
+import reinicio from "../assets/reinicio.png";
 
-const demo = [
-  {
-    id: 1,
-    solicitud: "Receta #1",
-    afiliado: "Juan P.",
-    estado: "Recibido",
-    fecha: "05/09/2025",
-    detalle: {
-      integrante: "Juan P.",
-      medicamento: "Ibuprofeno",
-      cantidad: "2",
-      presentacion: "400 mg x 10 comp.",
-      observaciones: "Uso por 5 días."
-    }
-  },
-  {
-    id: 2,
-    solicitud: "Receta #2",
-    afiliado: "Ana G.",
-    estado: "En análisis",
-    fecha: "07/09/2025",
-    detalle: {
-      integrante: "Ana G.",
-      medicamento: "Amoxicilina",
-      cantidad: "1",
-      presentacion: "500 mg x 12 caps.",
-      observaciones: "Tomar cada 8 hs."
-    }
-  }
-];
+export default function SolicitudesRecetas() {
+  const { solicitudes, actualizarEstado, loading } = useSolicitudes();
+  const [lista, setLista] = useState([]);
+  const [filtro, setFiltro] = useState("todos");
+  const [filtroBusqueda, setFiltroBusqueda] = useState("");
+  const navigate = useNavigate();
 
-const badge = (estado) => {
-  const map = { "Recibido":"secondary", "En análisis":"primary", "Observado":"warning", "Aprobado":"success", "Rechazado":"danger" };
-  return map[estado] || "secondary";
-};
+  useEffect(() => {
+    setLista(solicitudes.filter(s => s.tipo === "receta"));
+  }, [solicitudes]);
 
-export default function SolicitudesRecetas(){
-  const [lista, setLista] = useState(demo);
-  const [sel, setSel] = useState(demo[0]);
-  const [showObs, setShowObs] = useState(false);
-  const [showRec, setShowRec] = useState(false);
+  if (loading) return <p>Cargando solicitudes...</p>;
 
-  const actualizar = (id, estado, motivo = "") => {
-    setLista(prev => prev.map(s => s.id === id ? { ...s, estado, motivo } : s));
-    setSel(prev => prev && prev.id === id ? { ...prev, estado, motivo } : prev);
+  const estados = [
+    { label: "Recibido", color: "#b3b3b3" },
+    { label: "Observado", color: "#ff9c41" },
+    { label: "En análisis", color: "#1d4ed8" },
+    { label: "Aprobado", color: "#22c55e" },
+    { label: "Rechazado", color: "#ef4444" },
+  ];
+
+  const badge = (estado) => {
+    const map = { "Recibido":"secondary", "En análisis":"primary", "Observado":"warning", "Aprobado":"success", "Rechazado":"danger" };
+    return map[estado] || "secondary";
   };
+
+  const solicitudesFiltradas = lista
+    .filter(s => filtro === "todos" ? true : s.estado.toLowerCase() === filtro.toLowerCase())
+    .filter(s =>
+      s.afiliado.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
+      s.solicitud.toLowerCase().includes(filtroBusqueda.toLowerCase())
+    );
 
   return (
     <div className="mt-4">
@@ -65,63 +53,107 @@ export default function SolicitudesRecetas(){
         SOLICITUDES - RECETAS
       </h2>
 
-      <hr
-        className="border-dark border-5 rounded-pill mt-4 mx-auto"
-        style={{ width: "90%" }}
-      />
+      <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
 
-      <div className="col-12 col-lg-7">
-        <div className="card p-3">
-          <div className="table-responsive">
-            <table className="table table-dark align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>Solicitud</th>
-                  <th>Afiliado</th>
-                  <th>Estado</th>
-                  <th>Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lista.map(r => (
-                  <tr key={r.id} style={{cursor:"pointer"}} onClick={()=>setSel(r)}>
-                    <td>{r.solicitud}</td>
-                    <td>{r.afiliado}</td>
-                    <td><span className={`badge bg-${badge(r.estado)}`}>{r.estado}</span></td>
-                    <td>{r.fecha}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      {/* FILTROS Y BÚSQUEDA */}
+      <div className="d-flex justify-content-between flex-wrap" style={{ width: "90%", margin: "5px auto", alignItems: "center" }}>
+        <div className="d-flex flex-wrap gap-1">
+          {estados.map(e => (
+            <button
+              key={e.label}
+              onClick={() => setFiltro(e.label)}
+              style={{
+                backgroundColor: e.color,
+                color: "white",
+                border: "none",
+                borderRadius: "25px",
+                padding: "5px 10px",
+                fontWeight: "bold",
+                boxShadow: filtro === e.label ? "0 0 0 3px #242424 inset" : "none",
+              }}
+            >
+              {e.label}
+            </button>
+          ))}
 
-      <div className="col-12 col-lg-5">
-        <div className="card p-3">
-          <h6 className="text-muted mb-3">Detalle de la receta</h6>
-          {sel && (
-            <>
-              <div className="small mb-1"><strong>Integrante:</strong> {sel.detalle.integrante}</div>
-              <div className="small mb-1"><strong>Medicamento:</strong> {sel.detalle.medicamento}</div>
-              <div className="small mb-1"><strong>Cantidad:</strong> {sel.detalle.cantidad}</div>
-              <div className="small mb-3"><strong>Presentación:</strong> {sel.detalle.presentacion}</div>
-              <div className="small mb-3"><strong>Observaciones:</strong> {sel.detalle.observaciones}</div>
-
-              <div className="d-flex gap-2">
-                <button className="btn btn-success btn-sm" onClick={()=>actualizar(sel.id,"Aprobado")}>Aprobar</button>
-                <button className="btn btn-warning btn-sm" onClick={()=>setShowObs(true)}>Observar</button>
-                <button className="btn btn-danger btn-sm" onClick={()=>setShowRec(true)}>Rechazar</button>
-              </div>
-            </>
+          {filtro !== "todos" && (
+            <button
+              onClick={() => setFiltro("todos")}
+              style={{ backgroundColor: "#242424", border: "none", borderRadius: "25px", padding: "5px 10px" }}
+            >
+              <img src={reinicio} alt="Todos" style={{ width: "20px", height: "20px" }} />
+            </button>
           )}
         </div>
+
+        <input
+          type="text"
+          placeholder="Buscar afiliado o solicitud..."
+          value={filtroBusqueda}
+          onChange={(e) => setFiltroBusqueda(e.target.value)}
+          style={{
+            borderRadius: "25px",
+            border: "2px solid #242424",
+            padding: "5px 10px",
+            outline: "none",
+            width: "250px",
+            backgroundColor: "#242424",
+            color: "white",
+          }}
+        />
       </div>
 
-      <ReasonModal show={showObs} tipo="observar" onClose={()=>setShowObs(false)}
-                   onSend={(motivo)=>actualizar(sel.id,"Observado",motivo)} />
-      <ReasonModal show={showRec} tipo="rechazar" onClose={()=>setShowRec(false)}
-                   onSend={(motivo)=>actualizar(sel.id,"Rechazado",motivo)} />
+      {/* TABLA */}
+      <div
+        className="mt-3"
+        style={{
+          borderRadius: "20px",
+          overflow: "hidden",
+          width: "90%",
+          boxShadow: "0px 4px 6px rgba(0,0,0,0.2)",
+          border: "20px solid #242424",
+          margin: "auto",
+          backgroundColor: "white",
+        }}
+      >
+        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+          <thead style={{ backgroundColor: "#242424", color: "white" }}>
+            <tr>
+              <th style={{ padding: "12px 15px" }}>Solicitud</th>
+              <th style={{ padding: "12px 15px" }}>Asunto</th>
+              <th style={{ padding: "12px 15px" }}>Afiliado</th>
+              <th style={{ padding: "12px 15px" }}>Estado</th>
+              <th style={{ padding: "12px 15px" }}>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {solicitudesFiltradas.map(s => (
+              <tr key={s.id} style={{ cursor:"pointer", borderBottom: "1px solid #ddd" }} onClick={() => navigate(`/solicitudes/recetas/${s.id}`)}>
+                <td style={{ padding: "10px 15px" }}>{s.solicitud}</td>
+                <td style={{ padding: "10px 15px" }}>{s.motivo}</td>
+                <td style={{ padding: "10px 15px" }}>{s.afiliado}</td>
+                <td style={{ padding: "10px 15px" }}>
+                  <span className="px-2 py-1 rounded-pill" style={{ fontWeight: "bold", fontSize: "0.9rem",
+                    ...(() => {
+                      const base = {
+                        "Recibido": { color: "#555", background: "#e5e5e5" },
+                        "Observado": { color: "#ff9c41", background: "#fff3e6" },
+                        "En análisis": { color: "#1d4ed8", background: "#e0e7ff" },
+                        "Aprobado": { color: "#22c55e", background: "#dcfce7" },
+                        "Rechazado": { color: "#ef4444", background: "#fee2e2" },
+                      };
+                      return base[s.estado] || {};
+                    })()
+                  }}>
+                    {s.estado}
+                  </span>
+                </td>
+                <td style={{ padding: "10px 15px" }}>{s.fecha}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
