@@ -2,12 +2,21 @@
   /* Paleta accesible */
   --brand:#0597ad;      /* turquesa botón */
   --brand-2:#2b6cb0;    /* azul secundario */
-  --bg:#0f1115;         /* fondo app */
-  --card:#171c25;       /* paneles (un poco más claro que antes) */
-  --card-2:#1d2330;     /* resalte sutil */
+
+  --bg:#0f1115;         /* fondo app (general) */
+
+  /* 🔹 Unificamos paneles/recuadros en #242424 */
+  --card:#242424;       /* paneles, cards, tablas, etc */
+  --card-2:#2b2b2b;     /* resalte sutil / hover */
   --text:#f4f7fb;       /* texto claro */
   --muted:#b7c0cf;      /* texto tenue legible */
-  --border:#2b3342;     /* bordes visibles */
+  --border:#333333;     /* bordes visibles pero discretos */
+
+  /* Header y Sidebar */
+  --header-bg:#242424;  /* color del header */
+  --sidebar-bg:#242424; /* color del sidebar */
+
+  /* Estados */
   --ok:#22c55e;         /* aprobado */
   --warn:#f59e0b;       /* observado */
   --info:#3b82f6;       /* en análisis */
@@ -19,22 +28,31 @@ html,body{
   color:var(--text);
 }
 
-/* Cards y contenedores */
+/* ====== Header & Sidebar ================================================== */
+header{
+  background: var(--header-bg) !important;
+  color: var(--text);
+}
+
+/* si usás la clase .sidebar en el aside */
+.sidebar{
+  width:260px;
+  background: var(--sidebar-bg) !important;
+}
+.sidebar a{ color:#cfd6e4; text-decoration:none; }
+.sidebar a.active,.sidebar a:hover{ color:#fff; font-weight:600; }
+
+/* ====== Cards y contenedores ============================================= */
 .card{
-  background:var(--card);
-  border:1px solid var(--border);
-  color:var(--text);
+  background:var(--card) !important;
+  border:1px solid var(--border) !important;
+  color:var(--text) !important;
   border-radius: 14px;
 }
 .card .text-muted{ color:var(--muted) !important; }
 
 /* Títulos */
 h1,h2,h3,h4,h5{ color:var(--text); }
-
-/* Sidebar */
-.sidebar{ width:260px; background:#0c0f14; }
-.sidebar a{ color:#cfd6e4; text-decoration:none; }
-.sidebar a.active,.sidebar a:hover{ color:#fff; font-weight:600; }
 
 /* Botón brand (texto blanco sí o sí) */
 .btn-brand{
@@ -44,20 +62,29 @@ h1,h2,h3,h4,h5{ color:var(--text); }
 }
 .btn-brand:hover{ filter:brightness(1.06); }
 
-/* Inputs en modo dark (para que no queden negros sobre negro si los usamos) */
-.form-control, .form-select, .form-control:focus{
-  background:#0f141d;
-  color:var(--text);
-  border:1px solid var(--border);
+/* Inputs en modo dark */
+.form-control, .form-select, .form-control:focus, textarea.form-control {
+  background:#1b1b1b !important;
+  color:var(--text) !important;
+  border:1px solid var(--border) !important;
 }
-.form-control::placeholder{ color:#91a0b8; }
+.form-control::placeholder, textarea::placeholder{ color:#95a3b8; }
 
-/* Tablas legibles */
+/* ====== Tablas legibles (Bootstrap .table-dark) =========================== */
 .table{ color:var(--text); }
-.table-dark{ --bs-table-bg: var(--card); --bs-table-border-color: var(--border); }
-.table-hover tbody tr:hover{ background: var(--card-2); }
+.table-dark{
+  --bs-table-bg: var(--card) !important;
+  --bs-table-striped-bg: var(--card-2) !important;
+  --bs-table-striped-color: var(--text) !important;
+  --bs-table-color: var(--text) !important;
+  --bs-table-border-color: var(--border) !important;
+  background-color: var(--card) !important;
+  color: var(--text) !important;
+}
+.table-dark th, .table-dark td { border-color: var(--border) !important; }
+.table-hover tbody tr:hover{ background: var(--card-2) !important; }
 
-/* Badges de estado con buen contraste */
+/* ====== Badges de estado ================================================== */
 .status{
   padding:.28rem .55rem; border-radius:.6rem; font-weight:700; font-size:.8rem;
   border:1px solid transparent; display:inline-block;
@@ -68,22 +95,57 @@ h1,h2,h3,h4,h5{ color:var(--text); }
 .status.aprobado{ background:#11351f; color:#9ef2b6; border-color:#1b5530; }
 .status.rechazado{ background:#3b1214; color:#ffb3b8; border-color:#5a1b1f; }
 
-/* Tarjetas de métrica grandes (Dashboard) */
+/* ====== Tarjetas de métrica (Dashboard) ================================== */
 .metric{
-  background: linear-gradient(180deg, var(--card), #121722) padding-box;
+  background: linear-gradient(180deg, var(--card), #1e1e1e) padding-box;
   border:1px solid var(--border);
   border-radius:14px;
 }
 .metric .label{ color:var(--muted); letter-spacing:.2px; }
 .metric .value{ color:#ffffff; }
 
-/* Contenedores “placeholder” (turnos / gráficos) */
+/* ====== Contenedores “placeholder” (turnos / gráficos) =================== */
 .placeholder-box{
-  background:#0e1219; border:1px dashed var(--border); color:var(--muted);
-  border-radius:12px; padding:1rem;
+  background:#1b1b1b;
+  border:1px dashed var(--border);
+  color:var(--muted);
+  border-radius:12px;
+  padding:1rem;
+} /* ← estaba faltando este cierre en tu archivo */
 
-/* calendario */
-.table-dark th, .table-dark td { border-color: var(--border); }
-.table-dark td { background: var(--card); }
-.table-dark tbody tr:hover td { background: var(--card-2); }
+/* ====== Botón circular (calendario / back) =============================== */
+.btn-circle{
+  width: 40px; height: 40px;
+  border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border, #333);
+  background: var(--card, #242424);
+  color: #e5f6ff;
+  transition: transform .08s ease, background .2s ease, border-color .2s ease;
+}
+.btn-circle:hover{ background: var(--card-2, #2b2b2b); transform: translateY(-1px); }
+.btn-circle:active{ transform: translateY(0); 
+
+/* Título con pastilla oscura detrás */
+.title-pill{
+  background: #242424;            /* o var(--card) */
+  border: 1px solid #333;         /* separa del fondo claro */
+  color: inherit;                 /* NO cambia el color del texto */
+  padding: .55rem 1.2rem;
+  border-radius: 999px;           /* pill */
+  display: inline-block;          /* auto-ancho */
+  line-height: 1;                 /* compacto */
+  letter-spacing: .3px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.06) inset;
+}
+
+/* variante a todo el ancho (como la imagen) */
+.title-pill.full{
+  display: block;
+  width: 100%;
+  text-align: center;
+  border-radius: 18px;
+  padding: .7rem 1.2rem;
+}
+
 }
