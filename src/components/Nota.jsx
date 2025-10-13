@@ -10,14 +10,13 @@ export default function Nota(props){
 
     return(
         <div className="row g-3 mb-4 align-items-center">
-            <h4 className="col-11 text-dark" >
-            {nota.fecha} - {nota.turno}
-            </h4>
-            <button className="col-1 btn btn-success mt-0" onClick={toggleMostrar}>Mostrar</button>
-            {mostrar && <div className="card card-body mb-1">
-                {nota.texto}
-            </div>}
-            
+                <h4 className="col-11 text-dark" >
+                {nota.fecha} - {nota.turno} - Doctor: Pepe
+                </h4>
+                <button className="col-1 btn btn-success mt-0" onClick={toggleMostrar}>Mostrar</button>
+                {mostrar && <div className="card card-body mb-1">
+                    {nota.texto}
+                </div>}
           </div>
     )
 

@@ -5,6 +5,7 @@ import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Afiliados from "./pages/Afiliados.jsx";
 import Turnos from "./pages/Turnos.jsx";
+import GrupoFamiliarHistoriaClinica from "./pages/GrupoFamiliarHistoriaClinica.jsx";
 import HistoriaClinica from "./pages/HistoriaClinica.jsx";
 import Situaciones from "./pages/Situaciones.jsx";
 import SolicitudesReintegros from "./pages/Solicitudes.jsx";
@@ -36,7 +37,8 @@ export default function App() {
             {/* Afiliados */}
             <Route path="/afiliados" element={<Afiliados />} />
             <Route path="/afiliados/turnos" element={<Turnos />} />
-            <Route path="/afiliados/historia" element={<HistoriaClinica />} />
+            <Route path="/afiliados/historia" element={<GrupoFamiliarHistoriaClinica />} />
+            <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
             <Route path="/afiliados/situaciones" element={<Situaciones />} />
 
             {/* Solicitudes */}
