@@ -1,23 +1,28 @@
 import { useState } from "react";
 
-export default function Nota(props){
-    const {nota} = props;
-    const [mostrar, setMostrar] = useState(false);
+export default function Nota({ nota }) {
+  const [mostrar, setMostrar] = useState(false);
 
-    const toggleMostrar= ()=>{
-        setMostrar(!mostrar)
-    }
+  const toggleMostrar = () => setMostrar(!mostrar);
 
-    return(
-        <div className="row g-3 mb-4 align-items-center">
-                <h4 className="col-11 text-dark" >
-                {nota.fecha} - {nota.turno} - Doctor: Pepe
-                </h4>
-                <button className="col-1 btn btn-success mt-0" onClick={toggleMostrar}>Mostrar</button>
-                {mostrar && <div className="card card-body mb-1">
-                    {nota.texto}
-                </div>}
-          </div>
-    )
+  return (
+    <div className="mb-4 p-3 border rounded shadow-sm">
+      <div className="d-flex justify-content-between align-items-start">
+        <div>
+          <p className="mb-1"><strong>Fecha:</strong> {nota.fecha}</p>
+          <p className="mb-1"><strong>Causa:</strong> {nota.motivo || nota.descripcion}</p>
+          <p className="mb-1"><strong>Doctor:</strong> {nota.doctor || "—"}</p>
+        </div>
+        <button className="btn btn-sm btn-primary" onClick={toggleMostrar}>
+          {mostrar ? "Ocultar" : "Mostrar"}
+        </button>
+      </div>
 
+      {mostrar && (
+        <div className="mt-2 p-2 border rounded" style={{ backgroundColor: "#f8f9fa" }}>
+          <p><strong>Descripción:</strong> {nota.nota || nota.texto}</p>
+        </div>
+      )}
+    </div>
+  );
 }

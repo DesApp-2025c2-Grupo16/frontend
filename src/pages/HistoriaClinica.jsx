@@ -1,50 +1,64 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BackButton from "../components/BackButton.jsx";
 import Nota from "../components/Nota.jsx";
 
-const PACIENTES = {
-  juan: {
-    nombre: "Juan",
-    apellido: "Perez",
-    situaciones: ["Discapacidad"],
-    notas: [
-      { id: 1, fecha: "02/09/2025", turno: "Control traumatológico", texto: "Revisión de movilidad articular." },
-      { id: 2, fecha: "16/09/2025", turno: "Fisioterapia", texto: "Mejora en el rango de movimiento." },
-    ],
-  },
-  martina: {
-    nombre: "Martina",
-    apellido: "Perez",
-    situaciones: ["Embarazo (4 meses)"],
-    notas: [
-      { id: 1, fecha: "01/09/2025", turno: "Control obstétrico", texto: "Ecografía de control sin complicaciones." },
-    ],
-  },
-};
-
 export default function HistoriaClinica() {
-  const { id } = useParams(); // toma el id dinamico
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [paciente, setPaciente] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const paciente = PACIENTES[id]; // seleccionamos el paciente
+  useEffect(() => {
+    const fetchPaciente = async () => {
+      try {
+        const res = await fetch(`http://localhost:3001/afiliados/${id}`);
+        if (!res.ok) throw new Error("Paciente no encontrado");
+        const data = await res.json();
 
-  if (!paciente) {
-    return (
-      <div className="text-center mt-5">
-        <h2>No se encontró la historia clínica</h2>
-        <button className="btn btn-dark mt-3" onClick={() => navigate(-1)}>
-          Volver atrás
-        </button>
-      </div>
-    );
-  }
+        // Si es un miembro del grupo familiar, buscarlo dentro del grupo
+        if (id.includes("-")) {
+          const titularId = id.split("-")[0];
+          const resTitular = await fetch(`http://localhost:3001/afiliados/${titularId}`);
+          if (!resTitular.ok) throw new Error("Titular no encontrado");
+          const titularData = await resTitular.json();
+
+          const miembro = (titularData.grupoFamiliar || []).find(f => f.nroAfiliado === id);
+          if (!miembro) throw new Error("Miembro del grupo familiar no encontrado");
+
+          // asignamos historiaClinica del miembro
+          setPaciente(miembro);
+        } else {
+          // Si es el titular
+          setPaciente(data);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaciente();
+  }, [id]);
+
+  if (loading) return <p>Cargando...</p>;
+
+  if (error) return (
+    <div className="text-center mt-5">
+      <h2>Error: {error}</h2>
+      <button className="btn btn-dark mt-3" onClick={() => navigate(-1)}>
+        Volver atrás
+      </button>
+    </div>
+  );
 
   return (
     <div className="mt-4">
       <div className="d-flex align-items-center justify-content-start gap-3 mb-3" style={{ width: "100%", padding: "0 20px" }}>
         <BackButton
-          to="/afiliados/historia" 
+          to={`/afiliados/${paciente.nroAfiliado.includes('-') ? paciente.nroAfiliado.split('-')[0] : paciente.nroAfiliado}/grupo-familiar`}
           title="Volver al Grupo Familiar"
           style={{
             height: "50px",
@@ -73,19 +87,18 @@ export default function HistoriaClinica() {
 
       <div className="px-3">
         <h1 className="text-dark fw-bold">
-          Paciente: {paciente.nombre} {paciente.apellido}
+          Paciente: {paciente.nombre}
         </h1>
-        {paciente.situaciones.map((s, i) => (
-          <p key={i}><strong>Situación:</strong> {s}</p>
-        ))}
+        <p><strong>Situación:</strong> {paciente.situacionTerapeutica?.descripcion || "—"}</p>
       </div>
 
       <div className="px-3">
-        {paciente.notas.map((nota) => (
-          <Nota key={nota.id} nota={nota} />
-        ))}
+        {paciente.historiaClinica?.length > 0 ? (
+          paciente.historiaClinica.map((nota, i) => <Nota key={i} nota={nota} />)
+        ) : (
+          <p>No hay notas disponibles.</p>
+        )}
       </div>
     </div>
   );
 }
-

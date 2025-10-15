@@ -1,26 +1,33 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import BackButton from "../components/BackButton.jsx";
 
 export default function GrupoFamiliarHistoriaClinica() {
   const navigate = useNavigate();
+  const { id } = useParams(); // Captura el nroAfiliado desde la URL
+  const [grupoFamiliar, setGrupoFamiliar] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const GRUPO_FAMILIAR = [
-    {
-      id: "juan",
-      clasificacion: "Afiliado",
-      nombre: "Juan Perez",
-      situacion: "Discapacidad",
-      ultimoTurno: "02/09/2025",
-    },
-    {
-      id: "martina",
-      clasificacion: "Hijo/a",
-      nombre: "Martina Perez",
-      situacion: "Embarazo",
-      ultimoTurno: "01/09/2025",
-    },
-  ];
+  useEffect(() => {
+    const fetchGrupoFamiliar = async () => {
+      try {
+        const res = await fetch(`http://localhost:3001/afiliados/${id}/grupo-familiar`);
+        if (!res.ok) throw new Error("Error al cargar el grupo familiar");
+        const data = await res.json();
+        setGrupoFamiliar(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGrupoFamiliar();
+  }, [id]);
+
+  if (loading) return <p>Cargando...</p>;
+  if (error) return <p>Error: {error}</p>;
 
   return (
     <div className="mt-4">
@@ -98,24 +105,16 @@ export default function GrupoFamiliarHistoriaClinica() {
           </thead>
 
           <tbody>
-            {GRUPO_FAMILIAR.map((p, i) => (
+            {grupoFamiliar.map((p) => (
               <tr
-                key={i}
+                key={p.nroAfiliado}
                 style={{ borderBottom: "1px solid #ddd", cursor: "pointer" }}
-                onClick={() => navigate(`/afiliados/historia/${p.id}`)}
+                onClick={() => navigate(`/afiliados/historia/${p.nroAfiliado}`)}
               >
-                <td style={{ padding: "10px 15px" }}>
-                  {p.clasificacion}
-                </td>
-                <td style={{ padding: "10px 15px" }}>
-                  {p.nombre}
-                </td>
-                <td style={{ padding: "10px 15px" }}>
-                  {p.situacion}
-                </td>
-                <td style={{ padding: "10px 15px" }}>
-                  {p.ultimoTurno}
-                </td>
+                <td style={{ padding: "10px 15px" }}>{p.clasificacion}</td>
+                <td style={{ padding: "10px 15px" }}>{p.nombre}</td>
+                <td style={{ padding: "10px 15px" }}>{p.situacion}</td>
+                <td style={{ padding: "10px 15px" }}>{p.ultimoTurno}</td>
               </tr>
             ))}
           </tbody>

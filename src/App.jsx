@@ -31,16 +31,6 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-
-            {/* Afiliados */}
-            <Route path="/afiliados" element={<Afiliados />} />
-            <Route path="/afiliados/turnos" element={<Turnos />} />
-            <Route path="/afiliados/historia" element={<GrupoFamiliarHistoriaClinica />} />
-            <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
-            <Route path="/afiliados/situaciones" element={<Situaciones />} />
-
             {/* Solicitudes */}
             <Route path="/solicitudes" element={<Navigate to="/solicitudes/reintegros" replace />} />
             <Route path="/solicitudes/reintegros" element={<SolicitudesReintegros />} />
@@ -51,6 +41,18 @@ export default function App() {
 
             <Route path="/solicitudes/recetas" element={<SolicitudesRecetas />} />
             <Route path="/solicitudes/recetas/:id" element={<DetalleSolicitudRecetas />} /> 
+
+            {/* Dashboard */}
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+
+            {/* Afiliados */}
+            <Route path="/afiliados" element={<Afiliados />} />
+            <Route path="/afiliados/turnos" element={<Turnos />} />
+            <Route path="/afiliados/:id/grupo-familiar" element={<GrupoFamiliarHistoriaClinica />} />
+            <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
+            <Route path="/afiliados/situaciones" element={<Situaciones />} />
+
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
