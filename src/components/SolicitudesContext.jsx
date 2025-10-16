@@ -24,7 +24,7 @@ export const SolicitudesProvider = ({ children }) => {
           lugar: "Hospital Central",
           factura: { fecha: "30/08/2025", cuit: "20-12345678-9", total: 15000, persona: "Juan Pérez" },
           formaPago: { tipo: "Transferencia", cbu: "0123456789012345678901" },
-          observaciones: "Presentó toda la documentación correctamente."
+          observaciones: "Consulta por dolor en rodilla tras esguince, se solicita reintegro según cobertura del plan."
         },
         {
           tipo: "reintegro",
@@ -40,7 +40,7 @@ export const SolicitudesProvider = ({ children }) => {
           lugar: "Clínica Norte",
           factura: { fecha: "29/08/2025", cuit: "27-98765432-1", total: 8500, persona: "Ana López" },
           formaPago: { tipo: "Cheque" },
-          observaciones: "Falta comprobante de pago."
+          observaciones: "Radiografía de control en seguimiento de lesión ósea previa."
         },
         // AUTORIZACIONES
         {
