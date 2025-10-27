@@ -12,12 +12,15 @@ export default function Layout() {
   const [solOpen, setSolOpen] = useState(
     location.pathname.startsWith("/solicitudes")
   );
+
   useEffect(() => {
     if (location.pathname.startsWith("/solicitudes")) setSolOpen(true);
   }, [location.pathname]);
 
   const linkClass = ({ isActive }) =>
-    "nav-link px-2 py-2 rounded " + (isActive ? "active" : "text-light");
+    `nav-link d-flex justify-content-center align-items-center fs-5 px-2 py-2 rounded ${
+      isActive ? "fw-bold text-light" : "text-light"
+    }`;
 
   const onLogout = () => {
     logout();
@@ -33,42 +36,108 @@ export default function Layout() {
       <aside
         className="d-none d-md-block"
         style={{
-          width: 260,
+          width: 170,
           background: "var(--sidebar, #242424)",
-          marginTop: "60px",                // arranca debajo del header
-          height: "calc(100vh - 60px)",     // ocupa el resto de la pantalla
+          marginTop: "80px",               // altura del header
+          height: "calc(100vh - 80px)",
           position: "fixed",
           left: 0,
           top: 0,
           overflowY: "auto",
-          border: "none",                   // 🔹 elimina bordes blancos
+          border: "none",
+          borderTopRightRadius: "15px",    // esquina superior derecha redondeada
         }}
       >
-        <nav className="p-2 m-0">           {/* 🔹 quitamos margenes extras */}
-          <ul className="nav flex-column gap-1 m-0 p-0">
+        <nav className="p-0 m-0">
+          <ul className="nav flex-column gap-3 m-2 p-2">
+            {/* Dashboard */}
             <li className="nav-item">
               <NavLink to="/dashboard" className={linkClass}>
                 Dashboard
               </NavLink>
             </li>
 
-            <li className="nav-item">
-              <button
-                className="w-100 text-start nav-link px-2 py-2 rounded text-light"
-                style={{ background: "transparent", border: "none" }}
-                onClick={() => setSolOpen((v) => !v)}
-              >
-                Solicitudes {solOpen ? "▾" : "▸"}
-              </button>
-              {solOpen && (
-                <ul className="list-unstyled ms-3 mt-1 mb-2 d-flex flex-column gap-1">
-                  <li><NavLink to="/solicitudes/reintegros" className={linkClass}>Reintegros</NavLink></li>
-                  <li><NavLink to="/solicitudes/autorizaciones" className={linkClass}>Autorizaciones</NavLink></li>
-                  <li><NavLink to="/solicitudes/recetas" className={linkClass}>Recetas</NavLink></li>
-                </ul>
-              )}
+            {/* Línea tipo pill */}
+            <li>
+              <div
+                style={{
+                  height: "2px",
+                  width: "80%",
+                  margin: "0 auto",
+                  background: "#6c757d",
+                  borderRadius: "10px",
+                }}
+              />
             </li>
 
+            {/* Solicitudes */}
+            <li className="nav-item">
+              <div className="d-flex flex-column w-100">
+                <button
+                  className={`w-100 d-flex justify-content-center align-items-center fs-5 nav-link px-2 py-2 rounded text-light ${
+                    solOpen ? "fw-bold" : ""
+                  }`}
+                  style={{ background: "transparent", border: "none" }}
+                  onClick={() => setSolOpen((v) => !v)}
+                >
+                  Solicitudes
+                </button>
+
+                {/* Sublista animada */}
+                <div
+                  style={{
+                    maxHeight: solOpen ? "500px" : "0",
+                    overflow: "hidden",
+                    transition: "max-height 0.3s ease",
+                  }}
+                >
+                  <ul
+                    className="list-unstyled mt-1 mb-2 d-flex flex-column gap-1"
+                    style={{ paddingLeft: 0 }}
+                  >
+                    <li>
+                      <NavLink
+                        to="/solicitudes/reintegros"
+                        className={linkClass}
+                      >
+                        Reintegros
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/solicitudes/autorizaciones"
+                        className={linkClass}
+                      >
+                        Autorizaciones
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/solicitudes/recetas"
+                        className={linkClass}
+                      >
+                        Recetas
+                      </NavLink>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </li>
+
+            {/* Segunda línea tipo pill */}
+            <li>
+              <div
+                style={{
+                  height: "2px",
+                  width: "80%",
+                  margin: "0 auto",
+                  background: "#6c757d",
+                  borderRadius: "10px",
+                }}
+              />
+            </li>
+
+            {/* Afiliados */}
             <li className="nav-item">
               <NavLink to="/afiliados" className={linkClass}>
                 Afiliados
@@ -81,12 +150,15 @@ export default function Layout() {
       {/* Contenido principal */}
       <main
         style={{
-          marginTop: "60px",   // altura del header
-          marginLeft: "260px", // ancho del sidebar
-          minHeight: "calc(100vh - 60px)",
-           background: "#ffffff",
-           color: "#000000",
-           padding: "20px",
+          marginTop: "80px",   // altura del header
+          marginLeft: "170px", // ancho del sidebar
+          minHeight: "calc(100vh - 80px)",
+          background: "#ffffff",
+          color: "#242424",
+          padding: "20px",
+          borderTopLeftRadius: "40px", // esquina superior izquierda redondeada
+          borderTopRightRadius: "40px", // esquina superior derecha redondeada
+          overflow: "hidden",
         }}
       >
         <div className="p-3 m-0">

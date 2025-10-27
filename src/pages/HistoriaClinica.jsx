@@ -1,118 +1,103 @@
-// src/pages/HistoriaClinica.jsx
-import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import BackButton from "../components/BackButton.jsx";
+import Nota from "../components/Nota.jsx";
 
-const INIT = [
-  { id: 1, clas: "Afiliado", nombre: "Juan P.",    situacion: "Discapacidad", notas: ["02/09/2025 - Control traumatólogo"] },
-  { id: 2, clas: "Hijo/a",   nombre: "Martina P.", situacion: "Embarazo (4 meses)", notas: [] },
-  { id: 3, clas: "Esposo/a", nombre: "Paula S.",   situacion: "Migraña", notas: [] },
-];
+export default function HistoriaClinica() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [paciente, setPaciente] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-export default function HistoriaClinica(){
-  const { state } = useLocation(); // ej: { nro }
-  const [items, setItems] = useState(INIT);
-  const [sel, setSel] = useState(null);
-  const [texto, setTexto] = useState("");
-  const [msg, setMsg] = useState(null);
+  useEffect(() => {
+    const fetchPaciente = async () => {
+      try {
+        const res = await fetch(`http://localhost:3001/afiliados/${id}`);
+        if (!res.ok) throw new Error("Paciente no encontrado");
+        const data = await res.json();
 
-  const addNote = () => {
-    if (!sel || !texto.trim()) return;
-    setItems(prev =>
-      prev.map(r => r.id === sel.id ? { ...r, notas: [texto.trim(), ...(r.notas || [])] } : r)
-    );
-    setSel(prev => prev ? { ...prev, notas: [texto.trim(), ...(prev.notas || [])] } : prev);
-    setTexto("");
-    setMsg(`Nota añadida a ${sel.nombre}`);
-    setTimeout(()=> setMsg(null), 2500);
-  };
+        // Si es un miembro del grupo familiar, buscarlo dentro del grupo
+        if (id.includes("-")) {
+          const titularId = id.split("-")[0];
+          const resTitular = await fetch(`http://localhost:3001/afiliados/${titularId}`);
+          if (!resTitular.ok) throw new Error("Titular no encontrado");
+          const titularData = await resTitular.json();
 
-  const last = (r) => (r.notas && r.notas[0]) || "—";
+          const miembro = (titularData.grupoFamiliar || []).find(f => f.nroAfiliado === id);
+          if (!miembro) throw new Error("Miembro del grupo familiar no encontrado");
+
+          // asignamos historiaClinica del miembro
+          setPaciente(miembro);
+        } else {
+          // Si es el titular
+          setPaciente(data);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaciente();
+  }, [id]);
+
+  if (loading) return <p>Cargando...</p>;
+
+  if (error) return (
+    <div className="text-center mt-5">
+      <h2>Error: {error}</h2>
+      <button className="btn btn-dark mt-3" onClick={() => navigate(-1)}>
+        Volver atrás
+      </button>
+    </div>
+  );
 
   return (
-    <div className="row g-3">
-      {/* Header con volver */}
-      <div className="col-12 d-flex align-items-center gap-2">
-        <BackButton to="/afiliados" title="Volver a Afiliados" />
-        <h2 className="mb-0">Historia Clínica</h2>
-      </div>
-      {state?.nro && (
-        <div className="col-12 text-muted">Afiliado: {state.nro}</div>
-      )}
-
-      {/* Lista */}
-      <div className="col-12">
-        <div className="card">
-          <div className="table-responsive">
-            <table className="table table-dark align-middle mb-0 table-hover">
-              <thead>
-                <tr>
-                  <th>Clasificación</th>
-                  <th>Nombre</th>
-                  <th>Situación</th>
-                  <th>Última nota</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map(r => (
-                  <tr
-                    key={r.id}
-                    onClick={() => setSel(r)}
-                    style={{cursor:"pointer"}}
-                    className={sel?.id === r.id ? "table-active" : ""}
-                  >
-                    <td>{r.clas}</td>
-                    <td>{r.nombre}</td>
-                    <td>{r.situacion}</td>
-                    <td>{last(r)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <div className="mt-4">
+      <div className="d-flex align-items-center justify-content-start gap-3 mb-3" style={{ width: "100%", padding: "0 20px" }}>
+        <BackButton
+          to={`/afiliados/${paciente.nroAfiliado.includes('-') ? paciente.nroAfiliado.split('-')[0] : paciente.nroAfiliado}/grupo-familiar`}
+          title="Volver al Grupo Familiar"
+          style={{
+            height: "50px",
+            lineHeight: "50px",
+            minWidth: "120px",
+            borderRadius: "50px",
+            fontWeight: "bold",
+          }}
+        />
+        <h2
+          className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
+          style={{
+            background: "#242424",
+            display: "block",
+            width: "90%",
+            textAlign: "center",
+            margin: "0 auto",
+            lineHeight: "50px",
+          }}
+        >
+          HISTORIA CLÍNICA
+        </h2>
       </div>
 
-      {/* Editor de nota */}
-      <div className="col-12">
-        <div className="card p-3">
-          <div className="d-flex justify-content-between align-items-center">
-            <div className="text-muted">
-              {sel ? `Añadir nota a ${sel.nombre}` : "Seleccioná una fila para añadir nota"}
-            </div>
-            {msg && <div className="alert alert-info py-1 px-2 mb-0">{msg}</div>}
-          </div>
+      <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
 
-          <textarea
-            className="form-control mt-2"
-            rows={3}
-            placeholder={sel ? `Nota para ${sel.nombre}…` : "Seleccioná una fila arriba…"}
-            value={texto}
-            onChange={e=>setTexto(e.target.value)}
-            disabled={!sel}
-            onKeyDown={(e) => {
-              if (e.ctrlKey && e.key === "Enter") addNote();
-            }}
-          />
+      <div className="px-3">
+        <h1 className="text-dark fw-bold">
+          Paciente: {paciente.nombre}
+        </h1>
+        <p><strong>Situación:</strong> {paciente.situacionTerapeutica?.descripcion || "—"}</p>
+      </div>
 
-          <div className="mt-2 d-flex gap-2">
-            <button
-              className="btn btn-brand"
-              onClick={addNote}
-              disabled={!sel || !texto.trim()}
-              title="Guardar (Ctrl+Enter)"
-            >
-              Guardar nota
-            </button>
-            <button
-              className="btn btn-outline-light"
-              onClick={() => setTexto("")}
-              disabled={!texto}
-            >
-              Limpiar
-            </button>
-          </div>
-        </div>
+      <div className="px-3">
+        {paciente.historiaClinica?.length > 0 ? (
+          paciente.historiaClinica.map((nota, i) => <Nota key={i} nota={nota} />)
+        ) : (
+          <p>No hay notas disponibles.</p>
+        )}
       </div>
     </div>
   );

@@ -1,36 +1,41 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const nav = useNavigate();
-  const loc = useLocation();
-  const { login } = useAuth();
   const [user, setUser] = useState("");
+  const [err, setErr] = useState("");
+  const navigate = useNavigate();
 
-  const submit = (e) => {
+  const onSubmit = (e) => {
     e.preventDefault();
-    login(user); // guarda sesión
-    const go = loc.state?.from || "/dashboard";
-    nav(go, { replace: true });
+    const u = user.trim();
+    if (!u) {
+      setErr("Ingresá un nombre de usuario.");
+      return;
+    }
+    // guardamos sesión simple
+    localStorage.setItem("auth_user", JSON.stringify({ username: u }));
+    // navegamos al dashboard
+    navigate("/dashboard", { replace: true });
   };
 
   return (
-    <div className="container py-5" style={{ maxWidth: 520 }}>
-      <div className="card p-4">
-        <h1 className="h4 mb-3 text-center">Iniciar sesión</h1>
-        <form onSubmit={submit}>
-          <div className="mb-3">
-            <label className="form-label">Nombre de usuario</label>
-            <input
-              className="form-control"
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
-              placeholder="ej. jprestes"
-              required
-            />
-          </div>
-          <button className="btn btn-brand w-100">Entrar</button>
+    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh" }}>
+      <div className="card p-4" style={{ width: 520 }}>
+        <h3 className="mb-3">Iniciar sesión</h3>
+        {err && <div className="alert alert-warning py-2">{err}</div>}
+
+        <form onSubmit={onSubmit}>
+          <label className="form-label">Nombre de usuario</label>
+          <input
+            className="form-control mb-3"
+            placeholder="ej. j.prestes"
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+          />
+          <button type="submit" className="btn btn-brand w-100">
+            Entrar
+          </button>
         </form>
       </div>
     </div>

@@ -49,3 +49,9 @@ npm install
 npm run dev
 4. Abrir en el navegador:
 http://localhost:5173
+
+---
+
+## Importante
+
+A la hora de iniciar la aplicacion tener en cuenta que esta conectada con el backend del repositorio backend2
