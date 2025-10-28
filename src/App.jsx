@@ -58,7 +58,7 @@ export default function App() {
           <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
           <Route path="/afiliados/situaciones" element={<Situaciones />} />
 
-          {/* ✅ Mensajería */}
+          {/*  Mensajería */}
           <Route path="/mensajes" element={<Messages />} />
         </Route>
 
