@@ -149,7 +149,7 @@ export default function BusquedaAfiliado() {
                 backgroundColor: "white",
                 boxShadow: "3px 3px 0px rgba(0,0,0,0.4)",
               }}
-              onClick={() => navigate("/afiliados/turnos", { state: { nro: resultado.nroAfiliado } }) }
+              onClick={() => navigate("/turnos", { state: { nro: resultado.nroAfiliado } }) }
             >
               Turnos
             </button>
