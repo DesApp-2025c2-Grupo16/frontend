@@ -14,50 +14,57 @@ import SolicitudesAutorizaciones from "./pages/SolicitudesAutorizaciones.jsx";
 import DetalleSolicitudAutorizacion from "./pages/DetalleSolicitudAutorizacion.jsx";
 import SolicitudesRecetas from "./pages/SolicitudesRecetas.jsx";
 import DetalleSolicitudRecetas from "./pages/DetalleSolicitudRecetas.jsx";
-import { AuthProvider } from "./auth/AuthContext.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import { SolicitudesProvider } from "./components/SolicitudesContext.jsx";
+import Messages from "./pages/Messages.jsx";
 
 export default function App() {
   return (
-    <AuthProvider>
-      <SolicitudesProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+    <SolicitudesProvider>
+      <Routes>
+        {/* público */}
+        <Route path="/login" element={<Login />} />
+
+        {/* privado */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          {/* Redirección por defecto */}
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<ProtectedRoute> <Dashboard /> </ProtectedRoute>} />
+
+          {/* Solicitudes */}
           <Route
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            {/* Solicitudes */}
-            <Route path="/solicitudes" element={<Navigate to="/solicitudes/reintegros" replace />} />
-            <Route path="/solicitudes/reintegros" element={<SolicitudesReintegros />} />
-            <Route path="/solicitudes/reintegros/:id" element={<DetalleSolicitudReintegros />} />
+            path="/solicitudes"
+            element={<Navigate to="/solicitudes/reintegros" replace />}
+          />
+          <Route path="/solicitudes/reintegros" element={<SolicitudesReintegros />} />
+          <Route path="/solicitudes/reintegros/:id" element={<DetalleSolicitudReintegros />} />
 
-            <Route path="/solicitudes/autorizaciones" element={<SolicitudesAutorizaciones />} />
-            <Route path="/solicitudes/autorizaciones/:id" element={<DetalleSolicitudAutorizacion />} /> 
+          <Route path="/solicitudes/autorizaciones" element={<SolicitudesAutorizaciones />} />
+          <Route path="/solicitudes/autorizaciones/:id" element={<DetalleSolicitudAutorizacion />} />
 
-            <Route path="/solicitudes/recetas" element={<SolicitudesRecetas />} />
-            <Route path="/solicitudes/recetas/:id" element={<DetalleSolicitudRecetas />} /> 
+          <Route path="/solicitudes/recetas" element={<SolicitudesRecetas />} />
+          <Route path="/solicitudes/recetas/:id" element={<DetalleSolicitudRecetas />} />
 
-            {/* Dashboard */}
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+          {/* Afiliados */}
+          <Route path="/afiliados" element={<Afiliados />} />
+          <Route path="/afiliados/turnos" element={<Turnos />} />
+          <Route path="/afiliados/:id/grupo-familiar" element={<GrupoFamiliarHistoriaClinica />} />
+          <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
+          <Route path="/afiliados/situaciones" element={<Situaciones />} />
 
-            {/* Afiliados */}
-            <Route path="/afiliados" element={<Afiliados />} />
-            <Route path="/afiliados/turnos" element={<Turnos />} />
-            <Route path="/afiliados/:id/grupo-familiar" element={<GrupoFamiliarHistoriaClinica />} />
-            <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
-            <Route path="/afiliados/situaciones" element={<Situaciones />} />
+          {/*  Mensajería */}
+          <Route path="/mensajes" element={<Messages />} />
+        </Route>
 
-          </Route>
-
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </SolicitudesProvider>
-    </AuthProvider>
+        {/* fallback */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </SolicitudesProvider>
   );
 }
