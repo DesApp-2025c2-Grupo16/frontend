@@ -143,6 +143,26 @@ export default function Layout() {
                 Afiliados
               </NavLink>
             </li>
+            
+            {/* Tercera línea tipo pill */}
+            <li>
+              <div
+                style={{
+                  height: "2px",
+                  width: "80%",
+                  margin: "0 auto",
+                  background: "#6c757d",
+                  borderRadius: "10px",
+                }}
+              />
+            </li>
+
+            {/* Turnos */}
+            <li className="nav-item">
+              <NavLink to="/turnos" className={linkClass}>
+                Turnos
+              </NavLink>
+            </li>
           </ul>
         </nav>
       </aside>

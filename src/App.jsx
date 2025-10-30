@@ -18,6 +18,7 @@ import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import { SolicitudesProvider } from "./components/SolicitudesContext.jsx";
 import Messages from "./pages/Messages.jsx";
 
+
 export default function App() {
   return (
     <SolicitudesProvider>
@@ -54,6 +55,7 @@ export default function App() {
           {/* Afiliados */}
           <Route path="/afiliados" element={<Afiliados />} />
           <Route path="/afiliados/turnos" element={<Turnos />} />
+          <Route path="/turnos" element={<Turnos />} />
           <Route path="/afiliados/:id/grupo-familiar" element={<GrupoFamiliarHistoriaClinica />} />
           <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
           <Route path="/afiliados/situaciones" element={<Situaciones />} />
