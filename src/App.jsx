@@ -56,12 +56,18 @@ export default function App() {
           <Route path="/afiliados" element={<Afiliados />} />
           <Route path="/afiliados/turnos" element={<Turnos />} />
           <Route path="/turnos" element={<Turnos />} />
-          <Route path="/afiliados/:id/grupo-familiar" element={<GrupoFamiliarHistoriaClinica />} />
+          {/* <Route path="/afiliados/:id/grupo-familiar" element={<GrupoFamiliarHistoriaClinica />} />
           <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
-          <Route path="/afiliados/situaciones" element={<Situaciones />} />
+          <Route path="/afiliados/situaciones" element={<Situaciones />} /> */}
 
           {/*  Mensajería */}
           <Route path="/mensajes" element={<Messages />} />
+
+          {/* Historia Clinica */}
+          <Route path="/historia-clinica/:id" element={<HistoriaClinica />} />
+
+          {/* Situacion terapeutica */}
+          <Route path="/situaciones/:id" element={<Situaciones />} />
         </Route>
 
         {/* fallback */}
