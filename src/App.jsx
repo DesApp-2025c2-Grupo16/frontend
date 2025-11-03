@@ -14,16 +14,30 @@ import SolicitudesAutorizaciones from "./pages/SolicitudesAutorizaciones.jsx";
 import DetalleSolicitudAutorizacion from "./pages/DetalleSolicitudAutorizacion.jsx";
 import SolicitudesRecetas from "./pages/SolicitudesRecetas.jsx";
 import DetalleSolicitudRecetas from "./pages/DetalleSolicitudRecetas.jsx";
-import { AuthProvider } from "./auth/AuthContext.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import { SolicitudesProvider } from "./components/SolicitudesContext.jsx";
+import Messages from "./pages/Messages.jsx";
 
 export default function App() {
   return (
-    <AuthProvider>
-      <SolicitudesProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+    <SolicitudesProvider>
+      <Routes>
+        {/* público */}
+        <Route path="/login" element={<Login />} />
+
+        {/* privado */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          {/* Redirección por defecto */}
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<ProtectedRoute> <Dashboard /> </ProtectedRoute>} />
+
+          {/* Solicitudes */}
           <Route
             element={
               <ProtectedRoute>
