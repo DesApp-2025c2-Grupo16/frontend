@@ -143,7 +143,7 @@ export default function Layout() {
                 Afiliados
               </NavLink>
             </li>
-
+            
             {/* Tercera línea tipo pill */}
             <li>
               <div

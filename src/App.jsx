@@ -18,6 +18,7 @@ import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import { SolicitudesProvider } from "./components/SolicitudesContext.jsx";
 import Messages from "./pages/Messages.jsx";
 
+
 export default function App() {
   return (
     <SolicitudesProvider>
@@ -56,16 +57,20 @@ export default function App() {
             <Route path="/solicitudes/recetas" element={<SolicitudesRecetas />} />
             <Route path="/solicitudes/recetas/:id" element={<DetalleSolicitudRecetas />} /> 
 
-            {/* Dashboard */}
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+          {/* Afiliados */}
+          <Route path="/afiliados" element={<Afiliados />} />
+          <Route path="/afiliados/turnos" element={<Turnos />} />
+          <Route path="/turnos" element={<Turnos />} />
+            
+          {/*  Mensajería */}
+          <Route path="/mensajes" element={<Messages />} />
 
-            {/* Afiliados */}
-            <Route path="/afiliados" element={<Afiliados />} />
-            <Route path="/afiliados/turnos" element={<Turnos />} />
-            <Route path="/afiliados/:id/grupo-familiar" element={<GrupoFamiliarHistoriaClinica />} />
-            <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
-            <Route path="/afiliados/situaciones" element={<Situaciones />} />
+          {/* Historia Clinica */}
+          <Route path="/historia-clinica/:id" element={<HistoriaClinica />} />
+
+          {/* Situacion terapeutica */}
+          <Route path="/situaciones/:id" element={<Situaciones />} />
+        </Route>
 
             {/* */}
             <Route path="/turnos" element={<Turnos />} />

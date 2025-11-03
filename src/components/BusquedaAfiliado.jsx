@@ -1,64 +1,85 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Modal, Button } from "react-bootstrap";
 
 export default function BusquedaAfiliado() {
   const [q, setQ] = useState("");
-  const [resultado, setResultado] = useState(null);
+  const [grupoFamiliar, setGrupoFamiliar] = useState([]);
+  const [situaciones, setSituaciones] = useState([]);
   const [error, setError] = useState("");
+  const [filtro, setFiltro] = useState("");
   const navigate = useNavigate();
 
+  // Buscar grupo familiar por número
   const buscar = async (e) => {
     e.preventDefault();
     setError("");
-    setResultado(null);
+    setGrupoFamiliar([]);
+    setSituaciones([]);
 
-    const nroAfiliado = q.trim();
-    if (!nroAfiliado) return;
+    const grupoNumero = q.trim();
+    if (!grupoNumero) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/afiliados/${nroAfiliado}`);
-      if (!res.ok) throw new Error("Afiliado no encontrado");
-      const data = await res.json();
+      // Buscar directamente el grupo familiar
+      const grupoRes = await fetch(
+        `http://localhost:3001/afiliados/grupo-familiar/${grupoNumero}`
+      );
+      if (!grupoRes.ok) throw new Error("Grupo familiar no encontrado");
 
-      setResultado({
-        clasificacion: "Afiliado",
-        nroAfiliado: data.nroAfiliado,
-        nombre: data.nombre,
-        dni: data.dni,
-        situacion: data.situacionTerapeutica.descripcion,
-      });
+      const grupo = await grupoRes.json();
+      setGrupoFamiliar(grupo);
+
+      // Buscar situaciones asociadas al grupo
+      const sitRes = await fetch(
+        `http://localhost:3001/situaciones/grupoFamiliar/${grupoNumero}`
+      );
+      if (!sitRes.ok) throw new Error("No se pudieron cargar las situaciones");
+
+      const sit = await sitRes.json();
+      setSituaciones(sit);
     } catch (err) {
       console.error(err);
-      setError("Afiliado no encontrado");
+      setError("No se encontró el grupo familiar");
     }
   };
 
+
+
+  // Filtro de texto
+  const grupoFiltrado = grupoFamiliar.filter((miembro) => {
+    const texto = filtro.toLowerCase();
+
+    const nroAfiliado = `${miembro.numeroIntegrate}`;
+    const coincideNombre = miembro.nombre?.toLowerCase().includes(texto);
+    const coincideApellido = miembro.apellido?.toLowerCase().includes(texto);
+    const coincideNumero = nroAfiliado.toLowerCase().includes(texto);
+
+    return coincideNombre || coincideApellido || coincideNumero;
+  });
+
+
   return (
-    <div className="mt-4 text-center">
+    <div className="mt-4 text-center" style={{ fontFamily: "sans-serif" }}>
       <h2
-        className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
+        className="fw-bold py-3 mx-auto rounded-pill"
         style={{
-          background: "#242424",
-          display: "block",
+          background: "#1e1e1e",
+          color: "white",
           width: "90%",
           textAlign: "center",
-          margin: "0 auto",
-          lineHeight: "50px",
         }}
       >
         BÚSQUEDA DE AFILIADO
       </h2>
+      <hr className="border-dark border-5 rounded-pill mt-4" />
 
-      <hr
-        className="border-dark border-5 rounded-pill mt-4 mx-auto"
-        style={{ width: "90%" }}
-      />
-
+      {/* BUSCADOR */}
       <form
         onSubmit={buscar}
         className="d-flex justify-content-center align-items-center mt-4"
         style={{
-          border: "3px solid #242424",
+          border: "3px solid #1e1e1e",
           borderRadius: "50px",
           padding: "5px 10px",
           width: "500px",
@@ -69,7 +90,7 @@ export default function BusquedaAfiliado() {
         <input
           type="text"
           className="form-control"
-          placeholder="Nro. Afiliado"
+          placeholder="N° Grupo Familiar"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           style={{
@@ -79,94 +100,123 @@ export default function BusquedaAfiliado() {
             color: "white",
           }}
         />
-        <button
-          type="submit"
-          className="btn btn-dark"
-          style={{ borderRadius: "50px" }}
-        >
+        <button type="submit" className="btn btn-dark" style={{ borderRadius: "50px" }}>
           BUSCAR
         </button>
       </form>
 
       {error && <p className="text-danger mt-3">{error}</p>}
 
-      {resultado && (
-        <div className="mt-5 d-flex flex-column align-items-center">
-          <div
-            style={{
-              borderRadius: "20px",
-              overflow: "hidden",
-              width: "90%",
-              boxShadow: "0px 4px 6px rgba(0,0,0,0.2)",
-              border: "20px solid #242424",
-              margin: "auto",
-              backgroundColor: "white",
-            }}
-          >
-            <table
+      {/* TABLA DE RESULTADOS */}
+      {grupoFamiliar.length > 0 && (
+        <div
+          className="mt-5 mx-auto p-4"
+          style={{
+            background: "#1e1e1e",
+            color: "white",
+            borderRadius: "15px",
+            width: "90%",
+          }}
+        >
+          {/* Campo de filtro y encabezado */}
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <input
+              type="text"
+              placeholder="Buscar por nombre, apellido o N° afiliado"
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
               style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                borderSpacing: 0,
-                tableLayout: "fixed",
+                borderRadius: "8px",
+                border: "none",
+                padding: "5px 10px",
+                width: "60%",
               }}
-            >
-              <thead style={{ backgroundColor: "#242424", color: "white" }}>
-                <tr>
-                  <th style={{ padding: "12px 15px", textAlign: "center" }}>Clasificación</th>
-                  <th style={{ padding: "12px 15px", textAlign: "center" }}>Nro Afiliado</th>
-                  <th style={{ padding: "12px 15px", textAlign: "center" }}>Nombre</th>
-                  <th style={{ padding: "12px 15px", textAlign: "center" }}>DNI</th>
-                  <th style={{ padding: "12px 15px", textAlign: "center" }}>Situación</th>
-                </tr>
-              </thead>
-              <tbody
-                style={{
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-                onClick={() => navigate("/afiliados/situaciones", { state: { nroAfiliado: resultado.nroAfiliado } })}
-              >
-                <tr>
-                  <td style={{ padding: "10px 15px" }}>{resultado.clasificacion}</td>
-                  <td style={{ padding: "10px 15px" }}>{resultado.nroAfiliado}</td>
-                  <td style={{ padding: "10px 15px" }}>{resultado.nombre}</td>
-                  <td style={{ padding: "10px 15px" }}>{resultado.dni}</td>
-                  <td style={{ padding: "10px 15px" }}>{resultado.situacion}</td>
-                </tr>
-              </tbody>
-            </table>
+            />
+            <h6 className="mb-0 text-light">
+              Grupo Familiar N°{" "}
+              <span className="fw-bold">
+                {grupoFamiliar[0]?.numeroGrupoFamiliar}
+              </span>{" "}
+              — {grupoFiltrado.length} integrante(s)
+            </h6>
           </div>
 
-          <div className="mt-5 d-flex gap-3">
-            <button
-              style={{
-                border: "2px solid black",
-                borderRadius: "12px",
-                padding: "10px 25px",
-                fontWeight: "bold",
-                textTransform: "uppercase",
-                backgroundColor: "white",
-                boxShadow: "3px 3px 0px rgba(0,0,0,0.4)",
-              }}
-              onClick={() => navigate("/turnos", { state: { nro: resultado.nroAfiliado } }) }
+          {/* LISTADO */}
+          <div className="table-responsive">
+            <table
+              className="table align-middle mb-0 text-center"
+              style={{ background: "white", color: "black", tableLayout: "fixed", width: "100%" }}
             >
-              Turnos
-            </button>
-            <button
-              style={{
-                border: "2px solid black",
-                borderRadius: "12px",
-                padding: "10px 25px",
-                fontWeight: "bold",
-                textTransform: "uppercase",
-                backgroundColor: "white",
-                boxShadow: "3px 3px 0px rgba(0,0,0,0.4)",
-              }}
-              onClick={() => navigate(`/afiliados/${resultado.nroAfiliado}/grupo-familiar`)}
-            >
-              Historia Clínica
-            </button>
+              <thead style={{ background: "#242424", color: "white" }}>
+                <tr>
+                  <th style={{ width: "12%" }}>N° Afiliado</th>
+                  <th style={{ width: "21%" }}>Clasificación</th>
+                  <th style={{ width: "21%" }}>Nombre</th>
+                  <th style={{ width: "21%" }}>Apellido</th>
+                  <th style={{ width: "25%" }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grupoFiltrado.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center text-muted py-3">
+                      No hay integrantes para mostrar
+                    </td>
+                  </tr>
+                ) : (
+                  grupoFiltrado.map((miembro) => (
+                    <tr key={miembro.id}>
+                      <td>
+                        {miembro.numeroGrupoFamiliar}-{miembro.numeroIntegrate}
+                      </td>
+                      <td>{miembro.parentesco}</td>
+                      <td>{miembro.nombre}</td>
+                      <td>{miembro.apellido}</td>
+                      <td>
+                        <div
+                          className="d-flex justify-content-center align-items-center"
+                          style={{ gap: "10px", whiteSpace: "nowrap" }}
+                        >
+                          {/* Historia Clínica */}
+                          <button
+                            className="btn btn-sm fw-semibold"
+                            style={{
+                              backgroundColor: "#f5a623",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "6px",
+                              padding: "5px 10px",
+                              minWidth: "120px",
+                              boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                            }}
+                            onClick={() => navigate(`/historia-clinica/${miembro.id}`)}
+                          >
+                            Historia Clínica
+                          </button>
+
+                          {/* Situaciones Terapéuticas */}
+                          <button
+                            className="btn btn-sm fw-semibold"
+                            style={{
+                              backgroundColor: "#007b83",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "6px",
+                              padding: "5px 10px",
+                              minWidth: "150px",
+                              boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                            }}
+                            onClick={() => navigate(`/situaciones/${miembro.id}`)}
+                          >
+                            Situaciones terapéuticas
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

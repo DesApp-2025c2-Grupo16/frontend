@@ -1,173 +1,475 @@
-import { useMemo, useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import BackButton from "../components/BackButton.jsx";
-
-const clasificaciones = ["Afiliado", "Hijo/a", "Esposo/a", "Otros"];
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Modal, Button, Form } from "react-bootstrap";
 
 export default function Situaciones() {
-  const { state } = useLocation();
-  const [rows, setRows] = useState([]);
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [afiliado, setAfiliado] = useState(null);
+  const [situaciones, setSituaciones] = useState([]);
   const [filtro, setFiltro] = useState("");
-  const [editing, setEditing] = useState(null);
-  const [temp, setTemp] = useState({});
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showEditar, setShowEditar] = useState(false);
+  const [soloActivas, setSoloActivas] = useState(false);
 
-  const nroAfiliado = state?.nroAfiliado; // viene desde la búsqueda del afiliado
 
-  // Cargar afiliado y grupo familiar desde backend
+  const [nuevaSituacion, setNuevaSituacion] = useState({
+    descripcion: "",
+    fechaInicio: "",
+    fechaFin: "",
+  });
+
+  const [situacionEditar, setSituacionEditar] = useState(null);
+
+  // Cargar afiliado y situaciones
   useEffect(() => {
-    if (!nroAfiliado) return;
-
-    const fetchAfiliado = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/afiliados/${nroAfiliado}`);
-        const data = await res.json();
-        // Construir rows: cada integrante del grupo familiar con sus situaciones
-        const todasSituaciones = [
-          {
-            id: `${data.nroAfiliado}-0`,
-            clasificacion: "Afiliado",
-            nombre: data.nombre,
-            situacion: data.situacionTerapeutica?.descripcion || "-",
-            desde: data.situacionTerapeutica?.fechaInicio || "-",
-            hasta: data.situacionTerapeutica?.fechaFin || "Indefinido",
-          },
-          ...data.grupoFamiliar.map((f, i) => ({
-            id: `${data.nroAfiliado}-${i + 1}`,
-            clasificacion: f.clasificacion,
-            nombre: f.nombre,
-            situacion: f.situacionTerapeutica?.descripcion || "-",
-            desde: f.situacionTerapeutica?.fechaInicio || "-",
-            hasta: f.situacionTerapeutica?.fechaFin || "Indefinido",
-          }))
-        ];
-        setRows(todasSituaciones);
+        const resAfi = await fetch(`http://localhost:3001/afiliados/${id}`);
+        if (!resAfi.ok) throw new Error("Afiliado no encontrado");
+        const dataAfi = await resAfi.json();
+        setAfiliado(dataAfi);
+
+        const resSit = await fetch(`http://localhost:3001/situaciones/${id}`);
+        if (resSit.status === 404) {
+          // 🔹 No hay situaciones registradas para este afiliado
+          setSituaciones([]);
+        } else if (!resSit.ok) {
+          // 🔹 Otro error real (500, etc.)
+          throw new Error("No se pudieron cargar las situaciones");
+        } else {
+          const dataSit = await resSit.json();
+          setSituaciones(Array.isArray(dataSit) ? dataSit : []);
+        }
       } catch (err) {
         console.error(err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
+    fetchData();
+  }, [id]);
 
-    fetchAfiliado();
-  }, [nroAfiliado]);
+  const filtradas = situaciones
+    // 🔹 Ordenar por fechaInicio (más nueva primero)
+    .sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio))
+    // 🔹 Luego filtrar por descripción y estado
+    .filter((s) => {
+      const texto = filtro.toLowerCase();
+      const coincideDescripcion = s.descripcion?.toLowerCase().includes(texto);
 
-  const filtradas = useMemo(() => {
-    if (!filtro.trim()) return rows;
-    const q = filtro.toLowerCase();
-    return rows.filter(r =>
-      r.nombre.toLowerCase().includes(q) ||
-      r.situacion.toLowerCase().includes(q) ||
-      r.clasificacion.toLowerCase().includes(q)
-    );
-  }, [rows, filtro]);
+      if (!soloActivas) return coincideDescripcion;
 
-  const startNew = () => {
-    setEditing("new");
-    setTemp({ id: Date.now(), clasificacion: "Afiliado", nombre: "", situacion: "", desde: "", hasta: "" });
-  };
-  const startEdit = (r) => { setEditing(r.id); setTemp({ ...r }); };
-  const cancel = () => { setEditing(null); setTemp({}); };
-  const save = () => {
-    if (!temp.nombre.trim()) { alert("El campo 'Nombre' es obligatorio."); return; }
-    if (!temp.situacion.trim()) { alert("El campo 'Situación' es obligatorio."); return; }
+      const hoy = new Date();
+      const fin = s.fechaFin ? new Date(s.fechaFin) : null;
+      const esActiva = !fin || fin >= hoy;
+      return coincideDescripcion && esActiva;
+    });
 
-    if (editing === "new") {
-      setRows(prev => [temp, ...prev]);
-    } else {
-      setRows(prev => prev.map(r => r.id === editing ? temp : r));
+
+  // Crear nueva situación
+  const handleCrearSituacion = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("http://localhost:3001/situaciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          descripcion: nuevaSituacion.descripcion,
+          fechaInicio: nuevaSituacion.fechaInicio,
+          fechaFin: nuevaSituacion.fechaFin || null,
+          AfiliadoId: id,
+        }),
+      });
+      if (!res.ok) throw new Error("Error al crear la situación");
+      const data = await res.json();
+      setSituaciones([...situaciones, data]);
+      setShowModal(false);
+      setNuevaSituacion({ descripcion: "", fechaInicio: "", fechaFin: "" });
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo crear la situación");
     }
-    cancel();
   };
-  const eliminar = (id) => { setRows(prev => prev.filter(r => r.id !== id)); };
+  // 🔹 Formatear fecha a dd-mm-aaaa
+  const formatearFecha = (fecha) => {
+    if (!fecha) return "—";
+    const d = new Date(fecha);
+    const dia = String(d.getDate()).padStart(2, "0");
+    const mes = String(d.getMonth() + 1).padStart(2, "0");
+    const anio = d.getFullYear();
+    return `${dia}-${mes}-${anio}`;
+  };
+  // Editar situación
+  const abrirEditar = (sit) => {
+    setSituacionEditar(sit);
+    setShowEditar(true);
+  };
 
-  if (loading) return <p className="text-center mt-5">Cargando...</p>;
+  const handleGuardarEdicion = async (e) => {
+    e.preventDefault();
+      const inicio = new Date(situacionEditar.fechaInicio);
+      const fin = situacionEditar.fechaFin ? new Date(situacionEditar.fechaFin) : null;
+
+      if (fin && fin < inicio) {
+        alert("La fecha fin no puede ser anterior a la fecha de inicio.");
+        return;
+      }
+    try {
+      const res = await fetch(
+        `http://localhost:3001/situaciones/${situacionEditar.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            descripcion: situacionEditar.descripcion,
+            fechaInicio: situacionEditar.fechaInicio,
+            fechaFin: situacionEditar.fechaFin,
+          }),
+        }
+      );
+      if (!res.ok) throw new Error("Error al actualizar la situación");
+      const data = await res.json();
+
+      setSituaciones(
+        situaciones.map((s) => (s.id === data.id ? data : s))
+      );
+      setShowEditar(false);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo actualizar la situación");
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="text-center mt-5 text-secondary">
+        <h4>Cargando situaciones...</h4>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="text-center mt-5 text-danger">
+        <h3>Error: {error}</h3>
+        <button className="btn btn-dark mt-3" onClick={() => navigate(-1)}>
+          Volver atrás
+        </button>
+      </div>
+    );
 
   return (
-    <div className="mt-4">
-      <div className="d-flex align-items-center gap-3 mb-3 px-3">
-        <BackButton to="/afiliados" title="Volver a Afiliados" style={{ height:"50px", lineHeight:"50px", minWidth:"120px", borderRadius:"50px", fontWeight:"bold" }} />
-        <h2 className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
-            style={{ background:"#242424", display:"block", width:"90%", textAlign:"center", margin:"0 auto", lineHeight:"50px" }}>
-          SITUACIÓN TERAPÉUTICA
-        </h2>
-      </div>
+    <div className="mt-4 text-center" style={{ fontFamily: "sans-serif" }}>
+      <h2
+        className="fw-bold py-3 mx-auto rounded-pill"
+        style={{
+          background: "#1e1e1e",
+          color: "white",
+          width: "90%",
+          textAlign: "center",
+        }}
+      >
+        SITUACIONES TERAPÉUTICAS
+      </h2>
 
-      <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width:"90%" }} />
+      <hr
+        className="border-dark border-5 rounded-pill mt-4 mx-auto"
+        style={{ width: "90%" }}
+      />
 
-      <div style={{ borderRadius:"20px", border:"3px solid #242424", padding:"15px", background:"#242424", color:"white", margin:"0 20px 20px 20px" }}>
-        <div className="d-flex flex-wrap gap-2 mb-3">
-          <input className="form-control" placeholder="Buscar por clasificación, nombre o situación" value={filtro} onChange={(e)=>setFiltro(e.target.value)} style={{ maxWidth:420, background:"white", color:"black" }} />
-          <button className="btn btn-success" onClick={startNew}>Agregar situación</button>
+      {/* Datos del paciente */}
+      <div
+        className="mx-auto mt-4 p-4 rounded shadow-lg"
+        style={{
+          width: "85%",
+          background: "#ffffff",
+          color: "#222",
+          borderLeft: "6px solid #1e1e1e",
+          textAlign: "left",
+        }}
+      >
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h3 className="fw-bold mb-0" style={{ color: "#1e1e1e" }}>
+            {afiliado.nombre} {afiliado.apellido}
+          </h3>
+          <span
+            className="badge bg-dark fs-6"
+            style={{ borderRadius: "8px", padding: "6px 12px" }}
+          >
+            {afiliado.parentesco || "Titular"}
+          </span>
         </div>
 
-        {/* fila de alta/edición */}
-        {editing && (
-          <div className="border rounded p-3 mb-3" style={{ background:"white", color:"black" }}>
-            <div className="row g-2">
-              <div className="col-12 col-md-2">
-                <label className="form-label">Clasificación</label>
-                <select className="form-select" value={temp.clasificacion} style={{ background:"white", color:"black" }} onChange={(e)=>setTemp({...temp, clasificacion:e.target.value})}>
-                  {clasificaciones.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="col-12 col-md-3">
-                <label className="form-label">Nombre</label>
-                <input className="form-control" value={temp.nombre} style={{ background:"white", color:"black" }} onChange={(e)=>setTemp({...temp, nombre:e.target.value})}/>
-              </div>
-              <div className="col-12 col-md-4">
-                <label className="form-label">Situación</label>
-                <input className="form-control" value={temp.situacion} style={{ background:"white", color:"black" }} onChange={(e)=>setTemp({...temp, situacion:e.target.value})}/>
-              </div>
-              <div className="col-6 col-md-1">
-                <label className="form-label">Desde</label>
-                <input type="date" className="form-control" value={temp.desde} style={{ background:"white", color:"black" }} onChange={(e)=>setTemp({...temp, desde:e.target.value})}/>
-              </div>
-              <div className="col-6 col-md-1">
-                <label className="form-label">Hasta</label>
-                <input type="date" className="form-control" value={temp.hasta} style={{ background:"white", color:"black" }} onChange={(e)=>setTemp({...temp, hasta:e.target.value})}/>
-              </div>
-            </div>
-            <div className="d-flex gap-2 mt-3">
-              <button className="btn btn-sm btn-outline-primary" onClick={save}>Guardar</button>
-              <button className="btn btn-sm btn-outline-danger" onClick={cancel}>Cancelar</button>
-            </div>
-          </div>
-        )}
+        <p>
+          <strong>N° Afiliado:</strong>{" "}
+          {afiliado.numeroGrupoFamiliar}-{afiliado.numeroIntegrate}
+        </p>
+      </div>
 
-        {/* tabla */}
+      {/* Listado */}
+      <div
+        className="mt-4 mx-auto p-4 rounded"
+        style={{
+          width: "90%",
+          background: "#1e1e1e",
+          color: "white",
+        }}
+      >
+        <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap" style={{ gap: "10px" }}>
+          <input
+            type="text"
+            placeholder="Buscar por descripción"
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            style={{
+              borderRadius: "8px",
+              border: "none",
+              padding: "5px 10px",
+              width: "40%",
+              color: "black",
+            }}
+          />
+          {/* 🔹 Checkbox de activas */}
+          <div className="form-check text-light">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="soloActivas"
+              checked={soloActivas}
+              onChange={(e) => setSoloActivas(e.target.checked)}
+            />
+            <label className="form-check-label" htmlFor="soloActivas">
+              Mostrar solo activas
+            </label>
+          </div>
+
+          <button
+            className="btn btn-sm fw-semibold text-white"
+            style={{
+              backgroundColor: "#007b83",
+              border: "none",
+              borderRadius: "6px",
+              padding: "8px 16px",
+            }}
+            onClick={() => setShowModal(true)}
+          >
+            + Agregar situación
+          </button>
+
+          <h6 className="mb-0 text-light">
+            Situaciones registradas:{" "}
+            <span className="fw-bold">{filtradas.length}</span>
+          </h6>
+        </div>
+
         <div className="table-responsive">
-          <table className="table align-middle mb-0" style={{ background:"white", color:"black" }}>
-            <thead style={{ background:"#242424", color:"white" }}>
+          <table
+            className="table align-middle mb-0 text-center"
+            style={{
+              background: "white",
+              color: "black",
+              tableLayout: "fixed",
+              width: "100%",
+            }}
+          >
+            <thead style={{ background: "#242424", color: "white" }}>
               <tr>
-                <th>Clasificación</th>
-                <th>Nombre</th>
-                <th>Situación</th>
-                <th>Desde</th>
-                <th>Hasta</th>
-                <th style={{width:160}}>Acciones</th>
+                <th style={{ width: "30%" }}>Descripción</th>
+                <th style={{ width: "20%" }}>Desde</th>
+                <th style={{ width: "20%" }}>Hasta</th>
+                <th style={{ width: "15%" }}>Estado</th>
+                <th style={{ width: "15%" }}>Acción</th>
               </tr>
             </thead>
             <tbody>
-              {filtradas.map(r => (
-                <tr key={r.id}>
-                  <td>{r.clasificacion}</td>
-                  <td>{r.nombre}</td>
-                  <td>{r.situacion}</td>
-                  <td>{r.desde || "-"}</td>
-                  <td>{r.hasta || <span className="text-muted">Indefinido</span>}</td>
-                  <td className="d-flex gap-2">
-                    <button className="btn btn-sm btn-outline-dark" onClick={()=>startEdit(r)}>Editar</button>
-                    <button className="btn btn-sm btn-outline-danger" title="Eliminar" onClick={()=>eliminar(r.id)}>Eliminar</button>
+              {filtradas.length > 0 ? (
+                filtradas.map((s) => (
+                  <tr key={s.id}>
+                    <td>{s.descripcion}</td>
+                    <td>{formatearFecha(s.fechaInicio)}</td>
+                    <td>{s.fechaFin ? formatearFecha(s.fechaFin) : "Indefinido"}</td>
+                    <td>
+                      {(() => {
+                        if (!s.fechaFin) return "Activa";
+                        const hoy = new Date();
+                        const fin = new Date(s.fechaFin);
+                        return fin < hoy ? "Finalizada" : "Activa";
+                      })()}
+                    </td>
+                    <td>
+                      {(() => {
+                        const hoy = new Date();
+                        const fin = s.fechaFin ? new Date(s.fechaFin) : null;
+                        const esActiva = !fin || fin >= hoy;
+
+                        return (
+                          <button
+                            className={`btn btn-sm ${
+                              esActiva ? "btn-outline-dark" : "btn-outline-secondary"
+                            }`}
+                            style={{ width: "70px", opacity: esActiva ? 1 : 0.6 }}
+                            onClick={() => esActiva && abrirEditar(s)}
+                            disabled={!esActiva}
+                            title={esActiva ? "Editar situación" : "Solo disponible para situaciones activas"}
+                          >
+                            Editar
+                          </button>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="text-center text-muted py-3">
+                    No hay situaciones terapéuticas registradas.
                   </td>
                 </tr>
-              ))}
-              {!filtradas.length && (
-                <tr><td style={{color:"black"}} colSpan="6" className="text-center text-muted">Sin resultados</td></tr>
               )}
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Modal Agregar */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Nueva situación terapéutica</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleCrearSituacion}>
+            <Form.Group className="mb-3">
+              <Form.Label>Descripción</Form.Label>
+              <Form.Control
+                type="text"
+                value={nuevaSituacion.descripcion}
+                onChange={(e) =>
+                  setNuevaSituacion({
+                    ...nuevaSituacion,
+                    descripcion: e.target.value,
+                  })
+                }
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Fecha inicio</Form.Label>
+              <Form.Control
+                type="date"
+                value={nuevaSituacion.fechaInicio}
+                onChange={(e) =>
+                  setNuevaSituacion({
+                    ...nuevaSituacion,
+                    fechaInicio: e.target.value,
+                  })
+                }
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Fecha fin (opcional)</Form.Label>
+              <Form.Control
+                type="date"
+                value={nuevaSituacion.fechaFin}
+                onChange={(e) =>
+                  setNuevaSituacion({
+                    ...nuevaSituacion,
+                    fechaFin: e.target.value,
+                  })
+                }
+              />
+            </Form.Group>
+            <Button variant="dark" type="submit" className="w-100">
+              Guardar situación
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
+      {/* Modal Editar */}
+      <Modal show={showEditar} onHide={() => setShowEditar(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Editar situación terapéutica</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {situacionEditar && (
+            <Form onSubmit={handleGuardarEdicion}>
+              <Form.Group className="mb-3">
+                <Form.Label>Descripción</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={situacionEditar.descripcion}
+                  onChange={(e) =>
+                    setSituacionEditar({
+                      ...situacionEditar,
+                      descripcion: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Fecha inicio</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={situacionEditar.fechaInicio?.slice(0, 10) || ""}
+                  onChange={(e) =>
+                    setSituacionEditar({
+                      ...situacionEditar,
+                      fechaInicio: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Fecha fin (opcional)</Form.Label>
+                <div className="d-flex align-items-center" style={{ gap: "10px" }}>
+                  <Form.Control
+                    type="date"
+                    value={situacionEditar.fechaFin?.slice(0, 10) || ""}
+                    onChange={(e) =>
+                      setSituacionEditar({
+                        ...situacionEditar,
+                        fechaFin: e.target.value,
+                      })
+                    }
+                    style={{ flex: "1" }}
+                  />
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() =>
+                      setSituacionEditar({
+                        ...situacionEditar,
+                        fechaFin: null,
+                      })
+                    }
+                  >
+                    Indefinido
+                  </Button>
+                </div>
+              </Form.Group>
+              <Button variant="dark" type="submit" className="w-100">
+                Guardar cambios
+              </Button>
+            </Form>
+          )}
+        </Modal.Body>
+      </Modal>
+
+      {/* Botón volver */}
+      <div className="my-4">
+        <button
+          className="btn btn-dark px-4 py-2 rounded-pill fw-bold"
+          onClick={() => navigate(`/afiliados`)}
+        >
+          Volver al grupo familiar
+        </button>
       </div>
     </div>
   );
