@@ -40,26 +40,28 @@ export default function App() {
 
           {/* Solicitudes */}
           <Route
-            path="/solicitudes"
-            element={<Navigate to="/solicitudes/reintegros" replace />}
-          />
-          <Route path="/solicitudes/reintegros" element={<SolicitudesReintegros />} />
-          <Route path="/solicitudes/reintegros/:id" element={<DetalleSolicitudReintegros />} />
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            {/* Solicitudes */}
+            <Route path="/solicitudes" element={<Navigate to="/solicitudes/reintegros" replace />} />
+            <Route path="/solicitudes/reintegros" element={<SolicitudesReintegros />} />
+            <Route path="/solicitudes/reintegros/:id" element={<DetalleSolicitudReintegros />} />
 
-          <Route path="/solicitudes/autorizaciones" element={<SolicitudesAutorizaciones />} />
-          <Route path="/solicitudes/autorizaciones/:id" element={<DetalleSolicitudAutorizacion />} />
+            <Route path="/solicitudes/autorizaciones" element={<SolicitudesAutorizaciones />} />
+            <Route path="/solicitudes/autorizaciones/:id" element={<DetalleSolicitudAutorizacion />} /> 
 
-          <Route path="/solicitudes/recetas" element={<SolicitudesRecetas />} />
-          <Route path="/solicitudes/recetas/:id" element={<DetalleSolicitudRecetas />} />
+            <Route path="/solicitudes/recetas" element={<SolicitudesRecetas />} />
+            <Route path="/solicitudes/recetas/:id" element={<DetalleSolicitudRecetas />} /> 
 
           {/* Afiliados */}
           <Route path="/afiliados" element={<Afiliados />} />
           <Route path="/afiliados/turnos" element={<Turnos />} />
           <Route path="/turnos" element={<Turnos />} />
-          {/* <Route path="/afiliados/:id/grupo-familiar" element={<GrupoFamiliarHistoriaClinica />} />
-          <Route path="/afiliados/historia/:id" element={<HistoriaClinica />} />
-          <Route path="/afiliados/situaciones" element={<Situaciones />} /> */}
-
+            
           {/*  Mensajería */}
           <Route path="/mensajes" element={<Messages />} />
 
@@ -70,9 +72,14 @@ export default function App() {
           <Route path="/situaciones/:id" element={<Situaciones />} />
         </Route>
 
-        {/* fallback */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </SolicitudesProvider>
+            {/* */}
+            <Route path="/turnos" element={<Turnos />} />
+
+          </Route>
+
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </SolicitudesProvider>
+    </AuthProvider>
   );
 }
