@@ -9,7 +9,7 @@ export default function Nota({ nota }) {
     <div className="mb-4 p-3 border rounded shadow-sm">
       <div className="d-flex justify-content-between align-items-start">
         <div>
-          <p className="mb-1"><strong>Fecha:</strong> {nota.fecha}</p>
+          <p className="mb-1"><strong>Fecha:</strong> {new Date(nota.fecha).toLocaleDateString()}</p>
           <p className="mb-1"><strong>Causa:</strong> {nota.motivo || nota.descripcion}</p>
           <p className="mb-1"><strong>Doctor:</strong> {nota.doctor || "—"}</p>
         </div>
@@ -20,7 +20,7 @@ export default function Nota({ nota }) {
 
       {mostrar && (
         <div className="mt-2 p-2 border rounded" style={{ backgroundColor: "#f8f9fa" }}>
-          <p><strong>Descripción:</strong> {nota.nota || nota.texto}</p>
+          <p><strong>Descripción:</strong> {nota.descripcion || nota.texto}</p>
         </div>
       )}
     </div>

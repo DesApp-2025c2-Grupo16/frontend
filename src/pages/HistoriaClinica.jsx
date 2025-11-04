@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Modal, Button } from "react-bootstrap";
+import Nota from "../components/Nota.jsx";
 
 export default function HistoriaClinica() {
-  const { id } = useParams(); // ID del afiliado
+  const { id } = useParams();
   const navigate = useNavigate();
   const [afiliado, setAfiliado] = useState(null);
   const [notas, setNotas] = useState([]);
@@ -68,7 +68,7 @@ export default function HistoriaClinica() {
 
       <hr className="border-dark border-5 rounded-pill mt-4" />
 
-      {/* Notas clínicas */}
+      {/* Datos del paciente */}
       <div
         className="mt-4 mx-auto p-4 rounded"
         style={{
@@ -83,27 +83,12 @@ export default function HistoriaClinica() {
             className="fw-bold mb-4 text-uppercase"
             style={{ color: "#1e1e1e" }}
           >
-            PACIENTE: <span className="text-dark">{afiliado.nombre}</span>
+            PACIENTE: <span className="text-dark">{afiliado.nombre} {afiliado.apellido}</span>
           </h4>
 
+          {/* Notas Clínicas */}
           {notas.length > 0 ? (
-            notas.map((n) => (
-              <div key={n.id} className="mb-4">
-                <p className="fw-semibold mb-1">
-                  Causa - {n.motivo || "—"}.
-                </p>
-                <p className="mb-1">
-                  {n.fecha ? new Date(n.fecha).toLocaleDateString() : "—"} -{" "}
-                  {n.descripcion || "Sin descripción."}
-                </p>
-                {n.doctor && (
-                  <p className="text-muted mb-0">
-                    <small>Profesional interviniente: {n.doctor}</small>
-                  </p>
-                )}
-                <hr className="border-secondary mt-3 mb-3" />
-              </div>
-            ))
+            notas.map((nota, i) => <Nota key={i} nota={nota} />)
           ) : (
             <p className="text-muted text-center mb-0">
               No hay notas clínicas registradas.
@@ -111,7 +96,6 @@ export default function HistoriaClinica() {
           )}
         </div>
       </div>
-
 
       {/* Botón volver */}
       <div className="my-4">
