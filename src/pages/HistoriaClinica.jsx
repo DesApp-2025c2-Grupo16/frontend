@@ -7,23 +7,25 @@ export default function HistoriaClinica() {
   const navigate = useNavigate();
   const [afiliado, setAfiliado] = useState(null);
   const [notas, setNotas] = useState([]);
+  const [filteredNotas, setFilteredNotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [q, setQ] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 🔹 Buscar afiliado
         const resAfi = await fetch(`http://localhost:3001/afiliados/${id}`);
         if (!resAfi.ok) throw new Error("Afiliado no encontrado");
         const dataAfi = await resAfi.json();
         setAfiliado(dataAfi);
 
-        // 🔹 Buscar notas clínicas del afiliado
         const resNotas = await fetch(`http://localhost:3001/notas/${id}`);
-        if (!resNotas.ok) throw new Error("No se pudieron cargar las notas clínicas");
+        if (!resNotas.ok)
+          throw new Error("No se pudieron cargar las notas clínicas");
         const dataNotas = await resNotas.json();
         setNotas(dataNotas);
+        setFilteredNotas(dataNotas);
       } catch (err) {
         console.error(err);
         setError(err.message);
@@ -34,6 +36,19 @@ export default function HistoriaClinica() {
 
     fetchData();
   }, [id]);
+
+  // Filtro en tiempo real
+  useEffect(() => {
+    const termino = q.trim().toLowerCase();
+    if (termino === "") {
+      setFilteredNotas(notas);
+    } else {
+      const filtradas = notas.filter((nota) =>
+        nota.doctor?.toLowerCase().includes(termino)
+      );
+      setFilteredNotas(filtradas);
+    }
+  }, [q, notas]);
 
   if (loading)
     return (
@@ -68,6 +83,37 @@ export default function HistoriaClinica() {
 
       <hr className="border-dark border-5 rounded-pill mt-4" />
 
+      {/* Buscador por doctor */}
+      <div
+        className="d-flex justify-content-center align-items-center mt-4"
+        style={{
+          border: "3px solid #1e1e1e",
+          borderRadius: "50px",
+          padding: "5px 10px",
+          width: "500px",
+          margin: "0 auto",
+          background: "#242424",
+        }}
+      >
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Buscar por doctor..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          style={{
+            borderRadius: "50px",
+            marginRight: "10px",
+            background: "#242424",
+            color: "white",
+          }}
+        />
+      </div>
+
+      {filteredNotas.length === 0 && (
+        <p className="text-muted mt-3">No se encontraron notas de ese doctor.</p>
+      )}
+
       {/* Datos del paciente */}
       <div
         className="mt-4 mx-auto p-4 rounded"
@@ -79,16 +125,16 @@ export default function HistoriaClinica() {
         }}
       >
         <div className="px-2">
-          <h4
-            className="fw-bold mb-4 text-uppercase"
-            style={{ color: "#1e1e1e" }}
-          >
-            PACIENTE: <span className="text-dark">{afiliado.nombre} {afiliado.apellido}</span>
+          <h4 className="fw-bold mb-4 text-uppercase" style={{ color: "#1e1e1e" }}>
+            PACIENTE:{" "}
+            <span className="text-dark">
+              {afiliado.nombre} {afiliado.apellido}
+            </span>
           </h4>
 
           {/* Notas Clínicas */}
-          {notas.length > 0 ? (
-            notas.map((nota, i) => <Nota key={i} nota={nota} />)
+          {filteredNotas.length > 0 ? (
+            filteredNotas.map((nota, i) => <Nota key={i} nota={nota} />)
           ) : (
             <p className="text-muted text-center mb-0">
               No hay notas clínicas registradas.
