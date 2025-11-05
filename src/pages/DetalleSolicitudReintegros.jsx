@@ -14,7 +14,7 @@ export default function DetalleSolicitudReintegros() {
   useEffect(() => {
     const fetchReintegros = async () => {
       try {
-        const response = await fetch("http://localhost:3001/reintegros/1");
+        const response = await fetch("http://localhost:3001/reintegros/1"); // Esto se debe cambiar por el ID del prestador logueado
         const data = await response.json();
         const reintegro = data.find((r) => r.id === parseInt(id));
         setSolicitud(reintegro || null);
@@ -109,7 +109,7 @@ export default function DetalleSolicitudReintegros() {
           lineHeight: "50px",
         }}
       >
-        DETALLE DE SOLICITUD: {solicitud.Afiliado?.nombre} {solicitud.Afiliado?.apellido}
+        DETALLE DE SOLICITUD Nro: {solicitud.id}
       </h2>
 
       <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />

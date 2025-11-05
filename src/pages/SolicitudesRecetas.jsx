@@ -1,21 +1,43 @@
 // src/pages/SolicitudesRecetas.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSolicitudes } from "../components/SolicitudesContext.jsx";
 import reinicio from "../assets/reinicio.png";
 
 export default function SolicitudesRecetas() {
-  const { solicitudes, actualizarEstado, loading } = useSolicitudes();
-  const [lista, setLista] = useState([]);
+  const navigate = useNavigate();
+  const [recetas, setRecetas] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("todos");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+
+  const prestadorId = 1; // Cambiar despues por el ID real del prestador logueado
 
   useEffect(() => {
-    setLista(solicitudes.filter(s => s.tipo === "receta"));
-  }, [solicitudes]);
+    const fetchRecetas = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`http://localhost:3001/recetas/${prestadorId}`);
+        if (!res.ok) throw new Error("No se pudieron cargar las recetas");
+        const data = await res.json();
+        setRecetas(data);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRecetas();
+  }, [prestadorId]);
 
-  if (loading) return <p>Cargando solicitudes...</p>;
+  if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
+  if (error)
+    return (
+      <div className="text-center text-danger mt-5">
+        <h4>Error: {error}</h4>
+      </div>
+    );
 
   const estados = [
     { label: "Recibido", color: "#b3b3b3" },
@@ -25,17 +47,26 @@ export default function SolicitudesRecetas() {
     { label: "Rechazado", color: "#ef4444" },
   ];
 
-  const badge = (estado) => {
-    const map = { "Recibido":"secondary", "En análisis":"primary", "Observado":"warning", "Aprobado":"success", "Rechazado":"danger" };
-    return map[estado] || "secondary";
-  };
+  const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
-  const solicitudesFiltradas = lista
-    .filter(s => filtro === "todos" ? true : s.estado.toLowerCase() === filtro.toLowerCase())
-    .filter(s =>
-      s.afiliado.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
-      s.solicitud.toLowerCase().includes(filtroBusqueda.toLowerCase())
-    );
+  const recetasFiltradas = recetas
+    .filter((r) => (filtro === "todos" ? true : r.estado.toLowerCase() === filtro.toLowerCase()))
+    .filter(
+      (r) =>
+        r.asunto.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
+        (r.Afiliado &&
+          `${r.Afiliado.nombre} ${r.Afiliado.apellido}`
+            .toLowerCase()
+            .includes(filtroBusqueda.toLowerCase()))
+    )
+    .sort((a, b) => {
+      const ordenA = ordenEstados.indexOf(a.estado);
+      const ordenB = ordenEstados.indexOf(b.estado);
+      if (ordenA !== ordenB) return ordenA - ordenB;
+      const fechaA = new Date(a.fecha);
+      const fechaB = new Date(b.fecha);
+      return fechaB - fechaA;
+    });
 
   return (
     <div className="mt-4">
@@ -44,21 +75,27 @@ export default function SolicitudesRecetas() {
         style={{
           background: "#242424",
           display: "block",
-          width: "90%",       // Ocupa casi todo el ancho
-          textAlign: "center", // Texto centrado
-          margin: "0 auto",   // Centrado horizontal
-          lineHeight: "50px", // Altura consistente
+          width: "90%",
+          textAlign: "center",
+          margin: "0 auto",
+          lineHeight: "50px",
         }}
       >
         SOLICITUDES - RECETAS
       </h2>
 
-      <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
+      <hr
+        className="border-dark border-5 rounded-pill mt-4 mx-auto"
+        style={{ width: "90%" }}
+      />
 
       {/* FILTROS Y BÚSQUEDA */}
-      <div className="d-flex justify-content-between flex-wrap" style={{ width: "90%", margin: "5px auto", alignItems: "center" }}>
+      <div
+        className="d-flex justify-content-between flex-wrap"
+        style={{ width: "90%", margin: "5px auto", alignItems: "center" }}
+      >
         <div className="d-flex flex-wrap gap-1">
-          {estados.map(e => (
+          {estados.map((e) => (
             <button
               key={e.label}
               onClick={() => setFiltro(e.label)}
@@ -69,7 +106,8 @@ export default function SolicitudesRecetas() {
                 borderRadius: "25px",
                 padding: "5px 10px",
                 fontWeight: "bold",
-                boxShadow: filtro === e.label ? "0 0 0 3px #242424 inset" : "none",
+                boxShadow:
+                  filtro === e.label ? "0 0 0 3px #242424 inset" : "none",
               }}
             >
               {e.label}
@@ -79,16 +117,25 @@ export default function SolicitudesRecetas() {
           {filtro !== "todos" && (
             <button
               onClick={() => setFiltro("todos")}
-              style={{ backgroundColor: "#242424", border: "none", borderRadius: "25px", padding: "5px 10px" }}
+              style={{
+                backgroundColor: "#242424",
+                border: "none",
+                borderRadius: "25px",
+                padding: "5px 10px",
+              }}
             >
-              <img src={reinicio} alt="Todos" style={{ width: "20px", height: "20px" }} />
+              <img
+                src={reinicio}
+                alt="Todos"
+                style={{ width: "20px", height: "20px" }}
+              />
             </button>
           )}
         </div>
 
         <input
           type="text"
-          placeholder="Buscar afiliado o solicitud..."
+          placeholder="Buscar afiliado, asunto o medicamento..."
           value={filtroBusqueda}
           onChange={(e) => setFiltroBusqueda(e.target.value)}
           style={{
@@ -116,7 +163,13 @@ export default function SolicitudesRecetas() {
           backgroundColor: "white",
         }}
       >
-        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            tableLayout: "fixed",
+          }}
+        >
           <thead style={{ backgroundColor: "#242424", color: "white" }}>
             <tr>
               <th style={{ padding: "12px 15px" }}>Solicitud</th>
@@ -127,28 +180,51 @@ export default function SolicitudesRecetas() {
             </tr>
           </thead>
           <tbody>
-            {solicitudesFiltradas.map(s => (
-              <tr key={s.id} style={{ cursor:"pointer", borderBottom: "1px solid #ddd" }} onClick={() => navigate(`/solicitudes/recetas/${s.id}`)}>
-                <td style={{ padding: "10px 15px" }}>{s.solicitud}</td>
-                <td style={{ padding: "10px 15px" }}>{s.motivo}</td>
-                <td style={{ padding: "10px 15px" }}>{s.afiliado}</td>
+            {recetasFiltradas.map((r) => (
+              <tr
+                key={r.id}
+                style={{
+                  cursor:
+                    r.estado === "Recibido" || r.estado === "En análisis"
+                      ? "pointer" : "",
+                  opacity:
+                    r.estado === "Recibido" || r.estado === "En análisis"
+                      ? 1 : 0.6,
+                  borderBottom: "1px solid #ddd",
+                }}
+                onClick={() => {
+                  if (r.estado === "Recibido" || r.estado === "En análisis") {
+                    navigate(`/solicitudes/recetas/${r.id}`);
+                  }
+                }}
+              >
+                <td style={{ padding: "10px 15px" }}>{r.solicitud || `#${r.id}`}</td>
+                <td style={{ padding: "10px 15px" }}>{r.asunto}</td>
+                <td style={{ padding: "10px 15px" }}>{r.Afiliado.nombre} {r.Afiliado.apellido}</td>
                 <td style={{ padding: "10px 15px" }}>
-                  <span className="px-2 py-1 rounded-pill" style={{ fontWeight: "bold", fontSize: "0.9rem",
-                    ...(() => {
-                      const base = {
-                        "Recibido": { color: "#555", background: "#e5e5e5" },
-                        "Observado": { color: "#ff9c41", background: "#fff3e6" },
-                        "En análisis": { color: "#1d4ed8", background: "#e0e7ff" },
-                        "Aprobado": { color: "#22c55e", background: "#dcfce7" },
-                        "Rechazado": { color: "#ef4444", background: "#fee2e2" },
-                      };
-                      return base[s.estado] || {};
-                    })()
-                  }}>
-                    {s.estado}
+                  <span
+                    className="px-2 py-1 rounded-pill"
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "0.9rem",
+                      ...(() => {
+                        const base = {
+                          Recibido: { color: "#555", background: "#e5e5e5" },
+                          Observado: { color: "#ff9c41", background: "#fff3e6"},
+                          "En análisis": {color: "#1d4ed8", background: "#e0e7ff"},
+                          Aprobado: { color: "#22c55e", background: "#dcfce7"},
+                          Rechazado: { color: "#ef4444", background: "#fee2e2"},
+                        };
+                        return base[r.estado] || {};
+                      })(),
+                    }}
+                  >
+                    {r.estado}
                   </span>
                 </td>
-                <td style={{ padding: "10px 15px" }}>{s.fecha}</td>
+                <td style={{ padding: "10px 15px" }}>
+                  {new Date(r.fecha).toLocaleDateString("es-AR")}
+                </td>
               </tr>
             ))}
           </tbody>

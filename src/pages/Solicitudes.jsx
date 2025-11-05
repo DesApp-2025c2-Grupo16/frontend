@@ -196,7 +196,7 @@ export default function SolicitudesReintegros() {
               >
                 <td style={{ padding: "10px 15px" }}>{r.solicitud || `#${r.id}`}</td>
                 <td style={{ padding: "10px 15px" }}>{r.asunto}</td>
-                <td style={{ padding: "10px 15px" }}>{r.Afiliado ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}` : "No especificado"}</td>
+                <td style={{ padding: "10px 15px" }}>{r.Afiliado.nombre} {r.Afiliado.apellido}</td>
                 <td style={{ padding: "10px 15px" }}>
                   <span
                     className="px-2 py-1 rounded-pill"
@@ -226,11 +226,11 @@ export default function SolicitudesReintegros() {
           </tbody>
         </table>
 
-        {reintegrosFiltrados.length === 0 && (
+        {/* {reintegrosFiltrados.length === 0 && (
           <div className="text-center text-muted py-4">
             No hay solicitudes de reintegro registradas.
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
