@@ -185,7 +185,7 @@ export default function SolicitudesAutorizaciones() {
                 }}
               >
                 <td style={{ padding: "10px 15px" }}>#{r.id}</td>
-                <td style={{ padding: "10px 15px" }}>{r.lugar || "-"}</td>
+                <td style={{ padding: "10px 15px" }}>{r.asunto || "-"}</td>
                 <td style={{ padding: "10px 15px" }}>{r.Afiliado.nombre} {r.Afiliado.apellido}
                 </td>
                 <td style={{ padding: "10px 15px" }}>

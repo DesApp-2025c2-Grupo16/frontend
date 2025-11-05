@@ -401,13 +401,7 @@ export default function Situaciones() {
                 <Form.Control
                   type="text"
                   value={situacionEditar.descripcion}
-                  onChange={(e) =>
-                    setSituacionEditar({
-                      ...situacionEditar,
-                      descripcion: e.target.value,
-                    })
-                  }
-                  required
+                  disabled
                 />
               </Form.Group>
               <Form.Group className="mb-3">
@@ -415,17 +409,11 @@ export default function Situaciones() {
                 <Form.Control
                   type="date"
                   value={situacionEditar.fechaInicio?.slice(0, 10) || ""}
-                  onChange={(e) =>
-                    setSituacionEditar({
-                      ...situacionEditar,
-                      fechaInicio: e.target.value,
-                    })
-                  }
-                  required
+                  disabled
                 />
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label>Fecha fin (opcional)</Form.Label>
+                <Form.Label>Fecha fin</Form.Label>
                 <div className="d-flex align-items-center" style={{ gap: "10px" }}>
                   <Form.Control
                     type="date"

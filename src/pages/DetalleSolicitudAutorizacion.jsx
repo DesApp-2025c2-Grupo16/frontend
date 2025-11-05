@@ -121,10 +121,13 @@ export default function DetalleSolicitudAutorizacion() {
         }}
       >
         <h5 style={{ color: "#000" }}>Datos de Paciente</h5>
-        <p><strong>Afiliado:</strong> {solicitud.Afiliado?.nombre} {solicitud.Afiliado?.apellido}</p>
         <p><strong>Fecha de la prestación:</strong> {new Date(solicitud.fecha).toLocaleDateString()}</p>
+        <p><strong>Afiliado:</strong> {solicitud.Afiliado?.nombre} {solicitud.Afiliado?.apellido}</p>
+        <p><strong>Médico:</strong> - </p>
+        <p><strong>Especialidad:</strong> {solicitud.especialidad}</p>
         <p><strong>Asunto:</strong> {solicitud.asunto}</p>
         <p><strong>Lugar:</strong> {solicitud.lugar}</p>
+        <p><strong>Días de Internación:</strong> {solicitud.diasDeInternacion}</p>
 
         <hr />
 
