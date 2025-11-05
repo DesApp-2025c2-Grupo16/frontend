@@ -181,10 +181,18 @@ export default function SolicitudesReintegros() {
               <tr
                 key={r.id}
                 style={{
-                  cursor: "pointer",
+                  cursor:
+                    r.estado === "Recibido" || r.estado === "En análisis"
+                      ? "pointer" : "",
+                  opacity:
+                    r.estado === "Recibido" || r.estado === "En análisis" ? 1 : 0.6,
                   borderBottom: "1px solid #ddd",
                 }}
-                onClick={() => navigate(`/solicitudes/reintegros/${r.id}`)}
+                onClick={() => {
+                  if (r.estado === "Recibido" || r.estado === "En análisis") {
+                    navigate(`/solicitudes/reintegros/${r.id}`);
+                  }
+                }}
               >
                 <td style={{ padding: "10px 15px" }}>{r.solicitud || `#${r.id}`}</td>
                 <td style={{ padding: "10px 15px" }}>{r.asunto}</td>

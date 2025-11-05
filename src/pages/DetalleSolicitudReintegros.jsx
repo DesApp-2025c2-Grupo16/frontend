@@ -1,17 +1,36 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useSolicitudes } from "../components/SolicitudesContext.jsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function DetalleSolicitudReintegros() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { solicitudes, actualizarEstado } = useSolicitudes();
 
-  const solicitud = solicitudes.find(s => s.id === parseInt(id) && s.tipo === "reintegro");
-
+  const [solicitud, setSolicitud] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
+
+  useEffect(() => {
+    const fetchReintegros = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/reintegros/1");
+        const data = await response.json();
+        const reintegro = data.find((r) => r.id === parseInt(id));
+        setSolicitud(reintegro || null);
+      } catch (error) {
+        console.error("Error al obtener los reintegros:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReintegros();
+  }, [id]);
+
+  if (loading) {
+    return <div className="text-center mt-5">Cargando solicitud...</div>;
+  }
 
   if (!solicitud) {
     return (
@@ -23,11 +42,6 @@ export default function DetalleSolicitudReintegros() {
       </div>
     );
   }
-
-  const handleUpdate = (estado, comentarioOpcional) => {
-    actualizarEstado(solicitud.id, estado, comentarioOpcional || "");
-    navigate("/solicitudes");
-  };
 
   const abrirModal = (accion) => {
     setAccionConfirmar(accion);
@@ -41,13 +55,43 @@ export default function DetalleSolicitudReintegros() {
     setComentario("");
   };
 
-  const aceptarAccion = () => {
-    handleUpdate(accionConfirmar, comentario);
-    cerrarModal();
-  };
+  const aceptarAccion = async (estado, comentarioOpcional) => {
+    try {
+      const body = { estado };
 
-  const colorBoton = (accion) => {
-    return "btn-primary";
+      if (estado === "Aprobado") {
+        body.observacion = "Aprobado sin observaciones";
+      } else {
+        if (!comentarioOpcional || comentarioOpcional.trim() === "") {
+          alert("Debes escribir una observación antes de continuar.");
+          return;
+        }
+        body.observacion = comentarioOpcional.trim();
+      }
+
+      const response = await fetch(`http://localhost:3001/reintegros/${solicitud.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || "Error al actualizar el estado");
+      }
+
+      const actualizado = await response.json();
+      console.log("Reintegro actualizado:", actualizado);
+
+      alert(`Solicitud marcada como ${estado}`);
+      cerrarModal();
+      navigate("/solicitudes");
+    } catch (error) {
+      console.error(error);
+      alert("Hubo un error al actualizar el estado");
+    }
   };
 
   const requiereComentario = (accion) => accion === "Observado" || accion === "Rechazado";
@@ -65,7 +109,7 @@ export default function DetalleSolicitudReintegros() {
           lineHeight: "50px",
         }}
       >
-        DETALLE DE SOLICITUD ID: {solicitud.id}
+        DETALLE DE SOLICITUD: {solicitud.Afiliado?.nombre} {solicitud.Afiliado?.apellido}
       </h2>
 
       <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
@@ -81,70 +125,131 @@ export default function DetalleSolicitudReintegros() {
         }}
       >
         <h5 style={{ color: "#000" }}>Datos de Paciente</h5>
-        <p><strong>Afiliado:</strong> {solicitud.afiliado}</p>
-        <p><strong>Fecha de la prestación:</strong> {solicitud.fechaPrestacion}</p>
-        <p><strong>Integrante:</strong> {solicitud.integrante}</p>
-        <p><strong>Médico:</strong> {solicitud.medico}</p>
-        <p><strong>Especialidad:</strong> {solicitud.especialidad}</p>
-        <p><strong>Lugar:</strong> {solicitud.lugar}</p>
+        <p>
+          <strong>Afiliado:</strong> {solicitud.Afiliado?.nombre} {solicitud.Afiliado?.apellido}
+        </p>
+        <p>
+          <strong>Fecha de la prestación:</strong>{" "}
+          {new Date(solicitud.fecha).toLocaleDateString()}
+        </p>
+        <p>
+          <strong>Especialidad:</strong> {solicitud.especialidad}
+        </p>
+        <p>
+          <strong>Lugar:</strong> {solicitud.lugar}
+        </p>
 
         <hr />
 
         <h5 style={{ color: "#000" }}>Datos de Factura</h5>
-        <p><strong>Fecha:</strong> {solicitud.factura.fecha}</p>
-        <p><strong>CUIT:</strong> {solicitud.factura.cuit}</p>
-        <p><strong>Valor Total:</strong> ${solicitud.factura.total}</p>
-        <p><strong>Persona Facturada:</strong> {solicitud.factura.persona}</p>
+        <p>
+          <strong>Fecha:</strong>{" "}
+          {new Date(solicitud.fechaFactura).toLocaleDateString()}
+        </p>
+        <p>
+          <strong>CUIT:</strong> {solicitud.cuitFacturado}
+        </p>
+        <p>
+          <strong>Valor Total:</strong> ${solicitud.valorFacturado}
+        </p>
+        <p>
+          <strong>Persona Facturada:</strong> {solicitud.personaFacturada}
+        </p>
 
         <hr />
 
         <h5 style={{ color: "#000" }}>Forma de Pago</h5>
-        <p><strong>Tipo:</strong> {solicitud.formaPago.tipo}</p>
-        {solicitud.formaPago.cbu && <p><strong>CBU:</strong> {solicitud.formaPago.cbu}</p>}
+        <p>
+          <strong>Tipo:</strong> {solicitud.formaDePago}
+        </p>
+        {solicitud.cbu && (
+          <p>
+            <strong>CBU:</strong> {solicitud.cbu}
+          </p>
+        )}
+
         <hr />
 
         <h5 style={{ color: "#000" }}>Observaciones</h5>
-        <p>{solicitud.observaciones}</p>
+        <p>{solicitud.observacion || "Sin observaciones"}</p>
 
         <div className="mt-4 d-flex justify-content-around">
-          <button className="btn btn-success" onClick={() => abrirModal("Aprobado")}>Aprobar</button>
-          <button className="btn btn-warning" onClick={() => abrirModal("Observado")}>Observar</button>
-          <button className="btn btn-danger" onClick={() => abrirModal("Rechazado")}>Rechazar</button>
+          <button className="btn btn-success" onClick={() => abrirModal("Aprobado")}>
+            Aprobar
+          </button>
+          <button className="btn btn-warning" onClick={() => abrirModal("Observado")}>
+            Observar
+          </button>
+          <button className="btn btn-danger" onClick={() => abrirModal("Rechazado")}>
+            Rechazar
+          </button>
         </div>
 
         <div className="text-center mt-4">
-          <button className="btn btn-dark" onClick={() => navigate("/solicitudes")}>
-            Volver a la bandeja
+          <button 
+            className="btn btn-dark" 
+            onClick={async () => {
+              // Si la solicitud está en estado "Recibido", la pasamos a "En análisis"
+              if (solicitud.estado === "Recibido") {
+                try {
+                  await fetch(`http://localhost:3001/reintegros/${solicitud.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                      estado: "En análisis",
+                      observacion: "En análisis sin observaciones",
+                    }),
+                  });
+                } catch (error) {
+                  console.error("Error al actualizar estado:", error);
+                }
+              }
+              navigate("/solicitudes/reintegros");
+            }}
+          >
+              Volver a la bandeja
           </button>
         </div>
       </div>
 
-      {/* Modal de Confirmación */}
+      {/* MODAL */}
       {showModal && (
-        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div
                 className="modal-header"
                 style={{ borderBottom: "none", justifyContent: "center" }}
               >
-                <h5 className="modal-title" style={{ color: "#000" }}>Confirmación</h5>
+                <h5 className="modal-title" style={{ color: "#000" }}>
+                  Confirmación
+                </h5>
               </div>
 
               <div className="modal-body text-center">
                 {requiereComentario(accionConfirmar) ? (
                   <>
-                    <p>Escribe el comentario para dejar en <strong>{accionConfirmar.toLowerCase()}</strong> esta solicitud:</p>
+                    <p>
+                      Escribe el comentario para dejar en{" "}
+                      <strong>{accionConfirmar.toLowerCase()}</strong> esta solicitud:
+                    </p>
                     <textarea
-                      className="form-control bg-white "
+                      className="form-control bg-white"
                       value={comentario}
                       onChange={(e) => setComentario(e.target.value)}
                       rows={4}
-                      style={{ backgroundColor: "white !important", color: "black", resize: "none" }}
+                      style={{ resize: "none", color: "black" }}
                     />
                   </>
                 ) : (
-                  <p>¿Estás seguro de dejar en <strong>{accionConfirmar.toLowerCase()}</strong> esta solicitud?</p>
+                  <p>
+                    ¿Estás seguro de dejar en{" "}
+                    <strong>{accionConfirmar.toLowerCase()}</strong> esta solicitud?
+                  </p>
                 )}
               </div>
 
@@ -152,8 +257,21 @@ export default function DetalleSolicitudReintegros() {
                 className="modal-footer"
                 style={{ borderTop: "none", justifyContent: "center" }}
               >
-                <button className="btn btn-secondary mx-2" onClick={cerrarModal}>Cancelar</button>
-                <button className={`btn ${colorBoton(accionConfirmar)} mx-2`} onClick={aceptarAccion}>Aceptar</button>
+                <button className="btn btn-secondary mx-2" onClick={cerrarModal}>
+                  Cancelar
+                </button>
+                <button
+                  className={`btn ${
+                    accionConfirmar === "Aprobado"
+                      ? "btn-success"
+                      : accionConfirmar === "Observado"
+                      ? "btn-warning"
+                      : "btn-danger"
+                  } mx-2`}
+                  onClick={() => aceptarAccion(accionConfirmar, comentario)}
+                >
+                  Aceptar
+                </button>
               </div>
             </div>
           </div>

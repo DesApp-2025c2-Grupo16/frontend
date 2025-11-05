@@ -231,7 +231,7 @@ export default function Situaciones() {
               color: "black",
             }}
           />
-          {/* 🔹 Checkbox de activas */}
+          {/* Checkbox de activas */}
           <div className="form-check text-light">
             <input
               className="form-check-input"
