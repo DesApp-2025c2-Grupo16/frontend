@@ -1,11 +1,13 @@
-// src/pages/Solicitudes.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import reinicio from "../assets/reinicio.png";
 
 export default function SolicitudesReintegros() {
   const [reintegros, setReintegros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [filtro, setFiltro] = useState("todos");
+  const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,7 +17,6 @@ export default function SolicitudesReintegros() {
         const response = await fetch(`http://localhost:3001/reintegros/${prestadorId}`);
 
         if (!response.ok) {
-          // si la respuesta del servidor no es 200-299, lanzamos error
           const errData = await response.json();
           throw new Error(errData.message || "Error al cargar los reintegros");
         }
@@ -28,21 +29,12 @@ export default function SolicitudesReintegros() {
         setLoading(false);
       }
     };
+
     fetchReintegros();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="text-center mt-5">
-        <div className="spinner-border text-dark" role="status">
-          <span className="visually-hidden text-dark">Cargando...</span>
-        </div>
-        <p className="mt-3 text-dark">Cargando solicitudes de reintegro...</p>
-      </div>
-    );
-  }
-
-  if (error) {
+  if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
+  if (error)
     return (
       <div className="text-center mt-5 text-danger">
         <h5 className="text-dark">{error}</h5>
@@ -51,10 +43,43 @@ export default function SolicitudesReintegros() {
         </button>
       </div>
     );
-  }
+
+  const estados = [
+    { label: "Recibido", color: "#b3b3b3" },
+    { label: "Observado", color: "#ff9c41" },
+    { label: "En análisis", color: "#1d4ed8" },
+    { label: "Aprobado", color: "#22c55e" },
+    { label: "Rechazado", color: "#ef4444" },
+  ];
+
+  const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
+
+  const reintegrosFiltrados = reintegros
+    .filter((r) => (filtro === "todos" ? true : r.estado.toLowerCase() === filtro.toLowerCase()))
+    .filter(
+      (r) =>
+        r.asunto.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
+        (r.Afiliado &&
+          `${r.Afiliado.nombre} ${r.Afiliado.apellido}`
+            .toLowerCase()
+            .includes(filtroBusqueda.toLowerCase()))
+    )
+    .sort((a, b) => {
+      // Ordenar por estado según el orden definido
+      const ordenA = ordenEstados.indexOf(a.estado);
+      const ordenB = ordenEstados.indexOf(b.estado);
+
+      if (ordenA !== ordenB) return ordenA - ordenB;
+
+      // Si el estado es igual, ordenar por fecha más reciente
+      const fechaA = new Date(a.fecha);
+      const fechaB = new Date(b.fecha);
+      return fechaB - fechaA; // más reciente primero
+    });
 
   return (
-    <div className="container mt-4">
+    <div className="mt-4">
+      {/* TÍTULO */}
       <h2
         className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
         style={{
@@ -66,65 +91,142 @@ export default function SolicitudesReintegros() {
           lineHeight: "50px",
         }}
       >
-        SOLICITUDES DE REINTEGRO
+        SOLICITUDES - REINTEGROS
       </h2>
 
-      <hr
-        className="border-dark border-5 rounded-pill mt-4 mx-auto"
-        style={{ width: "90%" }}
-      />
+      <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
 
+      {/* FILTROS Y BÚSQUEDA */}
       <div
-        className="table-responsive mx-auto"
-        style={{ width: "90%", background: "white", borderRadius: "10px", padding: "20px" }}
+        className="d-flex justify-content-between flex-wrap"
+        style={{ width: "90%", margin: "5px auto", alignItems: "center" }}
       >
-        <table className="table table-hover align-middle">
-          <thead>
-            <tr style={{ background: "#242424", color: "white" }}>
-              <th scope="col">ID</th>
-              <th scope="col">Asunto</th>
-              <th scope="col">Fecha</th>
-              <th scope="col">Especialidad</th>
-              <th scope="col">Estado</th>
-              <th scope="col" className="text-center">Acciones</th>
+        <div className="d-flex flex-wrap gap-1">
+          {estados.map((e) => (
+            <button
+              key={e.label}
+              onClick={() => setFiltro(e.label)}
+              style={{
+                backgroundColor: e.color,
+                color: "white",
+                border: "none",
+                borderRadius: "25px",
+                padding: "5px 10px",
+                fontWeight: "bold",
+                boxShadow: filtro === e.label ? "0 0 0 3px #242424 inset" : "none",
+              }}
+            >
+              {e.label}
+            </button>
+          ))}
+
+          {filtro !== "todos" && (
+            <button
+              onClick={() => setFiltro("todos")}
+              style={{
+                backgroundColor: "#242424",
+                border: "none",
+                borderRadius: "25px",
+                padding: "5px 10px",
+              }}
+            >
+              <img src={reinicio} alt="Todos" style={{ width: "20px", height: "20px" }} />
+            </button>
+          )}
+        </div>
+
+        <input
+          type="text"
+          placeholder="Buscar asunto o afiliado..."
+          value={filtroBusqueda}
+          onChange={(e) => setFiltroBusqueda(e.target.value)}
+          style={{
+            borderRadius: "25px",
+            border: "2px solid #242424",
+            padding: "5px 10px",
+            outline: "none",
+            width: "250px",
+            backgroundColor: "#242424",
+            color: "white",
+          }}
+        />
+      </div>
+
+      {/* TABLA */}
+      <div
+        className="mt-3"
+        style={{
+          borderRadius: "20px",
+          overflow: "hidden",
+          width: "90%",
+          boxShadow: "0px 4px 6px rgba(0,0,0,0.2)",
+          border: "20px solid #242424",
+          margin: "auto",
+          backgroundColor: "white",
+        }}
+      >
+        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+          <thead style={{ backgroundColor: "#242424", color: "white" }}>
+            <tr>
+              <th style={{ padding: "12px 15px" }}>Solicitud</th>
+              <th style={{ padding: "12px 15px" }}>Asunto</th>
+              <th style={{ padding: "12px 15px" }}>Afiliado</th>
+              <th style={{ padding: "12px 15px" }}>Estado</th>
+              <th style={{ padding: "12px 15px" }}>Fecha</th>
             </tr>
           </thead>
+
           <tbody>
-            {reintegros.map((r) => (
-              <tr key={r.id}>
-                <td>{r.id}</td>
-                <td>{r.asunto}</td>
-                <td>{new Date(r.fecha).toLocaleDateString()}</td>
-                <td>{r.especialidad}</td>
-                <td>
+            {reintegrosFiltrados.map((r) => (
+              <tr
+                key={r.id}
+                style={{
+                  cursor:
+                    r.estado === "Recibido" || r.estado === "En análisis"
+                      ? "pointer" : "",
+                  opacity:
+                    r.estado === "Recibido" || r.estado === "En análisis" ? 1 : 0.6,
+                  borderBottom: "1px solid #ddd",
+                }}
+                onClick={() => {
+                  if (r.estado === "Recibido" || r.estado === "En análisis") {
+                    navigate(`/solicitudes/reintegros/${r.id}`);
+                  }
+                }}
+              >
+                <td style={{ padding: "10px 15px" }}>{r.solicitud || `#${r.id}`}</td>
+                <td style={{ padding: "10px 15px" }}>{r.asunto}</td>
+                <td style={{ padding: "10px 15px" }}>{r.Afiliado ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}` : "No especificado"}</td>
+                <td style={{ padding: "10px 15px" }}>
                   <span
-                    className={`badge text-bg-${
-                      r.estado === "Aprobado"
-                        ? "success"
-                        : r.estado === "Rechazado"
-                        ? "danger"
-                        : r.estado === "Observado"
-                        ? "warning"
-                        : "secondary"
-                    }`}
+                    className="px-2 py-1 rounded-pill"
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "0.9rem",
+                      ...(() => {
+                        const base = {
+                          Recibido: { color: "#555", background: "#e5e5e5" },
+                          Observado: { color: "#ff9c41", background: "#fff3e6" },
+                          "En análisis": { color: "#1d4ed8", background: "#e0e7ff" },
+                          Aprobado: { color: "#22c55e", background: "#dcfce7" },
+                          Rechazado: { color: "#ef4444", background: "#fee2e2" },
+                        };
+                        return base[r.estado] || {};
+                      })(),
+                    }}
                   >
                     {r.estado}
                   </span>
                 </td>
-                <td className="text-center">
-                  <button
-                    className="btn btn-dark btn-sm"
-                    onClick={() => navigate(`/solicitudes/reintegros/${r.id}`)}
-                  >
-                    Ver detalle
-                  </button>
+                <td style={{ padding: "10px 15px" }}>
+                  {r.fecha ? new Date(r.fecha).toLocaleDateString() : "-"}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {reintegros.length === 0 && (
+        {reintegrosFiltrados.length === 0 && (
           <div className="text-center text-muted py-4">
             No hay solicitudes de reintegro registradas.
           </div>
