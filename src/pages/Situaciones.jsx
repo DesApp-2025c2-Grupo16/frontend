@@ -95,11 +95,11 @@ export default function Situaciones() {
       alert("No se pudo crear la situación");
     }
   };
-  // 🔹 Formatear fecha a dd-mm-aaaa
+  // Formatear fecha a dd-mm-aaaa
   const formatearFecha = (fecha) => {
     if (!fecha) return "—";
     const d = new Date(fecha);
-    const dia = String(d.getDate()).padStart(2, "0");
+    const dia = String(d.getDate() + 1).padStart(2, "0");
     const mes = String(d.getMonth() + 1).padStart(2, "0");
     const anio = d.getFullYear();
     return `${dia}-${mes}-${anio}`;
@@ -123,11 +123,9 @@ export default function Situaciones() {
       const res = await fetch(
         `http://localhost:3001/situaciones/${situacionEditar.id}`,
         {
-          method: "PUT",
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            descripcion: situacionEditar.descripcion,
-            fechaInicio: situacionEditar.fechaInicio,
             fechaFin: situacionEditar.fechaFin,
           }),
         }

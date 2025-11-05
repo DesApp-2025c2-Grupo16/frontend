@@ -97,7 +97,7 @@ function ModalTurno({ turno, onClose, onSave }) {
 /* Componente principal */
 export default function Turnos() {
   const { state } = useLocation();
-  const prestadorId = state?.prestadorId || 1; // viene del navigate
+  const prestadorId = 1; // cambiar por el ID real
   const [turnos, setTurnos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTurno, setSelectedTurno] = useState(null);
@@ -157,7 +157,7 @@ export default function Turnos() {
       return;
     }
     setToast({
-      message: "Historia médica guardada correctamente ✅",
+      message: "Historia médica guardada correctamente",
       type: "success",
     });
     setTimeout(() => setToast({ message: "", type: "success" }), 3000);
@@ -193,7 +193,7 @@ export default function Turnos() {
         <div className="col-12 text-muted mb-3">
           ID del prestador: {prestadorId}
         </div>
-      )} */}
+      )}  */}
 
       <div className="col-12 mb-3 text-center">
         <input
