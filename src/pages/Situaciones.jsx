@@ -55,9 +55,25 @@ export default function Situaciones() {
   }, [id]);
 
   const filtradas = situaciones
-    // 🔹 Ordenar por fechaInicio (más nueva primero)
-    .sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio))
-    // 🔹 Luego filtrar por descripción y estado
+    // Primero ordenamos por estado y fecha
+    .sort((a, b) => {
+      const hoy = new Date();
+
+      const finA = a.fechaFin ? new Date(a.fechaFin) : null;
+      const finB = b.fechaFin ? new Date(b.fechaFin) : null;
+
+      const activaA = !finA || finA >= hoy;
+      const activaB = !finB || finB >= hoy;
+
+      // Primero van las activas (true > false)
+      if (activaA !== activaB) {
+        return activaA ? -1 : 1;
+      }
+
+      // Si ambos son del mismo tipo, ordenamos por fechaInicio (más reciente primero)
+      return new Date(b.fechaInicio) - new Date(a.fechaInicio);
+    })
+    // Luego aplicamos los filtros como antes
     .filter((s) => {
       const texto = filtro.toLowerCase();
       const coincideDescripcion = s.descripcion?.toLowerCase().includes(texto);
@@ -75,14 +91,13 @@ export default function Situaciones() {
   const handleCrearSituacion = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:3001/situaciones", {
+      const res = await fetch(`http://localhost:3001/situaciones/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           descripcion: nuevaSituacion.descripcion,
           fechaInicio: nuevaSituacion.fechaInicio,
           fechaFin: nuevaSituacion.fechaFin || null,
-          AfiliadoId: id,
         }),
       });
       if (!res.ok) throw new Error("Error al crear la situación");
@@ -401,13 +416,7 @@ export default function Situaciones() {
                 <Form.Control
                   type="text"
                   value={situacionEditar.descripcion}
-                  onChange={(e) =>
-                    setSituacionEditar({
-                      ...situacionEditar,
-                      descripcion: e.target.value,
-                    })
-                  }
-                  required
+                  disabled
                 />
               </Form.Group>
               <Form.Group className="mb-3">
@@ -415,17 +424,11 @@ export default function Situaciones() {
                 <Form.Control
                   type="date"
                   value={situacionEditar.fechaInicio?.slice(0, 10) || ""}
-                  onChange={(e) =>
-                    setSituacionEditar({
-                      ...situacionEditar,
-                      fechaInicio: e.target.value,
-                    })
-                  }
-                  required
+                  disabled
                 />
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label>Fecha fin (opcional)</Form.Label>
+                <Form.Label>Fecha fin</Form.Label>
                 <div className="d-flex align-items-center" style={{ gap: "10px" }}>
                   <Form.Control
                     type="date"
