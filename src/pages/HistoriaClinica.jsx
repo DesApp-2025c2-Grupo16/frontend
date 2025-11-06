@@ -147,9 +147,16 @@ export default function HistoriaClinica() {
       <div className="my-4">
         <button
           className="btn btn-dark px-4 py-2 rounded-pill fw-bold"
-          onClick={() => navigate(`/afiliados`)}
+          onClick={() =>
+            navigate('/afiliados', {
+              state: {
+                grupoNumero: afiliado.numeroGrupoFamiliar,
+                filtroAnterior: "",
+              },
+            })
+          }
         >
-          Volver a afiliados
+          Volver al grupo familiar
         </button>
       </div>
     </div>

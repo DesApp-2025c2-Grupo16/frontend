@@ -1,63 +1,53 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Modal, Button } from "react-bootstrap";
 
 export default function BusquedaAfiliado() {
-  const [q, setQ] = useState("");
-  const [grupoFamiliar, setGrupoFamiliar] = useState([]);
-  const [situaciones, setSituaciones] = useState([]);
-  const [error, setError] = useState("");
-  const [filtro, setFiltro] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const [q, setQ] = useState(String(location.state?.grupoNumero || ""));
+  const [grupoFamiliar, setGrupoFamiliar] = useState([]);
+  const [error, setError] = useState("");
+  const [filtro, setFiltro] = useState(location.state?.filtroAnterior || "");
 
-  // Buscar grupo familiar por número
+  // 🔹 Buscar grupo familiar
   const buscar = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError("");
     setGrupoFamiliar([]);
-    setSituaciones([]);
 
     const grupoNumero = q.trim();
     if (!grupoNumero) return;
 
     try {
-      // Buscar directamente el grupo familiar
       const grupoRes = await fetch(
         `http://localhost:3001/afiliados/grupo-familiar/${grupoNumero}`
       );
       if (!grupoRes.ok) throw new Error("Grupo familiar no encontrado");
-
       const grupo = await grupoRes.json();
       setGrupoFamiliar(grupo);
 
-      // Buscar situaciones asociadas al grupo
-      const sitRes = await fetch(
-        `http://localhost:3001/situaciones/grupoFamiliar/${grupoNumero}`
-      );
-      if (!sitRes.ok) throw new Error("No se pudieron cargar las situaciones");
-
-      const sit = await sitRes.json();
-      setSituaciones(sit);
     } catch (err) {
       console.error(err);
       setError("No se encontró el grupo familiar");
     }
   };
 
+  useEffect(() => {
+    if (location.state?.grupoNumero) {
+      buscar();
+    }
+  }, []);
 
-
-  // Filtro de texto
+  // 🔹 Filtro
   const grupoFiltrado = grupoFamiliar.filter((miembro) => {
     const texto = filtro.toLowerCase();
-
     const nroAfiliado = `${miembro.numeroIntegrate}`;
     const coincideNombre = miembro.nombre?.toLowerCase().includes(texto);
     const coincideApellido = miembro.apellido?.toLowerCase().includes(texto);
     const coincideNumero = nroAfiliado.toLowerCase().includes(texto);
-
     return coincideNombre || coincideApellido || coincideNumero;
   });
-
 
   return (
     <div className="mt-4 text-center" style={{ fontFamily: "sans-serif" }}>
@@ -206,7 +196,7 @@ export default function BusquedaAfiliado() {
                               minWidth: "150px",
                               boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
                             }}
-                            onClick={() => navigate(`/situaciones/${miembro.id}`)}
+                            onClick={() => navigate(`/situaciones/${miembro.id}`, {state: { grupoNumero: q, filtro }})}
                           >
                             Situaciones terapéuticas
                           </button>
