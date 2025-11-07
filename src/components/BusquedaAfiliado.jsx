@@ -42,7 +42,7 @@ export default function BusquedaAfiliado() {
   // 🔹 Filtro
   const grupoFiltrado = grupoFamiliar.filter((miembro) => {
     const texto = filtro.toLowerCase();
-    const nroAfiliado = `${miembro.numeroIntegrate}`;
+    const nroAfiliado = `${miembro.numeroIntegrante}`;
     const coincideNombre = miembro.nombre?.toLowerCase().includes(texto);
     const coincideApellido = miembro.apellido?.toLowerCase().includes(texto);
     const coincideNumero = nroAfiliado.toLowerCase().includes(texto);
@@ -157,7 +157,7 @@ export default function BusquedaAfiliado() {
                   grupoFiltrado.map((miembro) => (
                     <tr key={miembro.id}>
                       <td>
-                        {miembro.numeroGrupoFamiliar}-{miembro.numeroIntegrate}
+                        {miembro.numeroGrupoFamiliar}-{miembro.numeroIntegrante}
                       </td>
                       <td>{miembro.parentesco}</td>
                       <td>{miembro.nombre}</td>
