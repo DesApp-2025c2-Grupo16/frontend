@@ -140,10 +140,10 @@ export default function BusquedaAfiliado() {
               <thead style={{ background: "#242424", color: "white" }}>
                 <tr>
                   <th style={{ width: "12%" }}>N° Afiliado</th>
-                  <th style={{ width: "21%" }}>Clasificación</th>
-                  <th style={{ width: "21%" }}>Nombre</th>
-                  <th style={{ width: "21%" }}>Apellido</th>
-                  <th style={{ width: "25%" }}>Acciones</th>
+                  <th style={{ width: "18%" }}>Clasificación</th>
+                  <th style={{ width: "17%" }}>Nombre</th>
+                  <th style={{ width: "17%" }}>Apellido</th>
+                  <th style={{ width: "36%" }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>

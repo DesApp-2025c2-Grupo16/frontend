@@ -222,7 +222,7 @@ export default function Situaciones() {
 
         <p>
           <strong>N° Afiliado:</strong>{" "}
-          {afiliado.numeroGrupoFamiliar}-{afiliado.numeroIntegrate}
+          {afiliado.numeroGrupoFamiliar}-{afiliado.numeroIntegrante}
         </p>
       </div>
 
