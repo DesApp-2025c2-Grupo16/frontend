@@ -7,7 +7,7 @@ export default function SolicitudesAutorizaciones() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filtro, setFiltro] = useState("todos");
+  const [filtro, setFiltro] = useState("nuevos");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const navigate = useNavigate();
 
@@ -55,7 +55,7 @@ export default function SolicitudesAutorizaciones() {
   const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
   const solicitudesFiltradas = solicitudes
-    .filter(r => filtro === "todos" ? true : r.estado.toLowerCase() === filtro.toLowerCase())
+    .filter(r => filtro === "nuevos" ? (r.estado === "Recibido" || r.estado == "En análisis") : r.estado.toLowerCase() === filtro.toLowerCase())
     .filter(r =>
       (r.Afiliado && `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase().includes(filtroBusqueda.toLowerCase())) ||
       (r.asunto && r.asunto.toLowerCase().includes(filtroBusqueda.toLowerCase()))
@@ -109,9 +109,9 @@ export default function SolicitudesAutorizaciones() {
             </button>
           ))}
 
-          {filtro !== "todos" && (
+          {filtro !== "nuevos" && (
             <button
-              onClick={() => setFiltro("todos")}
+              onClick={() => setFiltro("nuevos")}
               style={{
                 backgroundColor: "#242424",
                 border: "none",

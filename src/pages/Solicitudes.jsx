@@ -6,7 +6,7 @@ export default function SolicitudesReintegros() {
   const [reintegros, setReintegros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filtro, setFiltro] = useState("todos");
+  const [filtro, setFiltro] = useState("nuevos");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const navigate = useNavigate();
 
@@ -55,7 +55,7 @@ export default function SolicitudesReintegros() {
   const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
   const reintegrosFiltrados = reintegros
-    .filter((r) => (filtro === "todos" ? true : r.estado.toLowerCase() === filtro.toLowerCase()))
+    .filter((r) => (filtro === "nuevos" ? (r.estado === "Recibido" || r.estado == "En análisis") : r.estado.toLowerCase() === filtro.toLowerCase()))
     .filter(
       (r) =>
         r.asunto.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
@@ -120,9 +120,9 @@ export default function SolicitudesReintegros() {
             </button>
           ))}
 
-          {filtro !== "todos" && (
+          {filtro !== "nuevos" && (
             <button
-              onClick={() => setFiltro("todos")}
+              onClick={() => setFiltro("nuevos")}
               style={{
                 backgroundColor: "#242424",
                 border: "none",

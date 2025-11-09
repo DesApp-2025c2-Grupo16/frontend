@@ -63,13 +63,11 @@ export default function DetalleSolicitudRecetas() {
       const body = { estado };
 
       if (estado === "Aprobado") {
-        body.observacion = "Aprobado sin observaciones";
-      } else {
         if (!comentarioOpcional || comentarioOpcional.trim() === "") {
           alert("Debes escribir una observación antes de continuar.");
           return;
         }
-        body.observacion = comentarioOpcional.trim();
+        body.motivoEstado = comentarioOpcional.trim();
       }
 
       const response = await fetch(
@@ -188,8 +186,7 @@ export default function DetalleSolicitudRecetas() {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      estado: "En análisis",
-                      observacion: "En análisis sin observaciones",
+                      estado: "En análisis"
                     }),
                   });
                 } catch (error) {
