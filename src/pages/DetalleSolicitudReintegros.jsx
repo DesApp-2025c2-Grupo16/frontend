@@ -14,7 +14,7 @@ export default function DetalleSolicitudReintegros() {
   useEffect(() => {
     const fetchReintegros = async () => {
       try {
-        const response = await fetch("http://localhost:3001/reintegros/1"); // Esto se debe cambiar por el ID del prestador logueado
+        const response = await fetch("http://localhost:3001/reintegros/1"); // ID prestador logueado
         const data = await response.json();
         const reintegro = data.find((r) => r.id === parseInt(id));
         setSolicitud(reintegro || null);
@@ -80,19 +80,23 @@ export default function DetalleSolicitudReintegros() {
         throw new Error(errData.message || "Error al actualizar el estado");
       }
 
-      const actualizado = await response.json();
-      console.log("Reintegro actualizado:", actualizado);
-
       alert(`Solicitud marcada como ${estado}`);
       cerrarModal();
-      navigate("/solicitudes");
+      navigate("/solicitudes/reintegros");
+
     } catch (error) {
       console.error(error);
       alert("Hubo un error al actualizar el estado");
     }
   };
 
-  const requiereComentario = (accion) => accion === "Observado" || accion === "Rechazado";
+  const requiereComentario = (accion) =>
+    accion === "Observado" || accion === "Rechazado";
+
+  const solicitudFinalizada =
+    solicitud.estado === "Aprobado" ||
+    solicitud.estado === "Observado" ||
+    solicitud.estado === "Rechazado";
 
   return (
     <div className="mt-4">
@@ -171,43 +175,49 @@ export default function DetalleSolicitudReintegros() {
         <h5 style={{ color: "#000" }}>Observaciones</h5>
         <p>{solicitud.observacion || "Sin observaciones"}</p>
 
-        <div className="mt-4 d-flex justify-content-around">
-          <button className="btn btn-success" onClick={() => abrirModal("Aprobado")}>
-            Aprobar
-          </button>
-          <button className="btn btn-warning" onClick={() => abrirModal("Observado")}>
-            Observar
-          </button>
-          <button className="btn btn-danger" onClick={() => abrirModal("Rechazado")}>
-            Rechazar
-          </button>
-        </div>
+        {/* Solo se muestran botones si no está finalizada */}
+        {!solicitudFinalizada && (
+          <div className="mt-5 d-flex justify-content-around">
+            <button className="btn btn-success" onClick={() => abrirModal("Aprobado")}>
+              Aprobar
+            </button>
+            <button className="btn btn-warning" onClick={() => abrirModal("Observado")}>
+              Observar
+            </button>
+            <button className="btn btn-danger" onClick={() => abrirModal("Rechazado")}>
+              Rechazar
+            </button>
+          </div>
+        )}
 
         <div className="text-center mt-4">
-          <button 
-            className="btn btn-dark" 
-            onClick={async () => {
-              // Si la solicitud está en estado "Recibido", la pasamos a "En análisis"
-              if (solicitud.estado === "Recibido") {
-                try {
-                  await fetch(`http://localhost:3001/reintegros/${solicitud.id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                      estado: "En análisis"
-                    }),
-                  });
-                } catch (error) {
-                  console.error("Error al actualizar estado:", error);
-                }
-              }
-              navigate("/solicitudes/reintegros");
-            }}
-          >
-              Volver a la bandeja
-          </button>
         </div>
       </div>
+
+      <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
+        <button
+          className="btn btn-dark"
+          onClick={async () => {
+            if (solicitud.estado === "Recibido") {
+              try {
+                await fetch(`http://localhost:3001/reintegros/${solicitud.id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    estado: "En análisis",
+                  }),
+                });
+              } catch (error) {
+                console.error("Error al actualizar estado:", error);
+              }
+            }
+            navigate("/solicitudes/reintegros");
+          }}
+        >
+          Volver a la bandeja
+        </button>
+      </div>
+
 
       {/* MODAL */}
       {showModal && (
@@ -232,7 +242,7 @@ export default function DetalleSolicitudReintegros() {
                   <>
                     <p>
                       Escribe el comentario para dejar en{" "}
-                      <strong>{accionConfirmar.toLowerCase()}</strong> esta solicitud:
+                      <strong>{accionConfirmar.toLowerCase()}</strong> la solicitud:
                     </p>
                     <textarea
                       className="form-control bg-white"

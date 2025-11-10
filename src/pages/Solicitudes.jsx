@@ -8,12 +8,18 @@ export default function SolicitudesReintegros() {
   const [error, setError] = useState("");
   const [filtro, setFiltro] = useState("nuevos");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
+  const [ordenFecha, setOrdenFecha] = useState(null);
+
+  // Nuevos filtros de fecha
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchReintegros = async () => {
       try {
-        const prestadorId = 1; // cambiar por el ID real
+        const prestadorId = 1;
         const response = await fetch(`http://localhost:3001/reintegros/${prestadorId}`);
 
         if (!response.ok) {
@@ -46,16 +52,20 @@ export default function SolicitudesReintegros() {
 
   const estados = [
     { label: "Recibido", color: "#b3b3b3" },
-    { label: "Observado", color: "#ff9c41" },
     { label: "En análisis", color: "#1d4ed8" },
+    { label: "Observado", color: "#ff9c41" },
     { label: "Aprobado", color: "#22c55e" },
     { label: "Rechazado", color: "#ef4444" },
   ];
 
   const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
-  const reintegrosFiltrados = reintegros
-    .filter((r) => (filtro === "nuevos" ? (r.estado === "Recibido" || r.estado == "En análisis") : r.estado.toLowerCase() === filtro.toLowerCase()))
+  let reintegrosFiltrados = reintegros
+    .filter((r) =>
+      filtro === "nuevos"
+        ? r.estado === "Recibido" || r.estado === "En análisis"
+        : r.estado.toLowerCase() === filtro.toLowerCase()
+    )
     .filter(
       (r) =>
         r.asunto.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
@@ -63,23 +73,39 @@ export default function SolicitudesReintegros() {
           `${r.Afiliado.nombre} ${r.Afiliado.apellido}`
             .toLowerCase()
             .includes(filtroBusqueda.toLowerCase()))
-    )
-    .sort((a, b) => {
-      // Ordenar por estado según el orden definido
+    );
+
+  if (fechaDesde) {
+    reintegrosFiltrados = reintegrosFiltrados.filter(
+      (r) => new Date(r.fecha) >= new Date(fechaDesde)
+    );
+  }
+
+  if (fechaHasta) {
+    reintegrosFiltrados = reintegrosFiltrados.filter(
+      (r) => new Date(r.fecha) <= new Date(fechaHasta)
+    );
+  }
+
+  if (ordenFecha === "desc") {
+    reintegrosFiltrados = reintegrosFiltrados.sort(
+      (a, b) => new Date(b.fecha) - new Date(a.fecha)
+    );
+  } else if (ordenFecha === "asc") {
+    reintegrosFiltrados = reintegrosFiltrados.sort(
+      (a, b) => new Date(a.fecha) - new Date(b.fecha)
+    );
+  } else {
+    reintegrosFiltrados = reintegrosFiltrados.sort((a, b) => {
       const ordenA = ordenEstados.indexOf(a.estado);
       const ordenB = ordenEstados.indexOf(b.estado);
-
       if (ordenA !== ordenB) return ordenA - ordenB;
-
-      // Si el estado es igual, ordenar por fecha más reciente
-      const fechaA = new Date(a.fecha);
-      const fechaB = new Date(b.fecha);
-      return fechaB - fechaA; // más reciente primero
+      return new Date(b.fecha) - new Date(a.fecha);
     });
+  }
 
   return (
     <div className="mt-4">
-      {/* TÍTULO */}
       <h2
         className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
         style={{
@@ -96,7 +122,6 @@ export default function SolicitudesReintegros() {
 
       <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
 
-      {/* FILTROS Y BÚSQUEDA */}
       <div
         className="d-flex justify-content-between flex-wrap"
         style={{ width: "90%", margin: "5px auto", alignItems: "center" }}
@@ -152,9 +177,54 @@ export default function SolicitudesReintegros() {
         />
       </div>
 
-      {/* TABLA */}
+      {/* Filtro de fechas */}
       <div
-        className="mt-3"
+        className="d-flex gap-2 mt-3"
+        style={{ width: "90%", margin: "5px auto", alignItems: "center" }}
+      >
+        <div>
+          <label style={{ color: "black", fontWeight: 600 }}>
+            <span style={{ marginRight: "10px" }}>Desde:</span>
+            <input
+              type="date"
+              value={fechaDesde}
+              onChange={(e) => setFechaDesde(e.target.value)}
+              style={{
+                borderRadius: "10px",
+                border: "3px solid #242424",
+                padding: "5px",
+                outline: "none",
+                backgroundColor: "#b3b3b3",
+                color: "white",
+                fontWeight: "bold"
+              }}
+            />
+          </label>
+        </div>
+
+        <div>
+          <label style={{ color: "black", fontWeight: 600 }}>
+            <span style={{ marginRight: "10px" }}>Hasta:</span>
+            <input
+              type="date"
+              value={fechaHasta}
+              onChange={(e) => setFechaHasta(e.target.value)}
+              style={{
+                borderRadius: "10px",
+                border: "3px solid #242424",
+                padding: "5px",
+                outline: "none",
+                backgroundColor: "#b3b3b3",
+                color: "white",
+                fontWeight: "bold"
+              }}
+            />
+          </label>
+        </div>
+      </div>
+
+      <div
+        className="mt-4"
         style={{
           borderRadius: "20px",
           overflow: "hidden",
@@ -172,31 +242,40 @@ export default function SolicitudesReintegros() {
               <th style={{ padding: "12px 15px" }}>Asunto</th>
               <th style={{ padding: "12px 15px" }}>Afiliado</th>
               <th style={{ padding: "12px 15px" }}>Estado</th>
-              <th style={{ padding: "12px 15px" }}>Fecha</th>
+
+              <th
+                style={{ padding: "12px 15px", cursor: "pointer" }}
+                onClick={() => setOrdenFecha((prev) => (prev === "asc" ? null : "asc"))}
+              >
+                Fecha {ordenFecha === "desc" ? "↓" : ordenFecha === "asc" ? "↑" : ""}
+              </th>
             </tr>
           </thead>
 
           <tbody>
+            {reintegrosFiltrados.length === 0 && (
+              <tr>
+                <td colSpan={5} style={{ padding: "20px", textAlign: "center", color: "#555" }}>
+                  No se encuentran solicitudes con este filtro.
+                </td>
+              </tr>
+            )}
+
             {reintegrosFiltrados.map((r) => (
               <tr
                 key={r.id}
                 style={{
-                  cursor:
-                    r.estado === "Recibido" || r.estado === "En análisis"
-                      ? "pointer" : "",
-                  opacity:
-                    r.estado === "Recibido" || r.estado === "En análisis" ? 1 : 0.6,
+                  cursor: "pointer",
                   borderBottom: "1px solid #ddd",
+                  opacity: r.estado === "Recibido" || r.estado === "En análisis" ? 1 : 0.5,
                 }}
-                onClick={() => {
-                  if (r.estado === "Recibido" || r.estado === "En análisis") {
-                    navigate(`/solicitudes/reintegros/${r.id}`);
-                  }
-                }}
+                onClick={() => navigate(`/solicitudes/reintegros/${r.id}`)}
               >
                 <td style={{ padding: "10px 15px" }}>{r.solicitud || `#${r.id}`}</td>
                 <td style={{ padding: "10px 15px" }}>{r.asunto}</td>
-                <td style={{ padding: "10px 15px" }}>{r.Afiliado.nombre} {r.Afiliado.apellido}</td>
+                <td style={{ padding: "10px 15px" }}>
+                  {r.Afiliado.nombre} {r.Afiliado.apellido}
+                </td>
                 <td style={{ padding: "10px 15px" }}>
                   <span
                     className="px-2 py-1 rounded-pill"
@@ -225,12 +304,6 @@ export default function SolicitudesReintegros() {
             ))}
           </tbody>
         </table>
-
-        {/* {reintegrosFiltrados.length === 0 && (
-          <div className="text-center text-muted py-4">
-            No hay solicitudes de reintegro registradas.
-          </div>
-        )} */}
       </div>
     </div>
   );
