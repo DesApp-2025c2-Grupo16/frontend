@@ -1,49 +1,52 @@
-import { useMemo, useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-const toYMD = (d) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+export default function CalendarMonth({ turnos = {}, onChangeMes, anio, mes }) {
+  const navigate = useNavigate();
 
-export default function CalendarMonth({ turnos = [], onSelectTurno }) {
-  const today = new Date();
-  const [month, setMonth] = useState(toYMD(today));
+  // usamos año y mes recibidos del padre
+  const [year, setYear] = useState(anio);
+  const [month, setMonth] = useState(mes - 1); // base 0
 
-  const { year, monIndex } = useMemo(() => {
-    const [y, m] = month.split("-").map(Number);
-    return { year: y, monIndex: m - 1 };
-  }, [month]);
+  useEffect(() => {
+    setYear(anio);
+    setMonth(mes - 1);
+  }, [anio, mes]);
 
-  // Generar 42 días (6 filas * 7 columnas) para cuadrícula uniforme
-  const days = useMemo(() => {
-    const first = new Date(year, monIndex, 1);
-    const last = new Date(year, monIndex + 1, 0);
-    const startPad = (first.getDay() + 6) % 7;
-    const cells = [];
-    for (let i = 0; i < 42; i++) {
-      const dayNum = i - startPad + 1;
-      cells.push(dayNum >= 1 && dayNum <= last.getDate() ? dayNum : 0);
-    }
-    return cells;
-  }, [year, monIndex]);
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  const startPad = (first.getDay() + 6) % 7;
 
-  const monthName = new Intl.DateTimeFormat("es-AR", {
+  const days = [];
+  for (let i = 0; i < 42; i++) {
+    const d = i - startPad + 1;
+    days.push(d >= 1 && d <= last.getDate() ? d : 0);
+  }
+
+  const nombreMes = new Intl.DateTimeFormat("es-AR", {
     month: "long",
     year: "numeric",
-  }).format(new Date(year, monIndex, 1));
+  }).format(new Date(year, month, 1));
+
+  const changeMonth = (delta) => {
+    const nueva = new Date(year, month + delta, 1);
+    setYear(nueva.getFullYear());
+    setMonth(nueva.getMonth());
+    if (onChangeMes)
+      onChangeMes(nueva.getFullYear(), nueva.getMonth() + 1);
+    console.log(
+      "Mes cambiado a:",
+      nueva.toLocaleString("es-AR", { month: "long", year: "numeric" })
+    );
+  };
 
   const week = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-  const changeMonth = (delta) => {
-    const d = new Date(year, monIndex + delta, 1);
-    setMonth(toYMD(d));
-  };
-
-  const turnosDelMes = useMemo(() => {
-    const ym = `${year}-${String(monIndex + 1).padStart(2, "0")}`;
-    return turnos.filter((t) => t.fecha.startsWith(ym));
-  }, [turnos, year, monIndex]);
-
   return (
-    <div className="card p-3 bg-dark text-light border-0 rounded-4 shadow-sm">
+    <div
+      key={`${year}-${month}`}
+      className="card p-3 bg-dark text-light border-0 rounded-4 shadow-sm"
+    >
       {/* Encabezado */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <button
@@ -52,7 +55,7 @@ export default function CalendarMonth({ turnos = [], onSelectTurno }) {
         >
           ‹
         </button>
-        <div className="fw-semibold text-uppercase">{monthName}</div>
+        <div className="fw-semibold text-uppercase">{nombreMes}</div>
         <button
           className="btn btn-outline-light btn-sm"
           onClick={() => changeMonth(1)}
@@ -61,7 +64,7 @@ export default function CalendarMonth({ turnos = [], onSelectTurno }) {
         </button>
       </div>
 
-      {/* Días de la semana */}
+      {/* Semana */}
       <div
         className="d-grid text-center fw-bold border-bottom pb-2 mb-2"
         style={{
@@ -74,7 +77,7 @@ export default function CalendarMonth({ turnos = [], onSelectTurno }) {
         ))}
       </div>
 
-      {/* Grilla del mes */}
+      {/* Días */}
       <div
         className="d-grid"
         style={{
@@ -85,63 +88,47 @@ export default function CalendarMonth({ turnos = [], onSelectTurno }) {
         }}
       >
         {days.map((d, i) => {
-          const fechaYMD = d
-            ? `${year}-${String(monIndex + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`
-            : null;
-
-          const turnosDelDia = d
-            ? turnosDelMes.filter((t) => t.fecha === fechaYMD)
-            : [];
+          const fechaYMD =
+            d > 0
+              ? `${year}-${String(month + 1).padStart(2, "0")}-${String(
+                  d
+                ).padStart(2, "0")}`
+              : null;
+          const cantidadTurnos = fechaYMD ? turnos[fechaYMD] || 0 : 0;
 
           return (
             <div
               key={i}
-              className="p-1 border border-secondary rounded-1"
+              className="p-1 border border-secondary rounded-1 position-relative"
               style={{
                 backgroundColor: "#1e1e1e",
                 display: "flex",
                 flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
                 overflow: "hidden",
+                minHeight: "80px",
               }}
             >
-              {/* Número del día */}
-              <div className="text-secondary small fw-bold mb-1 text-end pe-1">
+              <div
+                className="text-secondary small fw-bold position-absolute top-0 end-0 pe-1 pt-1"
+                style={{ fontSize: "0.8rem" }}
+              >
                 {d || ""}
               </div>
 
-              {/* Contenedor de turnos */}
-              <div
-                className="flex-grow-1 overflow-auto d-flex flex-column gap-1"
-                style={{ scrollbarWidth: "thin", paddingRight: "2px" }}
-              >
-                {turnosDelDia.map((t) => (
-                  <div
-                    key={t.id}
-                    className="small rounded px-1 py-1 turno-card text-truncate"
-                    style={{
-                      backgroundColor: "#f8f9fa",
-                      color: "#000",
-                      cursor: "pointer",
-                      fontSize: "0.8rem",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0d6efd";
-                      e.currentTarget.style.color = "#fff";
-                      e.currentTarget.style.boxShadow =
-                        "0 2px 6px rgba(0,0,0,0.3)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#f8f9fa";
-                      e.currentTarget.style.color = "#000";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                    onClick={() => onSelectTurno && onSelectTurno(t)}
-                  >
-                    {t.paciente}
-                  </div>
-                ))}
-              </div>
+              {cantidadTurnos > 0 && (
+                <button
+                  className="btn btn-sm btn-primary fw-bold px-3 py-1"
+                  style={{ fontSize: "0.9rem", borderRadius: "10px" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/turnosDelDia/${fechaYMD}`);
+                  }}
+                >
+                  {cantidadTurnos}
+                </button>
+              )}
             </div>
           );
         })}
