@@ -7,6 +7,11 @@ export default function TurnosDelDia({ username = "Prestador" }) {
   const [turnos, setTurnos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
+  const [descripcion, setDescripcion] = useState("");
+
   const prestadorId = 1;
 
   useEffect(() => {
@@ -18,7 +23,6 @@ export default function TurnosDelDia({ username = "Prestador" }) {
         if (!res.ok) throw new Error("No se pudieron cargar los turnos del día.");
         const data = await res.json();
 
-        // Traer los datos del afiliado
         const turnosConAfiliado = await Promise.all(
           data.map(async (t) => {
             try {
@@ -45,25 +49,75 @@ export default function TurnosDelDia({ username = "Prestador" }) {
     fetchTurnosDelDia();
   }, [fecha]);
 
-  /* 🔹 Formatear fecha (día completo) */
-  const formatearFecha = (fechaCompleta) => {
-    if (!fechaCompleta) return "";
-    const f = new Date(fechaCompleta);
-    return f.toLocaleDateString("es-AR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
-  /* 🔹 Obtener hora exacta desde el string (sin convertir a local) */
   const extraerHora = (fechaCompleta) => {
     if (!fechaCompleta) return "--:--";
     const match = fechaCompleta.match(/T(\d{2}:\d{2})/);
     return match ? match[1] : "--:--";
   };
 
+  const fechaTitulo = new Date(`${fecha}T12:00:00`).toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const abrirModal = (turno) => {
+    setTurnoSeleccionado({
+      turnoId: turno.id,
+      paciente: turno.afiliado
+        ? `${turno.afiliado.nombre} ${turno.afiliado.apellido}`
+        : `#${turno.AfiliadoId}`,
+      profesional: username,
+      fecha: turno.fecha.split("T")[0],
+      hora: extraerHora(turno.fecha),
+      especialidad: turno.especialidad || "General",
+      motivo: turno.descripcion || "No especificado",
+      afiliadoId: turno.AfiliadoId,
+    });
+
+    setDescripcion("");
+    setModalVisible(true);
+  };
+
+  const handleGuardarRegistro = async () => {
+    if (!turnoSeleccionado || !descripcion.trim()) {
+      alert("La descripción no puede estar vacía");
+      return;
+    }
+
+    const nuevaNota = {
+      descripcion,
+      motivo: turnoSeleccionado.motivo || "Sin motivo registrado",
+      doctor: turnoSeleccionado.profesional || "Profesional no indicado",
+      fecha: turnoSeleccionado.fecha,
+    };
+
+    try {
+      console.log("Enviando:", nuevaNota);
+
+      const res = await fetch(`http://localhost:3001/notas/${turnoSeleccionado.turnoId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevaNota),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        console.error("ERROR DEL BACK:", errData);
+        alert("No se pudo guardar la nota");
+        return;
+      }
+
+      alert("✅ Nota guardada");
+      setDescripcion("");
+      setModalVisible(false);
+    } catch (error) {
+      console.error("Error guardando nota:", error);
+    }
+  };
+
+  
   if (loading)
     return (
       <div className="text-center mt-5 text-secondary">
@@ -81,16 +135,8 @@ export default function TurnosDelDia({ username = "Prestador" }) {
       </div>
     );
 
-  const fechaTitulo = new Date(`${fecha}T12:00:00`).toLocaleDateString("es-AR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
   return (
     <div className="mt-4 text-center" style={{ fontFamily: "sans-serif" }}>
-      {/* Encabezado */}
       <h2
         className="fw-bold py-3 mx-auto rounded-pill"
         style={{
@@ -106,12 +152,10 @@ export default function TurnosDelDia({ username = "Prestador" }) {
 
       <hr className="border-dark border-5 rounded-pill mt-4" />
 
-      {/* Contenedor principal */}
       <div
         className="mt-4 mx-auto p-4 rounded"
         style={{
           width: "100%",
-          background: "#f7f7f7",
           textAlign: "left",
           color: "#1e1e1e",
         }}
@@ -136,7 +180,6 @@ export default function TurnosDelDia({ username = "Prestador" }) {
                   borderRadius: "15px",
                 }}
               >
-                {/* Descripción + hora en pastilla */}
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <h5 className="fw-bold text-dark mb-0">
                     {t.descripcion || "Turno sin descripción"}
@@ -150,7 +193,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
                 </div>
 
                 <p className="mb-1">
-                  <strong>Especialidad:</strong> {t.especialidad || "No indicada"}
+                  <strong>Motivo:</strong> {t.descripcion || "No indicada"}
                 </p>
                 <p className="mb-1">
                   <strong>Afiliado:</strong>{" "}
@@ -161,13 +204,21 @@ export default function TurnosDelDia({ username = "Prestador" }) {
                 <p className="mb-0">
                   <strong>Prestador:</strong> {username}
                 </p>
+
+                <div className="mt-3">
+                  <button
+                    className="btn btn-outline-dark btn-sm"
+                    onClick={() => abrirModal(t)}
+                  >
+                    Registrar consulta
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Botón volver */}
       <div className="my-4">
         <button
           className="btn btn-dark px-4 py-2 rounded-pill fw-bold"
@@ -176,6 +227,51 @@ export default function TurnosDelDia({ username = "Prestador" }) {
           Volver al calendario
         </button>
       </div>
+
+      {/* ✅ MODAL CON DATOS ALINEADOS A LA IZQUIERDA */}
+      {modalVisible && turnoSeleccionado && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+          style={{ backgroundColor: "rgba(0,0,0,0.6)", zIndex: 1050 }}
+        >
+          <div
+            className="bg-white p-4 rounded shadow-lg text-start"
+            style={{ width: "420px", maxWidth: "90%", color: "#212529" }}
+          >
+            <h5 className="fw-bold mb-3 text-dark text-center border-bottom pb-2">
+              Registrar Historia Clínica
+            </h5>
+
+            <p className="mb-1"><strong>Paciente:</strong> {turnoSeleccionado.paciente}</p>
+            <p className="mb-1"><strong>Profesional:</strong> {turnoSeleccionado.profesional}</p>
+            <p className="mb-1"><strong>Fecha:</strong> {turnoSeleccionado.fecha}</p>
+            <p className="mb-1"><strong>Hora:</strong> {turnoSeleccionado.hora}</p>
+            <p className="mb-1"><strong>Especialidad:</strong> {turnoSeleccionado.especialidad}</p>
+            <p className="mb-1"><strong>Motivo:</strong> {turnoSeleccionado.motivo}</p>
+
+            <hr />
+
+            <label className="form-label fw-bold text-dark">Descripción</label>
+            <textarea
+              className="form-control mb-3"
+              rows="4"
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              placeholder="Escriba aquí las observaciones del médico..."
+            />
+
+            <div className="d-flex justify-content-end">
+              <button className="btn btn-secondary me-2" onClick={() => setModalVisible(false)}>
+                Cerrar
+              </button>
+
+              <button className="btn btn-primary" onClick={handleGuardarRegistro}>
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

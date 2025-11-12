@@ -119,7 +119,6 @@ export default function HistoriaClinica() {
         className="mt-4 mx-auto p-4 rounded"
         style={{
           width: "100%",
-          background: "#f7f7f7",
           textAlign: "left",
           color: "#1e1e1e",
         }}

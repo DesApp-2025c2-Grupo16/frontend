@@ -34,10 +34,6 @@ export default function CalendarMonth({ turnos = {}, onChangeMes, anio, mes }) {
     setMonth(nueva.getMonth());
     if (onChangeMes)
       onChangeMes(nueva.getFullYear(), nueva.getMonth() + 1);
-    console.log(
-      "Mes cambiado a:",
-      nueva.toLocaleString("es-AR", { month: "long", year: "numeric" })
-    );
   };
 
   const week = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
