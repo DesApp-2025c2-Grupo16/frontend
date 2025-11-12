@@ -12,6 +12,8 @@ export default function TurnosDelDia({ username = "Prestador" }) {
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [descripcion, setDescripcion] = useState("");
 
+  const [q, setQ] = useState("");
+
   const prestadorId = 1;
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
           })
         );
 
-        setTurnos(turnosConAfiliado);
+        setTurnos(turnosConAfiliado.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
       } catch (err) {
         console.error(err);
         setError(err.message);
@@ -96,11 +98,14 @@ export default function TurnosDelDia({ username = "Prestador" }) {
     try {
       console.log("Enviando:", nuevaNota);
 
-      const res = await fetch(`http://localhost:3001/notas/${turnoSeleccionado.turnoId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nuevaNota),
-      });
+      const res = await fetch(
+        `http://localhost:3001/notas/${turnoSeleccionado.turnoId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(nuevaNota),
+        }
+      );
 
       if (!res.ok) {
         const errData = await res.json();
@@ -109,7 +114,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
         return;
       }
 
-      alert("✅ Nota guardada");
+      alert("Nota guardada");
       setDescripcion("");
       setModalVisible(false);
     } catch (error) {
@@ -117,7 +122,14 @@ export default function TurnosDelDia({ username = "Prestador" }) {
     }
   };
 
-  
+  // Filtrar por nombre del afiliado
+  const turnosFiltrados = turnos.filter((t) => {
+    const nombre = t.afiliado
+      ? `${t.afiliado.nombre} ${t.afiliado.apellido}`.toLowerCase()
+      : "";
+    return nombre.includes(q.toLowerCase());
+  });
+
   if (loading)
     return (
       <div className="text-center mt-5 text-secondary">
@@ -152,6 +164,39 @@ export default function TurnosDelDia({ username = "Prestador" }) {
 
       <hr className="border-dark border-5 rounded-pill mt-4" />
 
+      {/* BUSCADOR */}
+      <div
+        className="d-flex justify-content-center align-items-center mt-4"
+        style={{
+          border: "3px solid #1e1e1e",
+          borderRadius: "50px",
+          padding: "5px 10px",
+          width: "500px",
+          margin: "0 auto",
+          background: "#242424",
+        }}
+      >
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Buscar por afiliado..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          style={{
+            borderRadius: "50px",
+            marginRight: "10px",
+            background: "#242424",
+            color: "white",
+          }}
+        />
+      </div>
+
+      {turnosFiltrados.length === 0 && (
+        <p className="text-muted mt-3 text-center">
+          No se encontraron turnos de ese afiliado.
+        </p>
+      )}
+
       <div
         className="mt-4 mx-auto p-4 rounded"
         style={{
@@ -160,7 +205,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
           color: "#1e1e1e",
         }}
       >
-        {turnos.length === 0 ? (
+        {turnosFiltrados.length === 0 ? (
           <p className="text-muted text-center mb-0">
             No hay turnos registrados para este día.
           </p>
@@ -170,7 +215,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
               LISTADO DE TURNOS
             </h4>
 
-            {turnos.map((t) => (
+            {turnosFiltrados.map((t) => (
               <div
                 key={t.id}
                 className="mb-3 p-3 rounded shadow-sm"
@@ -205,12 +250,28 @@ export default function TurnosDelDia({ username = "Prestador" }) {
                   <strong>Prestador:</strong> {username}
                 </p>
 
-                <div className="mt-3">
+                <div className="mt-3 d-flex gap-2">
                   <button
                     className="btn btn-outline-dark btn-sm"
                     onClick={() => abrirModal(t)}
                   >
                     Registrar consulta
+                  </button>
+
+                  <button
+                   className="btn btn-sm fw-semibold"
+                    style={{
+                      backgroundColor: "#f5a623",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "5px 10px",
+                      minWidth: "120px",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                    }}
+                    onClick={() => navigate(`/historia-clinica/${t.AfiliadoId}`)}
+                  >
+                    Historia Clínica
                   </button>
                 </div>
               </div>
@@ -228,7 +289,6 @@ export default function TurnosDelDia({ username = "Prestador" }) {
         </button>
       </div>
 
-      {/* ✅ MODAL CON DATOS ALINEADOS A LA IZQUIERDA */}
       {modalVisible && turnoSeleccionado && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
