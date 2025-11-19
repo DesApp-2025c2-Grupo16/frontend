@@ -142,17 +142,8 @@ export default function SolicitudesRecetas() {
 
   return (
     <div className="mt-4">
-      <h2
-        className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
-        style={{
-          background: "#242424",
-          display: "block",
-          width: "90%",
-          textAlign: "center",
-          margin: "0 auto",
-          lineHeight: "50px",
-        }}
-      >
+      <h2 className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
+          style={{ background:"#242424", display:"block", width:"90%", textAlign:"center", margin:"0 auto", lineHeight:"50px" }}>
         SOLICITUDES - RECETAS
       </h2>
       <hr
@@ -165,21 +156,13 @@ export default function SolicitudesRecetas() {
         style={{ width: "90%", margin: "5px auto", alignItems: "center" }}
       >
         <div className="d-flex flex-wrap gap-1">
-          {estados.map((e) => (
-            <button
-              key={e.label}
-              onClick={() => setFiltro(e.label)}
+          {estados.map(e => (
+            <button key={e.label} onClick={() => setFiltro(e.label)}
               style={{
-                backgroundColor: e.color,
-                color: "white",
-                border: "none",
-                borderRadius: "25px",
-                padding: "5px 10px",
-                fontWeight: "bold",
-                boxShadow:
-                  filtro === e.label ? "0 0 0 3px #242424 inset" : "none",
-              }}
-            >
+                backgroundColor: e.color, color:"white", border:"none",
+                borderRadius:"25px", padding:"5px 10px", fontWeight:"bold",
+                boxShadow: filtro === e.label ? "0 0 0 3px #242424 inset" : "none",
+              }}>
               {e.label}
             </button>
           ))}
@@ -294,7 +277,7 @@ export default function SolicitudesRecetas() {
               </tr>
             )}
 
-            {/* 🔥 FIX: se usa currentItems, no filtradas */}
+            {/* FIX: se usa currentItems, no filtradas */}
             {currentItems.map((r) => (
               <tr
                 key={r.id}
