@@ -12,11 +12,21 @@ export default function SolicitudesReintegros() {
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const [ordenFecha, setOrdenFecha] = useState(null); // null | "asc" | "desc"
 
-  // Rango fechas (yyyy-mm-dd)
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
 
+  // === PAGINADO ===
+  const itemsPerPage = 10; // Cambiá acá si querés ver más por página
+  const [paginaActual, setPaginaActual] = useState(1);
+
   const navigate = useNavigate();
+
+  // Resetear página cuando cambia algún filtro
+  const resetPagina = () => setPaginaActual(1);
+
+  useEffect(() => {
+    resetPagina();
+  }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
 
   useEffect(() => {
     const fetchReintegros = async () => {
@@ -99,19 +109,11 @@ export default function SolicitudesReintegros() {
     });
   }
 
-  const toggleOrdenFecha = () =>
-    setOrdenFecha((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"));
-
-  const badgeStyle = (estado) => {
-    const base = {
-      Recibido: { color: "#555", background: "#e5e5e5" },
-      Observado: { color: "#ff9c41", background: "#fff3e6" },
-      "En análisis": { color: "#1d4ed8", background: "#e0e7ff" },
-      Aprobado: { color: "#22c55e", background: "#dcfce7" },
-      Rechazado: { color: "#ef4444", background: "#fee2e2" },
-    };
-    return base[estado] || {};
-  };
+  // === PAGINADO – Cálculo final ===
+  const totalPaginas = Math.ceil(reintegrosFiltrados.length / itemsPerPage);
+  const startIndex = (paginaActual - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const reintegrosPagina = reintegrosFiltrados.slice(startIndex, endIndex);
 
   return (
     <div className="mt-4">
@@ -123,7 +125,6 @@ export default function SolicitudesReintegros() {
           display: "block",
           width: "90%",
           textAlign: "center",
-          margin: "0 auto",
           lineHeight: "50px",
         }}
       >
@@ -132,7 +133,7 @@ export default function SolicitudesReintegros() {
 
       <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
 
-      {/* Filtros + búsqueda */}
+      {/* Filtros principales */}
       <div
         className="d-flex justify-content-between flex-wrap"
         style={{ width: "90%", margin: "5px auto", alignItems: "center" }}
@@ -184,42 +185,50 @@ export default function SolicitudesReintegros() {
         />
       </div>
 
-      {/* Fechas */}
-      <div className="d-flex gap-2 mt-3" style={{ width: "90%", margin: "5px auto", alignItems: "center" }}>
-        <label style={{ color: "black", fontWeight: 600 }}>
-          <span style={{ marginRight: 10 }}>Desde:</span>
-          <input
-            type="date"
-            value={fechaDesde}
-            onChange={(e) => setFechaDesde(e.target.value)}
-            style={{
-              borderRadius: 10,
-              border: "3px solid #242424",
-              padding: 5,
-              outline: "none",
-              backgroundColor: "#b3b3b3",
-              color: "white",
-              fontWeight: "bold",
-            }}
-          />
-        </label>
-        <label style={{ color: "black", fontWeight: 600 }}>
-          <span style={{ marginRight: 10 }}>Hasta:</span>
-          <input
-            type="date"
-            value={fechaHasta}
-            onChange={(e) => setFechaHasta(e.target.value)}
-            style={{
-              borderRadius: 10,
-              border: "3px solid #242424",
-              padding: 5,
-              outline: "none",
-              backgroundColor: "#b3b3b3",
-              color: "white",
-              fontWeight: "bold",
-            }}
-          />
-        </label>
+      {/* Filtro de fechas */}
+      <div
+        className="d-flex gap-2 mt-3"
+        style={{ width: "90%", margin: "5px auto", alignItems: "center" }}
+      >
+        <div>
+          <label style={{ color: "black", fontWeight: 600 }}>
+            <span style={{ marginRight: "10px" }}>Desde:</span>
+            <input
+              type="date"
+              value={fechaDesde}
+              onChange={(e) => setFechaDesde(e.target.value)}
+              style={{
+                borderRadius: "10px",
+                border: "3px solid #242424",
+                padding: "5px",
+                outline: "none",
+                backgroundColor: "#b3b3b3",
+                color: "white",
+                fontWeight: "bold",
+              }}
+            />
+          </label>
+        </div>
+
+        <div>
+          <label style={{ color: "black", fontWeight: 600 }}>
+            <span style={{ marginRight: "10px" }}>Hasta:</span>
+            <input
+              type="date"
+              value={fechaHasta}
+              onChange={(e) => setFechaHasta(e.target.value)}
+              style={{
+                borderRadius: "10px",
+                border: "3px solid #242424",
+                padding: "5px",
+                outline: "none",
+                backgroundColor: "#b3b3b3",
+                color: "white",
+                fontWeight: "bold",
+              }}
+            />
+          </label>
+        </div>
       </div>
 
       {/* Tabla */}
@@ -244,15 +253,16 @@ export default function SolicitudesReintegros() {
               <th style={{ padding: "12px 15px" }}>Estado</th>
               <th
                 style={{ padding: "12px 15px", cursor: "pointer" }}
-                onClick={toggleOrdenFecha}
-                title="Ordenar por Fecha"
+                onClick={() => setOrdenFecha((prev) =>
+                  prev === "asc" ? "desc" : prev === "desc" ? null : "asc"
+                )}
               >
                 Fecha {ordenFecha === "desc" ? "↓" : ordenFecha === "asc" ? "↑" : ""}
               </th>
             </tr>
           </thead>
           <tbody>
-            {sorted.length === 0 && (
+            {reintegrosPagina.length === 0 && (
               <tr>
                 <td colSpan={5} style={{ padding: 20, textAlign: "center", color: "#555" }}>
                   No se encuentran solicitudes con este filtro.
@@ -260,7 +270,7 @@ export default function SolicitudesReintegros() {
               </tr>
             )}
 
-            {sorted.map((r) => (
+            {reintegrosPagina.map((r) => (
               <tr
                 key={r.id}
                 style={{
@@ -288,6 +298,66 @@ export default function SolicitudesReintegros() {
           </tbody>
         </table>
       </div>
+
+      {/* === PAGINADO (estilo nuevo) === */}
+      {totalPaginas > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", gap: "10px", margin: "20px 0" }}>
+
+          {/* Botón anterior */}
+          <button
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(paginaActual - 1)}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
+              background: paginaActual === 1 ? "#ccc" : "#242424",
+              color: "white",
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer"
+            }}
+          >
+            ‹
+          </button>
+
+          {/* Números */}
+          {[...Array(totalPaginas).keys()].map((i) => {
+            const page = i + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => setPaginaActual(page)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: "10px",
+                  border: "2px solid #242424",
+                  background: paginaActual === page ? "#242424" : "white",
+                  color: paginaActual === page ? "white" : "#242424",
+                  cursor: "pointer",
+                  fontWeight: "bold"
+                }}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          {/* Botón siguiente */}
+          <button
+            disabled={paginaActual === totalPaginas}
+            onClick={() => setPaginaActual(paginaActual + 1)}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
+              background: paginaActual === totalPaginas ? "#ccc" : "#242424",
+              color: "white",
+              cursor: paginaActual === totalPaginas ? "not-allowed" : "pointer"
+            }}
+          >
+            ›
+          </button>
+        </div>
+      )}
     </div>
   );
 }

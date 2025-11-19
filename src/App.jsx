@@ -17,6 +17,7 @@ import DetalleSolicitudRecetas from "./pages/DetalleSolicitudRecetas.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import { SolicitudesProvider } from "./components/SolicitudesContext.jsx";
 import Messages from "./pages/Messages.jsx";
+import TurnosDelDia from "./pages/TurnosDelDia.jsx";
 
 
 export default function App() {
@@ -61,6 +62,8 @@ export default function App() {
 
           { /* Turnos */ }
           <Route path="/turnos" element={<Turnos />} />
+          <Route path="/turnosDelDia/:fecha" element={<TurnosDelDia />} />
+
 
           {/*  Mensajería */}
           <Route path="/mensajes" element={<Messages />} />

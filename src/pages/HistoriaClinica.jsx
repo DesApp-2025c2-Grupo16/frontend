@@ -24,8 +24,12 @@ export default function HistoriaClinica() {
         if (!resNotas.ok)
           throw new Error("No se pudieron cargar las notas clínicas");
         const dataNotas = await resNotas.json();
-        setNotas(dataNotas);
-        setFilteredNotas(dataNotas);
+        const notasOrdenadas = [...dataNotas].sort((a, b) => {
+          return new Date(b.fecha) - new Date(a.fecha);
+        });
+        setNotas(notasOrdenadas);
+        setFilteredNotas(notasOrdenadas);
+
       } catch (err) {
         console.error(err);
         setError(err.message);
@@ -119,7 +123,6 @@ export default function HistoriaClinica() {
         className="mt-4 mx-auto p-4 rounded"
         style={{
           width: "100%",
-          background: "#f7f7f7",
           textAlign: "left",
           color: "#1e1e1e",
         }}

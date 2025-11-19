@@ -158,7 +158,7 @@ export default function DetalleSolicitudAutorizacion() {
           onClick={async () => {
             if (solicitud.estado === "Recibido") {
               try {
-                await fetch(`http://localhost:3001/reintegros/${solicitud.id}`, {
+                await fetch(`http://localhost:3001/autorizaciones/${solicitud.id}`, {
                   method: "PATCH",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -169,7 +169,7 @@ export default function DetalleSolicitudAutorizacion() {
                 console.error("Error al actualizar estado:", error);
               }
             }
-            navigate("/solicitudes/reintegros");
+            navigate("/solicitudes/autorizaciones");
           }}
         >
           Volver a la bandeja

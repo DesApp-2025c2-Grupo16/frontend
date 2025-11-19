@@ -159,7 +159,7 @@ export default function DetalleSolicitudRecetas() {
           onClick={async () => {
             if (solicitud.estado === "Recibido") {
               try {
-                await fetch(`http://localhost:3001/reintegros/${solicitud.id}`, {
+                await fetch(`http://localhost:3001/recetas/${solicitud.id}`, {
                   method: "PATCH",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -170,7 +170,7 @@ export default function DetalleSolicitudRecetas() {
                 console.error("Error al actualizar estado:", error);
               }
             }
-            navigate("/solicitudes/reintegros");
+            navigate("/solicitudes/recetas");
           }}
         >
           Volver a la bandeja
@@ -203,7 +203,8 @@ export default function DetalleSolicitudRecetas() {
                   </>
                 ) : (
                   <p>
-                    ¿Estás seguro de <strong>{accionConfirmar.toLowerCase()}</strong> esta solicitud?
+                    ¿Estás seguro de dejar en{" "}
+                    <strong>{accionConfirmar.toLowerCase()}</strong> esta solicitud?
                   </p>
                 )}
               </div>

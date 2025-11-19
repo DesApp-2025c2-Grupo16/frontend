@@ -16,6 +16,10 @@ export default function SolicitudesAutorizaciones() {
   const [fechaHasta, setFechaHasta] = useState("");
   const [ordenFecha, setOrdenFecha] = useState(null); // null | "asc" | "desc"
 
+  // PAGINADO
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
+
   const prestadorId = 1; // TODO: traer del auth/contexto
 
   useEffect(() => {
@@ -37,6 +41,11 @@ export default function SolicitudesAutorizaciones() {
     };
     fetchAutorizaciones();
   }, [prestadorId]);
+
+  // Resetear paginado si cambian filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
 
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
@@ -90,6 +99,12 @@ export default function SolicitudesAutorizaciones() {
       return new Date(b.fecha) - new Date(a.fecha);
     });
   }
+
+  // === PAGINADO ===
+  const totalItems = filtradas.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentItems = filtradas.slice(startIndex, startIndex + itemsPerPage);
 
   const badgeStyle = (estado) => {
     const base = {
@@ -180,13 +195,13 @@ export default function SolicitudesAutorizaciones() {
             </tr>
           </thead>
           <tbody>
-            {filtradas.length === 0 && (
+            {currentItems.length === 0 && (
               <tr><td colSpan={5} style={{ padding:20, textAlign:"center", color:"#555" }}>
                 No se encuentran solicitudes con este filtro.
               </td></tr>
             )}
 
-            {filtradas.map(r => (
+            {currentItems.map(r => (
               <tr key={r.id}
                   style={{
                     cursor: (r.estado === "Recibido" || r.estado === "En análisis") ? "pointer" : "default",
@@ -216,6 +231,67 @@ export default function SolicitudesAutorizaciones() {
           </tbody>
         </table>
       </div>
+
+      {/* PAGINADO */}
+      {totalPages > 1 && (
+        <div style={{ display:"flex", justifyContent:"center", gap:"10px", margin:"20px 0" }}>
+
+          {/* Botón anterior */}
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+            style={{
+              padding:"5px 12px",
+              borderRadius:"10px",
+              border:"2px solid #242424",
+              background: currentPage === 1 ? "#ccc" : "#242424",
+              color:"white",
+              cursor: currentPage === 1 ? "not-allowed" : "pointer"
+            }}
+          >
+            ‹
+          </button>
+
+          {/* Números */}
+          {[...Array(totalPages).keys()].map(i => {
+            const page = i + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                style={{
+                  padding:"5px 12px",
+                  borderRadius:"10px",
+                  border:"2px solid #242424",
+                  background: currentPage === page ? "#242424" : "white",
+                  color: currentPage === page ? "white" : "#242424",
+                  cursor:"pointer",
+                  fontWeight:"bold"
+                }}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          {/* Botón siguiente */}
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
+            style={{
+              padding:"5px 12px",
+              borderRadius:"10px",
+              border:"2px solid #242424",
+              background: currentPage === totalPages ? "#ccc" : "#242424",
+              color:"white",
+              cursor: currentPage === totalPages ? "not-allowed" : "pointer"
+            }}
+          >
+            ›
+          </button>
+
+        </div>
+      )}
     </div>
   );
 }
