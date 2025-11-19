@@ -14,6 +14,10 @@ export default function TurnosDelDia({ username = "Prestador" }) {
 
   const [q, setQ] = useState("");
 
+  // === PAGINADO ===
+  const [paginaActual, setPaginaActual] = useState(1);
+  const itemsPerPage = 5;
+
   const prestadorId = 1;
 
   useEffect(() => {
@@ -22,7 +26,9 @@ export default function TurnosDelDia({ username = "Prestador" }) {
         const res = await fetch(
           `http://localhost:3001/turnos/${prestadorId}/fecha/${fecha}`
         );
-        if (!res.ok) throw new Error("No se pudieron cargar los turnos del día.");
+        if (!res.ok)
+          throw new Error("No se pudieron cargar los turnos del día.");
+
         const data = await res.json();
 
         const turnosConAfiliado = await Promise.all(
@@ -40,7 +46,11 @@ export default function TurnosDelDia({ username = "Prestador" }) {
           })
         );
 
-        setTurnos(turnosConAfiliado.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
+        setTurnos(
+          turnosConAfiliado.sort(
+            (a, b) => new Date(a.fecha) - new Date(b.fecha)
+          )
+        );
       } catch (err) {
         console.error(err);
         setError(err.message);
@@ -57,12 +67,15 @@ export default function TurnosDelDia({ username = "Prestador" }) {
     return match ? match[1] : "--:--";
   };
 
-  const fechaTitulo = new Date(`${fecha}T12:00:00`).toLocaleDateString("es-AR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const fechaTitulo = new Date(`${fecha}T12:00:00`).toLocaleDateString(
+    "es-AR",
+    {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }
+  );
 
   const abrirModal = (turno) => {
     setTurnoSeleccionado({
@@ -96,8 +109,6 @@ export default function TurnosDelDia({ username = "Prestador" }) {
     };
 
     try {
-      console.log("Enviando:", nuevaNota);
-
       const res = await fetch(
         `http://localhost:3001/notas/${turnoSeleccionado.turnoId}`,
         {
@@ -114,7 +125,25 @@ export default function TurnosDelDia({ username = "Prestador" }) {
         return;
       }
 
-      alert("Nota guardada");
+      await fetch(
+        `http://localhost:3001/turnos/${turnoSeleccionado.turnoId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ estado: "Atendido" }),
+        }
+      );
+
+      setTurnos((prev) =>
+        prev.map((t) =>
+          t.id === turnoSeleccionado.turnoId
+            ? { ...t, estado: "Atendido" }
+            : t
+        )
+      );
+
+      alert("Consulta registrada");
+
       setDescripcion("");
       setModalVisible(false);
     } catch (error) {
@@ -122,13 +151,24 @@ export default function TurnosDelDia({ username = "Prestador" }) {
     }
   };
 
-  // Filtrar por nombre del afiliado
+  // === FILTRO DE BÚSQUEDA ===
   const turnosFiltrados = turnos.filter((t) => {
     const nombre = t.afiliado
       ? `${t.afiliado.nombre} ${t.afiliado.apellido}`.toLowerCase()
       : "";
     return nombre.includes(q.toLowerCase());
   });
+
+  // Resetear paginado cuando cambia la búsqueda
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [q]);
+
+  // === PAGINADO ===
+  const totalPaginas = Math.ceil(turnosFiltrados.length / itemsPerPage);
+  const startIndex = (paginaActual - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const turnosPagina = turnosFiltrados.slice(startIndex, endIndex);
 
   if (loading)
     return (
@@ -215,13 +255,13 @@ export default function TurnosDelDia({ username = "Prestador" }) {
               LISTADO DE TURNOS
             </h4>
 
-            {turnosFiltrados.map((t) => (
+            {turnosPagina.map((t) => (
               <div
                 key={t.id}
-                className="mb-3 p-3 rounded shadow-sm"
+                className="mb-3 p-3 rounded shadow-sm position-relative"
                 style={{
-                  background: "white",
-                  border: "2px solid #ddd",
+                  background: t.estado === "Atendido" ? "#d4f8d4" : "white",
+                  border: t.estado === "Atendido" ? "2px solid #9ddf9d" : "2px solid #ddd",
                   borderRadius: "15px",
                 }}
               >
@@ -254,12 +294,19 @@ export default function TurnosDelDia({ username = "Prestador" }) {
                   <button
                     className="btn btn-outline-dark btn-sm"
                     onClick={() => abrirModal(t)}
+                    disabled={t.estado === "Atendido"}
+                    style={{
+                      opacity: t.estado === "Atendido" ? 0.5 : 1,
+                      pointerEvents: t.estado === "Atendido" ? "none" : "auto",
+                    }}
                   >
-                    Registrar consulta
+                    {t.estado === "Atendido"
+                      ? "Consulta registrada"
+                      : "Registrar consulta"}
                   </button>
 
                   <button
-                   className="btn btn-sm fw-semibold"
+                    className="btn btn-sm fw-semibold"
                     style={{
                       backgroundColor: "#f5a623",
                       color: "#fff",
@@ -269,16 +316,101 @@ export default function TurnosDelDia({ username = "Prestador" }) {
                       minWidth: "120px",
                       boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
                     }}
-                    onClick={() => navigate(`/historia-clinica/${t.AfiliadoId}`)}
+                    onClick={() =>
+                      navigate(`/historia-clinica/${t.AfiliadoId}`)
+                    }
                   >
                     Historia Clínica
                   </button>
                 </div>
+
+                {t.estado === "Atendido" && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: "8px",
+                      right: "15px",
+                      fontWeight: "bold",
+                      color: "#0a4d0a",
+                      fontSize: "0.95rem",
+                      opacity: 0.9,
+                    }}
+                  >
+                    Atendido
+                  </span>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* === PAGINADO === */}
+      {totalPaginas > 1 && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "10px",
+            margin: "20px 0",
+          }}
+        >
+          <button
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(paginaActual - 1)}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
+              background: paginaActual === 1 ? "#ccc" : "#242424",
+              color: "white",
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer",
+            }}
+          >
+            ‹
+          </button>
+
+          {[...Array(totalPaginas).keys()].map((i) => {
+            const page = i + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => setPaginaActual(page)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: "10px",
+                  border: "2px solid #242424",
+                  background:
+                    paginaActual === page ? "#242424" : "white",
+                  color:
+                    paginaActual === page ? "white" : "#242424",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          <button
+            disabled={paginaActual === totalPaginas}
+            onClick={() => setPaginaActual(paginaActual + 1)}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
+              background:
+                paginaActual === totalPaginas ? "#ccc" : "#242424",
+              color: "white",
+              cursor:
+                paginaActual === totalPaginas ? "not-allowed" : "pointer",
+            }}
+          >
+            ›
+          </button>
+        </div>
+      )}
 
       <div className="my-4">
         <button
@@ -302,12 +434,24 @@ export default function TurnosDelDia({ username = "Prestador" }) {
               Registrar Historia Clínica
             </h5>
 
-            <p className="mb-1"><strong>Paciente:</strong> {turnoSeleccionado.paciente}</p>
-            <p className="mb-1"><strong>Profesional:</strong> {turnoSeleccionado.profesional}</p>
-            <p className="mb-1"><strong>Fecha:</strong> {turnoSeleccionado.fecha}</p>
-            <p className="mb-1"><strong>Hora:</strong> {turnoSeleccionado.hora}</p>
-            <p className="mb-1"><strong>Especialidad:</strong> {turnoSeleccionado.especialidad}</p>
-            <p className="mb-1"><strong>Motivo:</strong> {turnoSeleccionado.motivo}</p>
+            <p className="mb-1">
+              <strong>Paciente:</strong> {turnoSeleccionado.paciente}
+            </p>
+            <p className="mb-1">
+              <strong>Profesional:</strong> {turnoSeleccionado.profesional}
+            </p>
+            <p className="mb-1">
+              <strong>Fecha:</strong> {turnoSeleccionado.fecha}
+            </p>
+            <p className="mb-1">
+              <strong>Hora:</strong> {turnoSeleccionado.hora}
+            </p>
+            <p className="mb-1">
+              <strong>Especialidad:</strong> {turnoSeleccionado.especialidad}
+            </p>
+            <p className="mb-1">
+              <strong>Motivo:</strong> {turnoSeleccionado.motivo}
+            </p>
 
             <hr />
 
@@ -321,11 +465,17 @@ export default function TurnosDelDia({ username = "Prestador" }) {
             />
 
             <div className="d-flex justify-content-end">
-              <button className="btn btn-secondary me-2" onClick={() => setModalVisible(false)}>
+              <button
+                className="btn btn-secondary me-2"
+                onClick={() => setModalVisible(false)}
+              >
                 Cerrar
               </button>
 
-              <button className="btn btn-primary" onClick={handleGuardarRegistro}>
+              <button
+                className="btn btn-primary"
+                onClick={handleGuardarRegistro}
+              >
                 Guardar
               </button>
             </div>

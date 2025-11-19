@@ -24,8 +24,12 @@ export default function HistoriaClinica() {
         if (!resNotas.ok)
           throw new Error("No se pudieron cargar las notas clínicas");
         const dataNotas = await resNotas.json();
-        setNotas(dataNotas);
-        setFilteredNotas(dataNotas);
+        const notasOrdenadas = [...dataNotas].sort((a, b) => {
+          return new Date(b.fecha) - new Date(a.fecha);
+        });
+        setNotas(notasOrdenadas);
+        setFilteredNotas(notasOrdenadas);
+
       } catch (err) {
         console.error(err);
         setError(err.message);

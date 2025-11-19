@@ -10,11 +10,21 @@ export default function SolicitudesReintegros() {
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const [ordenFecha, setOrdenFecha] = useState(null);
 
-  // Nuevos filtros de fecha
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
 
+  // === PAGINADO ===
+  const itemsPerPage = 10; // Cambiá acá si querés ver más por página
+  const [paginaActual, setPaginaActual] = useState(1);
+
   const navigate = useNavigate();
+
+  // Resetear página cuando cambia algún filtro
+  const resetPagina = () => setPaginaActual(1);
+
+  useEffect(() => {
+    resetPagina();
+  }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
 
   useEffect(() => {
     const fetchReintegros = async () => {
@@ -104,6 +114,12 @@ export default function SolicitudesReintegros() {
     });
   }
 
+  // === PAGINADO – Cálculo final ===
+  const totalPaginas = Math.ceil(reintegrosFiltrados.length / itemsPerPage);
+  const startIndex = (paginaActual - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const reintegrosPagina = reintegrosFiltrados.slice(startIndex, endIndex);
+
   return (
     <div className="mt-4">
       <h2
@@ -113,7 +129,6 @@ export default function SolicitudesReintegros() {
           display: "block",
           width: "90%",
           textAlign: "center",
-          margin: "0 auto",
           lineHeight: "50px",
         }}
       >
@@ -122,6 +137,7 @@ export default function SolicitudesReintegros() {
 
       <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
 
+      {/* Filtros principales */}
       <div
         className="d-flex justify-content-between flex-wrap"
         style={{ width: "90%", margin: "5px auto", alignItems: "center" }}
@@ -196,7 +212,7 @@ export default function SolicitudesReintegros() {
                 outline: "none",
                 backgroundColor: "#b3b3b3",
                 color: "white",
-                fontWeight: "bold"
+                fontWeight: "bold",
               }}
             />
           </label>
@@ -216,13 +232,14 @@ export default function SolicitudesReintegros() {
                 outline: "none",
                 backgroundColor: "#b3b3b3",
                 color: "white",
-                fontWeight: "bold"
+                fontWeight: "bold",
               }}
             />
           </label>
         </div>
       </div>
 
+      {/* Tabla */}
       <div
         className="mt-4"
         style={{
@@ -245,7 +262,9 @@ export default function SolicitudesReintegros() {
 
               <th
                 style={{ padding: "12px 15px", cursor: "pointer" }}
-                onClick={() => setOrdenFecha((prev) => (prev === "asc" ? null : "asc"))}
+                onClick={() => setOrdenFecha((prev) =>
+                  prev === "asc" ? "desc" : prev === "desc" ? null : "asc"
+                )}
               >
                 Fecha {ordenFecha === "desc" ? "↓" : ordenFecha === "asc" ? "↑" : ""}
               </th>
@@ -253,7 +272,7 @@ export default function SolicitudesReintegros() {
           </thead>
 
           <tbody>
-            {reintegrosFiltrados.length === 0 && (
+            {reintegrosPagina.length === 0 && (
               <tr>
                 <td colSpan={5} style={{ padding: "20px", textAlign: "center", color: "#555" }}>
                   No se encuentran solicitudes con este filtro.
@@ -261,7 +280,7 @@ export default function SolicitudesReintegros() {
               </tr>
             )}
 
-            {reintegrosFiltrados.map((r) => (
+            {reintegrosPagina.map((r) => (
               <tr
                 key={r.id}
                 style={{
@@ -305,6 +324,66 @@ export default function SolicitudesReintegros() {
           </tbody>
         </table>
       </div>
+
+      {/* === PAGINADO (estilo nuevo) === */}
+      {totalPaginas > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", gap: "10px", margin: "20px 0" }}>
+
+          {/* Botón anterior */}
+          <button
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(paginaActual - 1)}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
+              background: paginaActual === 1 ? "#ccc" : "#242424",
+              color: "white",
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer"
+            }}
+          >
+            ‹
+          </button>
+
+          {/* Números */}
+          {[...Array(totalPaginas).keys()].map((i) => {
+            const page = i + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => setPaginaActual(page)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: "10px",
+                  border: "2px solid #242424",
+                  background: paginaActual === page ? "#242424" : "white",
+                  color: paginaActual === page ? "white" : "#242424",
+                  cursor: "pointer",
+                  fontWeight: "bold"
+                }}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          {/* Botón siguiente */}
+          <button
+            disabled={paginaActual === totalPaginas}
+            onClick={() => setPaginaActual(paginaActual + 1)}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
+              background: paginaActual === totalPaginas ? "#ccc" : "#242424",
+              color: "white",
+              cursor: paginaActual === totalPaginas ? "not-allowed" : "pointer"
+            }}
+          >
+            ›
+          </button>
+        </div>
+      )}
     </div>
   );
 }
