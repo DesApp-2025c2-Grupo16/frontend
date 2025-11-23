@@ -41,7 +41,6 @@ export default function Dashboard() {
     lunes.setDate(lunes.getDate() + 7 * diff)
     domingo.setDate(domingo.getDate() + 7 * diff)
     setCurrentWeekInterval({lunes, domingo})
-    //console.log(dias)
   }
 
   const nextWeek = () => {changeCurrentWeek(1)};
@@ -50,17 +49,13 @@ export default function Dashboard() {
   useEffect(()=>{
     const fetchData = async () =>{
       try {
-        //console.log("fetch")
         const resRegistros = await fetch(`http://localhost:3001/registrosSolicitudes/1?minFecha=${currentWeekInterval.lunes}&maxFecha=${currentWeekInterval.domingo}`)
         if(resRegistros.status === 404){
-          //console.log('mal')
           setRegistros([])
         } else {
-          //console.log('bien')
           const dataRegistros = await resRegistros.json()
           setRegistros(dataRegistros)
         }
-        console.log(registros)
       } catch (error) {
         
       }
@@ -130,7 +125,6 @@ export default function Dashboard() {
   };
 
   const data = mockData[tipos[currentPage]];
-  console.log(data)
   const totalResueltas = data.reduce(
     (acc, d) => acc + d.Aprobado + d.Rechazado,
     0

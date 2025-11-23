@@ -80,6 +80,17 @@ export default function DetalleSolicitudReintegros() {
         throw new Error(errData.message || "Error al actualizar el estado");
       }
 
+      await fetch('http://localhost:3001/registrosSolicitudes/', {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: "reintegro",
+          estado: estado,
+          fecha: new Date(),
+          PrestadorId: 1
+        })
+      })
+
       alert(`Solicitud marcada como ${estado}`);
       cerrarModal();
       navigate("/solicitudes/reintegros");
