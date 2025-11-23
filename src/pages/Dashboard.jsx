@@ -57,7 +57,7 @@ export default function Dashboard() {
           setRegistros(dataRegistros)
         }
       } catch (error) {
-        
+        console.error(error)
       }
     } 
     fetchData()
@@ -88,13 +88,6 @@ export default function Dashboard() {
       }
     })
     return lista
-  }
-
-  const procesados = {
-    REINTEGROS: dias.map((dia, i)=>({
-      dia,
-      Recibido: generarLista('reintegro','Recibido')[i]
-    }))
   }
 
   const mockData = {
