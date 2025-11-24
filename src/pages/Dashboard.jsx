@@ -17,6 +17,9 @@ export default function Dashboard() {
   const tipos = ["REINTEGROS", "AUTORIZACIONES", "RECETAS"];
   const [currentPage, setCurrentPage] = useState(0);
   const [registros, setRegistros] = useState([]);
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
 
   const getCurrentWeekInterval = ()=>{
     const hoy = new Date()
@@ -46,10 +49,31 @@ export default function Dashboard() {
   const nextWeek = () => {changeCurrentWeek(1)};
   const previousWeek = () => {changeCurrentWeek(-1)};
 
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
+
   useEffect(()=>{
     const fetchData = async () =>{
       try {
-        const resRegistros = await fetch(`http://localhost:3001/registrosSolicitudes/1?minFecha=${currentWeekInterval.lunes}&maxFecha=${currentWeekInterval.domingo}`)
+        const resRegistros = await fetch(`http://localhost:3001/registrosSolicitudes/${prestadorId}?minFecha=${currentWeekInterval.lunes}&maxFecha=${currentWeekInterval.domingo}`)
         if(resRegistros.status === 404){
           setRegistros([])
         } else {
@@ -61,7 +85,7 @@ export default function Dashboard() {
       }
     } 
     fetchData()
-  }, [currentWeekInterval])
+  }, [currentWeekInterval, prestadorId])
 
   const handleNext = () => setCurrentPage((prev) => (prev + 1) % tipos.length);
   const handlePrev = () => setCurrentPage((prev) => (prev - 1 + tipos.length) % tipos.length);
@@ -274,6 +298,22 @@ export default function Dashboard() {
           boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
         }}
       >
+        {/*Selector de medico si es centro */}
+        {user.esCentro && <div className="row justify-content-center align-items-center"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value)}>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i}>{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
+
         <div className="row px-2">
           {/* === IZQUIERDA: LÍNEAS === */}
           <div className="col-12 col-lg-7 mb-4">
