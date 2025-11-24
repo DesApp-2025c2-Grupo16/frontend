@@ -14,7 +14,7 @@ export default function Header() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setUser(parsed.username || "Usuario");
+        setUser(parsed.nombre || "Usuario");
       } catch {
         setUser("Usuario");
       }

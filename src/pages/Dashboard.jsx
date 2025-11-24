@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -16,50 +16,132 @@ import {
 export default function Dashboard() {
   const tipos = ["REINTEGROS", "AUTORIZACIONES", "RECETAS"];
   const [currentPage, setCurrentPage] = useState(0);
+  const [registros, setRegistros] = useState([]);
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
+
+  const getCurrentWeekInterval = ()=>{
+    const hoy = new Date()
+    hoy.setUTCHours(0)
+    hoy.setUTCMinutes(0)
+    hoy.setUTCSeconds(0)
+    hoy.setUTCMilliseconds(0)
+    const numeroDeDia = hoy.getDay()
+    const diferenciaAlLunes = numeroDeDia === 0 ? -6 : 1-numeroDeDia
+    const lunes = new Date(hoy)
+    lunes.setDate(lunes.getDate() + diferenciaAlLunes)
+    const domingo = new Date(lunes)
+    domingo.setDate(lunes.getDate() + 6)
+    return {lunes, domingo}
+  }
+
+  const [currentWeekInterval, setCurrentWeekInterval] = useState(getCurrentWeekInterval())
+
+  const changeCurrentWeek = (diff) => {
+    const lunes  = new Date(currentWeekInterval.lunes)
+    const domingo  = new Date(currentWeekInterval.domingo)
+    lunes.setDate(lunes.getDate() + 7 * diff)
+    domingo.setDate(domingo.getDate() + 7 * diff)
+    setCurrentWeekInterval({lunes, domingo})
+  }
+
+  const nextWeek = () => {changeCurrentWeek(1)};
+  const previousWeek = () => {changeCurrentWeek(-1)};
+
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
+
+  useEffect(()=>{
+    const fetchData = async () =>{
+      try {
+        const resRegistros = await fetch(`http://localhost:3001/registrosSolicitudes/${prestadorId}?minFecha=${currentWeekInterval.lunes}&maxFecha=${currentWeekInterval.domingo}`)
+        if(resRegistros.status === 404){
+          setRegistros([])
+        } else {
+          const dataRegistros = await resRegistros.json()
+          setRegistros(dataRegistros)
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    } 
+    fetchData()
+  }, [currentWeekInterval, prestadorId])
 
   const handleNext = () => setCurrentPage((prev) => (prev + 1) % tipos.length);
-  const handlePrev = () =>
-    setCurrentPage((prev) => (prev - 1 + tipos.length) % tipos.length);
+  const handlePrev = () => setCurrentPage((prev) => (prev - 1 + tipos.length) % tipos.length);
 
-  const dias = [
-    "14/09/25",
-    "15/09/25",
-    "16/09/25",
-    "17/09/25",
-    "18/09/25",
-    "19/09/25",
-    "20/09/25",
-  ];
+  const generarListaDias = ()=>{
+    const lista = []
+    const copiaLunes = new Date(currentWeekInterval.lunes)
+    for(let i = 0; i<7; i++){
+      lista[i] = copiaLunes.toLocaleDateString()
+      copiaLunes.setDate(copiaLunes.getDate()+1)
+    }
+    return lista
+  }
+
+  const dias = generarListaDias()
+
+  const generarLista = (tipo, estado)=>{
+    const lista = [0,0,0,0,0,0,0]
+    registros.map((registro)=>{
+      if(registro.tipo === tipo && registro.estado === estado){
+        const fecha = new Date(registro.fecha)
+        const dia = fecha.getDay()
+        lista[dia] +=1
+      }
+    })
+    return lista
+  }
 
   const mockData = {
     REINTEGROS: dias.map((dia, i) => ({
       dia,
-      Recibido: [8, 6, 10, 8, 5, 7, 6][i],
-      Análisis: [5, 4, 6, 5, 7, 5, 4][i],
-      Observado: [2, 3, 1, 2, 2, 3, 2][i],
-      Aprobado: [4, 5, 3, 4, 5, 5, 6][i],
-      Rechazado: [1, 1, 0, 2, 1, 1, 0][i],
+      Recibido:   generarLista('reintegro','Recibido')[i],
+      Análisis:   generarLista('reintegro','En análisis')[i],
+      Observado:  generarLista('reintegro','Observado')[i],
+      Aprobado:   generarLista('reintegro','Aprobado')[i],
+      Rechazado:  generarLista('reintegro','Rechazado')[i],
     })),
     AUTORIZACIONES: dias.map((dia, i) => ({
       dia,
-      Recibido: [12, 9, 8, 7, 6, 5, 6][i],
-      Análisis: [6, 5, 5, 4, 6, 5, 6][i],
-      Observado: [3, 2, 3, 2, 3, 3, 2][i],
-      Aprobado: [5, 6, 7, 8, 7, 6, 8][i],
-      Rechazado: [2, 1, 2, 1, 2, 1, 2][i],
+      Recibido:   generarLista('autorizacion','Recibido')[i],
+      Análisis:   generarLista('autorizacion','En análisis')[i],
+      Observado:  generarLista('autorizacion','Observado')[i],
+      Aprobado:   generarLista('autorizacion','Aprobado')[i],
+      Rechazado:  generarLista('autorizacion','Rechazado')[i],
     })),
     RECETAS: dias.map((dia, i) => ({
       dia,
-      Recibido: [4, 5, 5, 6, 5, 4, 5][i],
-      Análisis: [3, 3, 4, 3, 4, 3, 3][i],
-      Observado: [1, 1, 2, 2, 1, 1, 1][i],
-      Aprobado: [6, 7, 8, 7, 8, 7, 8][i],
-      Rechazado: [0, 1, 1, 0, 1, 1, 0][i],
+      Recibido:   generarLista('receta','Recibido')[i],
+      Análisis:   generarLista('receta','En análisis')[i],
+      Observado:  generarLista('receta','Observado')[i],
+      Aprobado:   generarLista('receta','Aprobado')[i],
+      Rechazado:  generarLista('receta','Rechazado')[i],
     })),
   };
 
   const data = mockData[tipos[currentPage]];
-
   const totalResueltas = data.reduce(
     (acc, d) => acc + d.Aprobado + d.Rechazado,
     0
@@ -158,7 +240,7 @@ export default function Dashboard() {
   const [activeIndex, setActiveIndex] = useState(null);
 
   return (
-    <div className="mt-4">
+    <div className="mt-1">
       <h2
         className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
         style={{
@@ -176,22 +258,31 @@ export default function Dashboard() {
       <hr className="border-dark border-5 rounded-pill mt-4" />
 
       <div
+        className="row"
         style={{
           background: "#242424",
-          color: "white",
-          fontWeight: "bold",
-          fontSize: "30px",
           borderRadius: "20px 20px 0 0",
-          margin: "60px auto 0 auto",
+          margin: "24px auto 0 auto",
           width: "95%",
           maxWidth: "1200px",
-          textAlign: "center",
-          padding: "10px 0",
-          letterSpacing: "1px",
+          padding: "10px 0",  
           boxShadow: "0 5px 6px rgba(0,0,0,0.4)",
         }}
       >
-        {tipos[currentPage]}
+        {/* Cambiar tipo de solicitudes izquierda*/}
+        <div className="col d-flex justify-content-center align-items-center">
+          <button className="btn btn-light rounded-circle" onClick={handlePrev}>←</button> 
+        </div>
+
+        {/* tipo de solicitud actual */}
+        <div className="col d-flex justify-content-center align-items-center">
+          <span style={{fontWeight: "bold", color: "white", fontSize: "30px"}} > {tipos[currentPage]} </span>
+        </div>
+
+        {/* Cambiar tipo de solicitudes derecha*/}
+        <div className="col d-flex justify-content-center align-items-center">
+          <button className="btn btn-light rounded-circle" onClick={handleNext}>→</button>
+        </div>
       </div>
 
       <div
@@ -207,33 +298,41 @@ export default function Dashboard() {
           boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
         }}
       >
-        <div className="row mt-4 px-2">
+        {/*Selector de medico si es centro */}
+        {user.esCentro && <div className="row justify-content-center align-items-center"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value)}>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i}>{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
+
+        <div className="row px-2">
           {/* === IZQUIERDA: LÍNEAS === */}
           <div className="col-12 col-lg-7 mb-4">
             <div style={{ padding: "10px" }}>
-              <div className="d-flex justify-content-center gap-4 mb-5 flex-wrap">
-                {[
-                  { label: "Recibido", color: COLORS.Recibido },
-                  { label: "Análisis", color: COLORS.Análisis },
-                  { label: "Observado", color: COLORS.Observado },
-                  { label: "Aprobado", color: COLORS.Aprobado },
-                  { label: "Rechazado", color: COLORS.Rechazado },
-                ].map((item) => (
-                  <div key={item.label} className="d-flex align-items-center gap-2">
-                    <span
-                      style={{
-                        display: "inline-block",
-                        width: "12px",
-                        height: "12px",
-                        borderRadius: "50%",
-                        background: item.color,
-                      }}
-                    ></span>
-                    <span style={{ fontWeight: "bold" }}>{item.label}</span>
-                  </div>
-                ))}
+              
+              {/* Selector de semana */}
+              <div className="d-flex justify-content-center align-items-center gap-4">
+                <button className="btn btn-dark rounded-circle" onClick={previousWeek}>
+                  ←
+                </button>
+                <span className="rounded-pill  text-bg-dark fw-bold py-2 px-5 ">
+                  {currentWeekInterval.lunes.toLocaleDateString()} - {currentWeekInterval.domingo.toLocaleDateString()}
+                  </span>
+                <button className="btn btn-dark rounded-circle" onClick={nextWeek}>
+                  →
+                </button>
               </div>
 
+              {/* Grafico */}
               <div
                 style={{
                   width: "100%",
@@ -268,14 +367,29 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="d-flex justify-content-center mt-3 gap-4">
-                <button className="btn btn-dark rounded-circle" onClick={handlePrev}>
-                  ←
-                </button>
-                <button className="btn btn-dark rounded-circle" onClick={handleNext}>
-                  →
-                </button>
+              <div className="d-flex justify-content-center gap-4 mb-5 flex-wrap">
+                {[
+                  { label: "Recibido", color: COLORS.Recibido },
+                  { label: "Análisis", color: COLORS.Análisis },
+                  { label: "Observado", color: COLORS.Observado },
+                  { label: "Aprobado", color: COLORS.Aprobado },
+                  { label: "Rechazado", color: COLORS.Rechazado },
+                ].map((item) => (
+                  <div key={item.label} className="d-flex align-items-center gap-2">
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: "12px",
+                        height: "12px",
+                        borderRadius: "50%",
+                        background: item.color,
+                      }}
+                    ></span>
+                    <span style={{ fontWeight: "bold" }}>{item.label}</span>
+                  </div>
+                ))}
               </div>
+
             </div>
           </div>
 
