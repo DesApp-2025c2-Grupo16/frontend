@@ -5,13 +5,31 @@ import background from "../assets/Prestadores.png"; // opcional, fondo con líne
 
 export default function Login() {
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [invalid, setInvalid] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username.trim()) {
-      localStorage.setItem("auth_user", JSON.stringify({ username }));
-      navigate("/dashboard");
+    try {
+      const res = await fetch('http://localhost:3001/prestadores/validar', {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contraseña: password,
+          nombre: username
+        })
+      })
+      if(res.status === 401){
+        setInvalid(true)
+      } else if(res.ok){
+        setInvalid(false)
+        const data = await res.json()
+        localStorage.setItem("auth_user", JSON.stringify(data))
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error(error)
     }
   };
 
@@ -68,12 +86,28 @@ export default function Login() {
               </label>
               <input
                 type="text"
-                className="form-control"
-                placeholder="ej. j.prestes"
+                className="form-control mb-2"
+                placeholder="Ej.: J.Prestes"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
               />
+
+              <label className="form-label text-dark fw-semibold">
+                Contraseña
+              </label>
+              <input
+                type="password"
+                className="form-control"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div style={{minHeight: "30px"}}>
+            {invalid && <span className="text-danger">Contraseña invalida</span>}
             </div>
 
             <button
