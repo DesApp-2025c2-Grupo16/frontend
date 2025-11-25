@@ -8,7 +8,7 @@ import Turnos from "./pages/Turnos.jsx";
 import GrupoFamiliarHistoriaClinica from "./pages/GrupoFamiliarHistoriaClinica.jsx";
 import HistoriaClinica from "./pages/HistoriaClinica.jsx";
 import Situaciones from "./pages/Situaciones.jsx";
-import SolicitudesReintegros from "./pages/Solicitudes.jsx";
+import SolicitudesReintegros from "./pages/SolicitudesReintegros.jsx";
 import DetalleSolicitudReintegros from "./pages/DetalleSolicitudReintegros.jsx";
 import SolicitudesAutorizaciones from "./pages/SolicitudesAutorizaciones.jsx";
 import DetalleSolicitudAutorizacion from "./pages/DetalleSolicitudAutorizacion.jsx";
