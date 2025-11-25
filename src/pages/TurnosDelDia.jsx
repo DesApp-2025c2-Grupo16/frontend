@@ -12,45 +12,60 @@ export default function TurnosDelDia({ username = "Prestador" }) {
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [descripcion, setDescripcion] = useState("");
 
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
+
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
+
   const [q, setQ] = useState("");
 
   // === PAGINADO ===
   const [paginaActual, setPaginaActual] = useState(1);
   const itemsPerPage = 5;
 
-  const prestadorId = 1;
 
   useEffect(() => {
     const fetchTurnosDelDia = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:3001/turnos/${prestadorId}/fecha/${fecha}`
-        );
-        if (!res.ok)
-          throw new Error("No se pudieron cargar los turnos del día.");
-
-        const data = await res.json();
-
-        const turnosConAfiliado = await Promise.all(
-          data.map(async (t) => {
-            try {
-              const afRes = await fetch(
-                `http://localhost:3001/afiliados/${t.AfiliadoId}`
-              );
-              if (!afRes.ok) throw new Error();
-              const afData = await afRes.json();
-              return { ...t, afiliado: afData };
-            } catch {
-              return { ...t, afiliado: null };
-            }
-          })
-        );
-
-        setTurnos(
-          turnosConAfiliado.sort(
-            (a, b) => new Date(a.fecha) - new Date(b.fecha)
-          )
-        );
+        const id = parseInt(prestadorId)
+        if(!isNaN(prestadorId)){
+          const res = await fetch(
+            `http://localhost:3001/turnos/${prestadorId}/fecha/${fecha}`
+          );
+          if (!res.ok)
+            throw new Error("No se pudieron cargar los turnos del día.");
+  
+          const data = await res.json();
+  
+          setTurnos(
+            data.sort(
+              (a, b) => { 
+                console.log(a, b)
+                return new Date(a.fecha) - new Date(b.fecha)
+              }
+            )
+          );
+        }
       } catch (err) {
         console.error(err);
         setError(err.message);
@@ -59,7 +74,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
       }
     };
     fetchTurnosDelDia();
-  }, [fecha]);
+  }, [fecha, prestadorId]);
 
   const extraerHora = (fechaCompleta) => {
     if (!fechaCompleta) return "--:--";

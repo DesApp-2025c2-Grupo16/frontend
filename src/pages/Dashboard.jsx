@@ -73,12 +73,15 @@ export default function Dashboard() {
   useEffect(()=>{
     const fetchData = async () =>{
       try {
-        const resRegistros = await fetch(`http://localhost:3001/registrosSolicitudes/${prestadorId}?minFecha=${currentWeekInterval.lunes}&maxFecha=${currentWeekInterval.domingo}`)
-        if(resRegistros.status === 404){
-          setRegistros([])
-        } else {
-          const dataRegistros = await resRegistros.json()
-          setRegistros(dataRegistros)
+        const id = parseInt(prestadorId)
+        if(!isNaN(id)){
+          const resRegistros = await fetch(`http://localhost:3001/registrosSolicitudes/${id}?minFecha=${currentWeekInterval.lunes}&maxFecha=${currentWeekInterval.domingo}`)
+          if(resRegistros.status === 404){
+            setRegistros([])
+          } else {
+            const dataRegistros = await resRegistros.json()
+            setRegistros(dataRegistros)
+          }
         }
       } catch (error) {
         console.error(error)
