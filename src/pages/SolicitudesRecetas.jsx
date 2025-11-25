@@ -10,7 +10,7 @@ export default function SolicitudesRecetas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [filtro, setFiltro] = useState("nuevos");
+  const [filtro, setFiltro] = useState("Recibido,En análisis");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
@@ -51,7 +51,7 @@ export default function SolicitudesRecetas() {
         setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
-          const res = await fetch(`http://localhost:3001/recetas/prestador/${id}`);
+          const res = await fetch(`http://localhost:3001/recetas/prestador/${id}/${filtro}`);
           if (!res.ok) {
             const msg = await res.json().catch(() => ({}));
             throw new Error(msg?.message || "No se pudieron cargar las recetas");
@@ -66,7 +66,7 @@ export default function SolicitudesRecetas() {
       }
     };
     fetchRecetas();
-  }, [prestadorId]);
+  }, [prestadorId, filtro]);
 
   // Resetear paginado si cambian filtros
   useEffect(() => {
@@ -100,20 +100,21 @@ export default function SolicitudesRecetas() {
     "Rechazado",
   ];
 
-  let filtradas = (recetas || [])
-    .filter((r) =>
-      filtro === "nuevos"
-        ? r.estado === "Recibido" || r.estado === "En análisis"
-        : (r.estado || "").toLowerCase() === filtro.toLowerCase()
-    )
-    .filter((r) => {
-      const t = (filtroBusqueda || "").toLowerCase();
-      const fullName = r.Afiliado
-        ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase()
-        : "";
-      const asunto = (r.asunto || "").toLowerCase();
-      return fullName.includes(t) || asunto.includes(t);
-    });
+  let filtradas = recetas
+  //let filtradas = (recetas || [])
+  //  .filter((r) =>
+  //    filtro === "Recibido,En análisis"
+  //      ? r.estado === "Recibido" || r.estado === "En análisis"
+  //      : (r.estado || "").toLowerCase() === filtro.toLowerCase()
+  //  )
+  //  .filter((r) => {
+  //    const t = (filtroBusqueda || "").toLowerCase();
+  //    const fullName = r.Afiliado
+  //      ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase()
+  //      : "";
+  //    const asunto = (r.asunto || "").toLowerCase();
+  //    return fullName.includes(t) || asunto.includes(t);
+  //  });
 
   if (fechaDesde)
     filtradas = filtradas.filter(
@@ -189,16 +190,16 @@ export default function SolicitudesRecetas() {
               {e.label}
             </button>
           ))}
-          {filtro !== "nuevos" && (
+          {filtro !== "Recibido,En análisis" && (
             <button
-              onClick={() => setFiltro("nuevos")}
+              onClick={() => setFiltro("Recibido,En análisis")}
               style={{
                 backgroundColor: "#242424",
                 border: "none",
                 borderRadius: "25px",
                 padding: "5px 10px",
               }}
-              title="Mostrar nuevos (Recibido / En análisis)"
+              title="Mostrar Recibido,En análisis (Recibido / En análisis)"
             >
               <img src={reinicio} alt="Todos" style={{ width: 20, height: 20 }} />
             </button>

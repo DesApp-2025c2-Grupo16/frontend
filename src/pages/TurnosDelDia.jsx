@@ -59,10 +59,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
   
           setTurnos(
             data.sort(
-              (a, b) => { 
-                console.log(a, b)
-                return new Date(a.fecha) - new Date(b.fecha)
-              }
+              (a, b) => new Date(a.fecha) - new Date(b.fecha)
             )
           );
         }

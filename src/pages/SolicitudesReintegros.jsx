@@ -10,7 +10,7 @@ export default function SolicitudesReintegros() {
   const [error, setError] = useState("");
 
   // Filtros
-  const [filtro, setFiltro] = useState("nuevos");
+  const [filtro, setFiltro] = useState("Recibido,En análisis");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const [ordenFecha, setOrdenFecha] = useState(null);
   const [fechaDesde, setFechaDesde] = useState("");
@@ -56,7 +56,7 @@ export default function SolicitudesReintegros() {
         setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
-          const res = await fetch(`http://localhost:3001/reintegros/prestador/${prestadorId}`);
+          const res = await fetch(`http://localhost:3001/reintegros/prestador/${id}/${filtro}`);
           if (!res.ok) {
             const msg = await res.json().catch(() => ({}));
             throw new Error(msg?.message || "Error al cargar los reintegros");
@@ -72,7 +72,7 @@ export default function SolicitudesReintegros() {
     };
 
     fetchReintegros();
-  }, [prestadorId]);
+  }, [prestadorId, filtro]);
 
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error)
@@ -96,19 +96,20 @@ export default function SolicitudesReintegros() {
   const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
   let reintegrosFiltrados = reintegros
-    .filter((r) =>
-      filtro === "nuevos"
-        ? r.estado === "Recibido" || r.estado === "En análisis"
-        : r.estado.toLowerCase() === filtro.toLowerCase()
-    )
-    .filter(
-      (r) =>
-        r.asunto.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
-        (r.Afiliado &&
-          `${r.Afiliado.nombre} ${r.Afiliado.apellido}`
-            .toLowerCase()
-            .includes(filtroBusqueda.toLowerCase()))
-    );
+  //let reintegrosFiltrados = reintegros
+  //  .filter((r) =>
+  //    filtro === "Recibido,En análisis"
+  //      ? r.estado === "Recibido" || r.estado === "En análisis"
+  //      : r.estado.toLowerCase() === filtro.toLowerCase()
+  //  )
+  //  .filter(
+  //    (r) =>
+  //      r.asunto.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
+  //      (r.Afiliado &&
+  //        `${r.Afiliado.nombre} ${r.Afiliado.apellido}`
+  //          .toLowerCase()
+  //          .includes(filtroBusqueda.toLowerCase()))
+  //  );
 
   if (fechaDesde) {
     reintegrosFiltrados = reintegrosFiltrados.filter(
@@ -186,9 +187,9 @@ export default function SolicitudesReintegros() {
             </button>
           ))}
 
-          {filtro !== "nuevos" && (
+          {filtro !== "Recibido,En análisis" && (
             <button
-              onClick={() => setFiltro("nuevos")}
+              onClick={() => setFiltro("Recibido,En análisis")}
               style={{
                 backgroundColor: "#242424",
                 border: "none",

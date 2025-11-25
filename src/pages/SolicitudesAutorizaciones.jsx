@@ -10,7 +10,7 @@ export default function SolicitudesAutorizaciones() {
   const [error, setError] = useState("");
 
   // Filtros
-  const [filtro, setFiltro] = useState("nuevos");
+  const [filtro, setFiltro] = useState("Recibido,En análisis");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const [ordenFecha, setOrdenFecha] = useState(null); // null | "asc" | "desc"
   const [fechaDesde, setFechaDesde] = useState("");
@@ -56,7 +56,7 @@ export default function SolicitudesAutorizaciones() {
         setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
-          const res = await fetch(`http://localhost:3001/autorizaciones/prestador/${id}`);
+          const res = await fetch(`http://localhost:3001/autorizaciones/prestador/${id}/${filtro}`);
           if (!res.ok) {
             const msg = await res.json().catch(() => ({}));
             throw new Error(msg?.message || "Error al cargar las autorizaciones");
@@ -71,7 +71,7 @@ export default function SolicitudesAutorizaciones() {
       }
     };
     fetchAutorizaciones();
-  }, [prestadorId]);
+  }, [prestadorId, filtro]);
 
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
@@ -95,18 +95,19 @@ export default function SolicitudesAutorizaciones() {
   const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
   // Filtrado base
-  let filtradas = (solicitudes || [])
-    .filter(r =>
-      filtro === "nuevos"
-        ? (r.estado === "Recibido" || r.estado === "En análisis")
-        : (r.estado || "").toLowerCase() === filtro.toLowerCase()
-    )
-    .filter(r => {
-      const t = (filtroBusqueda || "").toLowerCase();
-      const fullName = r.Afiliado ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase() : "";
-      const asunto = (r.asunto || r.lugar || "").toLowerCase();
-      return fullName.includes(t) || asunto.includes(t);
-    });
+  let filtradas = solicitudes
+  //let filtradas = (solicitudes || [])
+  //  .filter(r =>
+  //    filtro === "Recibido,En análisis"
+  //      ? (r.estado === "Recibido" || r.estado === "En análisis")
+  //      : (r.estado || "").toLowerCase() === filtro.toLowerCase()
+  //  )
+  //  .filter(r => {
+  //    const t = (filtroBusqueda || "").toLowerCase();
+  //    const fullName = r.Afiliado ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase() : "";
+  //    const asunto = (r.asunto || r.lugar || "").toLowerCase();
+  //    return fullName.includes(t) || asunto.includes(t);
+  //  });
 
   // Fechas
   if (fechaDesde) filtradas = filtradas.filter(r => new Date(r.fecha) >= new Date(fechaDesde));
@@ -169,10 +170,10 @@ export default function SolicitudesAutorizaciones() {
               {e.label}
             </button>
           ))}
-          {filtro !== "nuevos" && (
-            <button onClick={() => setFiltro("nuevos")}
+          {filtro !== "Recibido,En análisis" && (
+            <button onClick={() => setFiltro("Recibido,En análisis")}
                     style={{ backgroundColor:"#242424", border:"none", borderRadius:"25px", padding:"5px 10px" }}
-                    title="Mostrar nuevos (Recibido / En análisis)">
+                    title="Mostrar Recibido,En análisis (Recibido / En análisis)">
               <img src={reinicio} alt="Todos" style={{ width:20, height:20 }} />
             </button>
           )}
