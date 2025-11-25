@@ -11,14 +11,37 @@ export default function DetalleSolicitudAutorizacion() {
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
 
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
+
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
+
   useEffect(() => {
     const fetchAutorizacion = async () => {
       try {
-        const prestadorId = 1; // TODO: traer del contexto/auth
-        const res = await fetch(`http://localhost:3001/autorizaciones/${prestadorId}`);
+        const res = await fetch(`http://localhost:3001/autorizaciones/${parseInt(id)}`);
         const data = await res.json();
-        const item = data.find(a => a.id === parseInt(id));
-        setSolicitud(item || null);
+        setSolicitud(data || null);
       } catch (err) {
         console.error("Error al obtener autorización:", err);
       } finally {
@@ -85,7 +108,7 @@ export default function DetalleSolicitudAutorizacion() {
           tipo: "autorizacion",
           estado: estado,
           fecha: new Date(),
-          PrestadorId: 1
+          PrestadorId: prestadorId
         })
       })
 
@@ -97,6 +120,24 @@ export default function DetalleSolicitudAutorizacion() {
       alert("Hubo un error al actualizar el estado");
     }
   };
+
+  const handleReclamada = async () => {
+    if (solicitud.estado === "Recibido") {
+      try {
+        await fetch(`http://localhost:3001/autorizaciones/${solicitud.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            estado: "En análisis",
+            PrestadorId: prestadorId
+          }),
+        });
+      } catch (error) {
+        console.error("Error al actualizar estado:", error);
+      }
+    }
+    navigate("/solicitudes/autorizaciones");
+  }
 
   const solicitudFinalizada =
     solicitud.estado === "Aprobado" ||
@@ -166,22 +207,7 @@ export default function DetalleSolicitudAutorizacion() {
       <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
         <button
           className="btn btn-dark"
-          onClick={async () => {
-            if (solicitud.estado === "Recibido") {
-              try {
-                await fetch(`http://localhost:3001/autorizaciones/${solicitud.id}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    estado: "En análisis",
-                  }),
-                });
-              } catch (error) {
-                console.error("Error al actualizar estado:", error);
-              }
-            }
-            navigate("/solicitudes/autorizaciones");
-          }}
+          onClick={handleReclamada}
         >
           Volver a la bandeja
         </button>

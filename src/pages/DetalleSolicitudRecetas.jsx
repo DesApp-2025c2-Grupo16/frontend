@@ -11,21 +11,44 @@ export default function DetalleSolicitudRecetas() {
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
 
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
+
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
+
   useEffect(() => {
-    const fetchRecetas = async () => {
+    const fetchReceta = async () => {
       try {
-        const prestadorId = 1; // TODO: traer del contexto/auth
-        const res = await fetch(`http://localhost:3001/recetas/${prestadorId}`);
+        const res = await fetch(`http://localhost:3001/recetas/${parseInt(id)}`);
         const data = await res.json();
-        const item = data.find(r => r.id === parseInt(id));
-        setSolicitud(item || null);
+        setSolicitud(data || null);
       } catch (err) {
         console.error("Error al obtener recetas:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchRecetas();
+    fetchReceta();
   }, [id]);
 
   if (loading) return <div className="text-center mt-5">Cargando solicitud...</div>;
@@ -85,7 +108,7 @@ export default function DetalleSolicitudRecetas() {
           tipo: "receta",
           estado: estado,
           fecha: new Date(),
-          PrestadorId: 1
+          PrestadorId: prestadorId
         })
       })
 
@@ -98,6 +121,24 @@ export default function DetalleSolicitudRecetas() {
     }
   };
 
+  const handleReclamada = async () => {
+    if (solicitud.estado === "Recibido") {
+      try {
+        await fetch(`http://localhost:3001/recetas/${solicitud.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            estado: "En análisis",
+            PrestadorId: prestadorId
+          }),
+        });
+      } catch (error) {
+        console.error("Error al actualizar estado:", error);
+      }
+    }
+    navigate("/solicitudes/recetas");
+  }
+  
   const solicitudFinalizada =
     solicitud.estado === "Aprobado" ||
     solicitud.estado === "Observado" ||
@@ -167,22 +208,7 @@ export default function DetalleSolicitudRecetas() {
       <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
         <button
           className="btn btn-dark"
-          onClick={async () => {
-            if (solicitud.estado === "Recibido") {
-              try {
-                await fetch(`http://localhost:3001/recetas/${solicitud.id}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    estado: "En análisis",
-                  }),
-                });
-              } catch (error) {
-                console.error("Error al actualizar estado:", error);
-              }
-            }
-            navigate("/solicitudes/recetas");
-          }}
+          onClick={handleReclamada}
         >
           Volver a la bandeja
         </button>

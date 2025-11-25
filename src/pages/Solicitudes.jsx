@@ -3,57 +3,82 @@ import { useNavigate } from "react-router-dom";
 import reinicio from "../assets/reinicio.png";
 
 export default function SolicitudesReintegros() {
+  const navigate = useNavigate();
+
   const [reintegros, setReintegros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Filtros
   const [filtro, setFiltro] = useState("nuevos");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const [ordenFecha, setOrdenFecha] = useState(null);
-
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
+
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
+
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
 
   // === PAGINADO ===
   const itemsPerPage = 10; // Cambiá acá si querés ver más por página
   const [paginaActual, setPaginaActual] = useState(1);
 
-  const navigate = useNavigate();
-
   // Resetear página cuando cambia algún filtro
-  const resetPagina = () => setPaginaActual(1);
-
   useEffect(() => {
-    resetPagina();
+    setPaginaActual(1);
   }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
 
   useEffect(() => {
     const fetchReintegros = async () => {
       try {
-        const prestadorId = 1;
-        const response = await fetch(`http://localhost:3001/reintegros/${prestadorId}`);
-
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.message || "Error al cargar los reintegros");
+        setLoading(true);
+        const id = parseInt(prestadorId)
+        if(!isNaN(id)){
+          const res = await fetch(`http://localhost:3001/reintegros/prestador/${prestadorId}`);
+          if (!res.ok) {
+            const msg = await res.json().catch(() => ({}));
+            throw new Error(msg?.message || "Error al cargar los reintegros");
+          }
+          const data = await res.json();
+          setReintegros(data || []);
         }
-
-        const data = await response.json();
-        setReintegros(data);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Fallo al cargar");
       } finally {
         setLoading(false);
       }
     };
 
     fetchReintegros();
-  }, []);
+  }, [prestadorId]);
 
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error)
     return (
       <div className="text-center mt-5 text-danger">
-        <h5 className="text-dark">{error}</h5>
+        <h4 className="text-dark">{error}</h4>
         <button className="btn btn-dark mt-3" onClick={() => window.location.reload()}>
           Reintentar
         </button>
