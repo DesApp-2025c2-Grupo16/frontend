@@ -42,22 +42,28 @@ export default function SolicitudesRecetas() {
   }, [user.esCentro, user.id])
 
   // PAGINADO
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 9;
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState()
+  const itemsPorPagina = 20;
 
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
+  
   useEffect(() => {
     const fetchRecetas = async () => {
       try {
         setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
-          const res = await fetch(`http://localhost:3001/recetas/prestador/${id}/${filtro}`);
+          const res = await fetch(`http://localhost:3001/recetas/prestador/${id}/${filtro}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
           if (!res.ok) {
             const msg = await res.json().catch(() => ({}));
             throw new Error(msg?.message || "No se pudieron cargar las recetas");
           }
           const data = await res.json();
-          setRecetas(data || []);
+          setRecetas(data.recetas || []);
+          setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
         }
       } catch (err) {
         setError(err.message || "Fallo al cargar");
@@ -66,12 +72,9 @@ export default function SolicitudesRecetas() {
       }
     };
     fetchRecetas();
-  }, [prestadorId, filtro]);
+  }, [prestadorId, filtro, paginaActual]);
 
   // Resetear paginado si cambian filtros
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
 
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
@@ -137,15 +140,6 @@ export default function SolicitudesRecetas() {
       return new Date(b.fecha) - new Date(a.fecha);
     });
   }
-
-  // === PAGINADO ===
-  const totalItems = filtradas.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = filtradas.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
 
   const badgeStyle = (estado) => {
     const base = {
@@ -302,7 +296,7 @@ export default function SolicitudesRecetas() {
             )}
 
             {/* FIX: se usa currentItems, no filtradas */}
-            {currentItems.map((r) => (
+            {filtradas.map((r) => (
               <tr
                 key={r.id}
                 style={{
@@ -353,7 +347,7 @@ export default function SolicitudesRecetas() {
       </div>
 
       {/* PAGINADO */}
-      {totalPages > 1 && (
+      {paginasTotales > 1 && (
         <div
           style={{
             display: "flex",
@@ -364,33 +358,33 @@ export default function SolicitudesRecetas() {
         >
           {/* Botón anterior */}
           <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(paginaActual - 1)}
             style={{
               padding: "5px 12px",
               borderRadius: "10px",
               border: "2px solid #242424",
-              background: currentPage === 1 ? "#ccc" : "#242424",
+              background: paginaActual === 1 ? "#ccc" : "#242424",
               color: "white",
-              cursor: currentPage === 1 ? "not-allowed" : "pointer",
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer",
             }}
           >
             ‹
           </button>
 
           {/* Números */}
-          {[...Array(totalPages).keys()].map((i) => {
+          {[...Array(paginasTotales).keys()].map((i) => {
             const page = i + 1;
             return (
               <button
                 key={page}
-                onClick={() => setCurrentPage(page)}
+                onClick={() => setPaginaActual(page)}
                 style={{
                   padding: "5px 12px",
                   borderRadius: "10px",
                   border: "2px solid #242424",
-                  background: currentPage === page ? "#242424" : "white",
-                  color: currentPage === page ? "white" : "#242424",
+                  background: paginaActual === page ? "#242424" : "white",
+                  color: paginaActual === page ? "white" : "#242424",
                   cursor: "pointer",
                   fontWeight: "bold",
                 }}
@@ -402,16 +396,16 @@ export default function SolicitudesRecetas() {
 
           {/* Botón siguiente */}
           <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={paginaActual === paginasTotales}
+            onClick={() => setPaginaActual(paginaActual + 1)}
             style={{
               padding: "5px 12px",
               borderRadius: "10px",
               border: "2px solid #242424",
-              background: currentPage === totalPages ? "#ccc" : "#242424",
+              background: paginaActual === paginaActual ? "#ccc" : "#242424",
               color: "white",
               cursor:
-                currentPage === totalPages ? "not-allowed" : "pointer",
+                paginaActual === paginaActual ? "not-allowed" : "pointer",
             }}
           >
             ›

@@ -42,12 +42,13 @@ export default function SolicitudesAutorizaciones() {
   }, [user.esCentro, user.id])
 
   // PAGINADO
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 9;
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState()
+  const itemsPorPagina = 20;
 
   // Resetear paginado si cambian filtros
   useEffect(() => {
-    setCurrentPage(1);
+    setPaginaActual(1);
   }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
 
   useEffect(() => {
@@ -56,13 +57,14 @@ export default function SolicitudesAutorizaciones() {
         setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
-          const res = await fetch(`http://localhost:3001/autorizaciones/prestador/${id}/${filtro}`);
+          const res = await fetch(`http://localhost:3001/autorizaciones/prestador/${id}/${filtro}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
           if (!res.ok) {
             const msg = await res.json().catch(() => ({}));
             throw new Error(msg?.message || "Error al cargar las autorizaciones");
           }
           const data = await res.json();
-          setSolicitudes(data || []);
+          setSolicitudes(data.autorizaciones || []);
+          setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
         }
       } catch (err) {
         setError(err.message || "Fallo al cargar");
@@ -71,7 +73,7 @@ export default function SolicitudesAutorizaciones() {
       }
     };
     fetchAutorizaciones();
-  }, [prestadorId, filtro]);
+  }, [prestadorId, filtro, paginaActual]);
 
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
@@ -127,11 +129,6 @@ export default function SolicitudesAutorizaciones() {
     });
   }
 
-  // === PAGINADO ===
-  const totalItems = filtradas.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = filtradas.slice(startIndex, startIndex + itemsPerPage);
 
   const badgeStyle = (estado) => {
     const base = {
@@ -222,13 +219,13 @@ export default function SolicitudesAutorizaciones() {
             </tr>
           </thead>
           <tbody>
-            {currentItems.length === 0 && (
+            {filtradas.length === 0 && (
               <tr><td colSpan={5} style={{ padding:20, textAlign:"center", color:"#555" }}>
                 No se encuentran solicitudes con este filtro.
               </td></tr>
             )}
 
-            {currentItems.map(r => (
+            {filtradas.map(r => (
               <tr key={r.id}
                   style={{
                     cursor: (r.estado === "Recibido" || r.estado === "En análisis") ? "pointer" : "default",
@@ -260,38 +257,38 @@ export default function SolicitudesAutorizaciones() {
       </div>
 
       {/* PAGINADO */}
-      {totalPages > 1 && (
+      {paginasTotales > 1 && (
         <div style={{ display:"flex", justifyContent:"center", gap:"10px", margin:"20px 0" }}>
 
           {/* Botón anterior */}
           <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(paginaActual - 1)}
             style={{
               padding:"5px 12px",
               borderRadius:"10px",
               border:"2px solid #242424",
-              background: currentPage === 1 ? "#ccc" : "#242424",
+              background: paginaActual === 1 ? "#ccc" : "#242424",
               color:"white",
-              cursor: currentPage === 1 ? "not-allowed" : "pointer"
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer"
             }}
           >
             ‹
           </button>
 
           {/* Números */}
-          {[...Array(totalPages).keys()].map(i => {
+          {[...Array(paginasTotales).keys()].map(i => {
             const page = i + 1;
             return (
               <button
                 key={page}
-                onClick={() => setCurrentPage(page)}
+                onClick={() => setPaginaActual(page)}
                 style={{
                   padding:"5px 12px",
                   borderRadius:"10px",
                   border:"2px solid #242424",
-                  background: currentPage === page ? "#242424" : "white",
-                  color: currentPage === page ? "white" : "#242424",
+                  background: paginaActual === page ? "#242424" : "white",
+                  color: paginaActual === page ? "white" : "#242424",
                   cursor:"pointer",
                   fontWeight:"bold"
                 }}
@@ -303,15 +300,15 @@ export default function SolicitudesAutorizaciones() {
 
           {/* Botón siguiente */}
           <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={paginaActual === paginasTotales}
+            onClick={() => setPaginaActual(paginaActual + 1)}
             style={{
               padding:"5px 12px",
               borderRadius:"10px",
               border:"2px solid #242424",
-              background: currentPage === totalPages ? "#ccc" : "#242424",
+              background: paginaActual === paginasTotales ? "#ccc" : "#242424",
               color:"white",
-              cursor: currentPage === totalPages ? "not-allowed" : "pointer"
+              cursor: paginaActual === paginasTotales ? "not-allowed" : "pointer"
             }}
           >
             ›

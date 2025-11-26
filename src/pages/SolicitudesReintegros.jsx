@@ -42,8 +42,9 @@ export default function SolicitudesReintegros() {
   }, [user.esCentro, user.id])
 
   // === PAGINADO ===
-  const itemsPerPage = 10; // Cambiá acá si querés ver más por página
   const [paginaActual, setPaginaActual] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState()
+  const itemsPorPagina = 20; 
 
   // Resetear página cuando cambia algún filtro
   useEffect(() => {
@@ -56,13 +57,14 @@ export default function SolicitudesReintegros() {
         setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
-          const res = await fetch(`http://localhost:3001/reintegros/prestador/${id}/${filtro}`);
+          const res = await fetch(`http://localhost:3001/reintegros/prestador/${id}/${filtro}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
           if (!res.ok) {
             const msg = await res.json().catch(() => ({}));
             throw new Error(msg?.message || "Error al cargar los reintegros");
           }
           const data = await res.json();
-          setReintegros(data || []);
+          setReintegros(data.reintegros || []);
+          setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
         }
       } catch (err) {
         setError(err.message || "Fallo al cargar");
@@ -72,7 +74,7 @@ export default function SolicitudesReintegros() {
     };
 
     fetchReintegros();
-  }, [prestadorId, filtro]);
+  }, [prestadorId, filtro, paginaActual]);
 
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error)
@@ -95,7 +97,7 @@ export default function SolicitudesReintegros() {
 
   const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
-  let reintegrosFiltrados = reintegros
+  let filtradas = reintegros
   //let reintegrosFiltrados = reintegros
   //  .filter((r) =>
   //    filtro === "Recibido,En análisis"
@@ -112,39 +114,33 @@ export default function SolicitudesReintegros() {
   //  );
 
   if (fechaDesde) {
-    reintegrosFiltrados = reintegrosFiltrados.filter(
+    filtradas = filtradas.filter(
       (r) => new Date(r.fecha) >= new Date(fechaDesde)
     );
   }
 
   if (fechaHasta) {
-    reintegrosFiltrados = reintegrosFiltrados.filter(
+    filtradas = filtradas.filter(
       (r) => new Date(r.fecha) <= new Date(fechaHasta)
     );
   }
 
   if (ordenFecha === "desc") {
-    reintegrosFiltrados = reintegrosFiltrados.sort(
+    filtradas = filtradas.sort(
       (a, b) => new Date(b.fecha) - new Date(a.fecha)
     );
   } else if (ordenFecha === "asc") {
-    reintegrosFiltrados = reintegrosFiltrados.sort(
+    filtradas = filtradas.sort(
       (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
   } else {
-    reintegrosFiltrados = reintegrosFiltrados.sort((a, b) => {
+    filtradas = filtradas.sort((a, b) => {
       const ordenA = ordenEstados.indexOf(a.estado);
       const ordenB = ordenEstados.indexOf(b.estado);
       if (ordenA !== ordenB) return ordenA - ordenB;
       return new Date(b.fecha) - new Date(a.fecha);
     });
   }
-
-  // === PAGINADO – Cálculo final ===
-  const totalPaginas = Math.ceil(reintegrosFiltrados.length / itemsPerPage);
-  const startIndex = (paginaActual - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const reintegrosPagina = reintegrosFiltrados.slice(startIndex, endIndex);
 
   return (
     <div className="mt-4">
@@ -298,7 +294,7 @@ export default function SolicitudesReintegros() {
           </thead>
 
           <tbody>
-            {reintegrosPagina.length === 0 && (
+            {filtradas.length === 0 && (
               <tr>
                 <td colSpan={5} style={{ padding: "20px", textAlign: "center", color: "#555" }}>
                   No se encuentran solicitudes con este filtro.
@@ -306,7 +302,7 @@ export default function SolicitudesReintegros() {
               </tr>
             )}
 
-            {reintegrosPagina.map((r) => (
+            {filtradas.map((r) => (
               <tr
                 key={r.id}
                 style={{
@@ -351,8 +347,8 @@ export default function SolicitudesReintegros() {
         </table>
       </div>
 
-      {/* === PAGINADO (estilo nuevo) === */}
-      {totalPaginas > 1 && (
+      {/* PAGINADO */}
+      {paginasTotales > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: "10px", margin: "20px 0" }}>
 
           {/* Botón anterior */}
@@ -372,7 +368,7 @@ export default function SolicitudesReintegros() {
           </button>
 
           {/* Números */}
-          {[...Array(totalPaginas).keys()].map((i) => {
+          {[...Array(paginasTotales).keys()].map((i) => {
             const page = i + 1;
             return (
               <button
@@ -395,15 +391,15 @@ export default function SolicitudesReintegros() {
 
           {/* Botón siguiente */}
           <button
-            disabled={paginaActual === totalPaginas}
+            disabled={paginaActual === paginasTotales}
             onClick={() => setPaginaActual(paginaActual + 1)}
             style={{
               padding: "5px 12px",
               borderRadius: "10px",
               border: "2px solid #242424",
-              background: paginaActual === totalPaginas ? "#ccc" : "#242424",
+              background: paginaActual === paginasTotales ? "#ccc" : "#242424",
               color: "white",
-              cursor: paginaActual === totalPaginas ? "not-allowed" : "pointer"
+              cursor: paginaActual === paginasTotales ? "not-allowed" : "pointer"
             }}
           >
             ›
