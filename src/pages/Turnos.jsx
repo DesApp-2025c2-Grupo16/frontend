@@ -57,7 +57,7 @@ export default function Turnos() {
         const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
         const data = await medicosAsociados.json()
         setPrestadores(data)
-        setPrestadorId(prestadores[0].id)
+        setPrestadorId(data[0].id)
       }
     }
     handlePrestador()
@@ -97,7 +97,8 @@ export default function Turnos() {
               continue;
             }
   
-            const data = await res.json();
+            const resData = await res.json();
+            const data = resData.turnos
   
             // data = array de turnos
             resultadosConteo[fechaISO] = Array.isArray(data) ? data.length : 0;
