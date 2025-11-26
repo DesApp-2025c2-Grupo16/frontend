@@ -7,7 +7,6 @@ export default function SolicitudesRecetas() {
   const navigate = useNavigate();
 
   const [recetas, setRecetas] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [filtro, setFiltro] = useState("Recibido,En análisis");
@@ -16,7 +15,9 @@ export default function SolicitudesRecetas() {
   const [fechaHasta, setFechaHasta] = useState("");
   const [ordenFecha, setOrdenFecha] = useState(null);
 
-  const [user, setUser] = useState({});
+  const [textoBusqueda, setTextoBusqueda] = useState("")
+
+  const [esCentro, setEsCentro] = useState()
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
 
@@ -28,52 +29,54 @@ export default function SolicitudesRecetas() {
 
   useEffect(()=>{
     const handlePrestador = async () => {
-      setUser(getUser())
+      const user= getUser()
+      setEsCentro(user.esCentro)
       if(!user.esCentro){
         setPrestadorId(user.id)
+        return
       } else {
         const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
         const data = await medicosAsociados.json()
         setPrestadores(data)
-        setPrestadorId(prestadores[0].id)
+        setPrestadorId(data?.[0]?.id)
       }
     }
     handlePrestador()
-  }, [user.esCentro, user.id])
+  }, [])
 
   // PAGINADO
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 9;
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState()
+  const itemsPorPagina = 20;
 
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
+  
   useEffect(() => {
     const fetchRecetas = async () => {
       try {
-        setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
-          const res = await fetch(`http://localhost:3001/recetas/prestador/${id}/${filtro}`);
+          const res = await fetch(`http://localhost:3001/recetas/prestador/${id}/${filtro}?pagina=${paginaActual}&tamaño=${itemsPorPagina}&busqueda=${filtroBusqueda}`);
           if (!res.ok) {
             const msg = await res.json().catch(() => ({}));
             throw new Error(msg?.message || "No se pudieron cargar las recetas");
           }
           const data = await res.json();
-          setRecetas(data || []);
+          setRecetas(data.recetas || []);
+          setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
         }
       } catch (err) {
-        setError(err.message || "Fallo al cargar");
-      } finally {
-        setLoading(false);
-      }
+        setRecetas([])
+        //setError(err.message || "Fallo al cargar");
+      } 
     };
     fetchRecetas();
-  }, [prestadorId, filtro]);
+  }, [prestadorId, filtro, paginaActual, filtroBusqueda]);
 
   // Resetear paginado si cambian filtros
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
 
-  if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
     return (
       <div className="text-center mt-5 text-danger">
@@ -101,20 +104,6 @@ export default function SolicitudesRecetas() {
   ];
 
   let filtradas = recetas
-  //let filtradas = (recetas || [])
-  //  .filter((r) =>
-  //    filtro === "Recibido,En análisis"
-  //      ? r.estado === "Recibido" || r.estado === "En análisis"
-  //      : (r.estado || "").toLowerCase() === filtro.toLowerCase()
-  //  )
-  //  .filter((r) => {
-  //    const t = (filtroBusqueda || "").toLowerCase();
-  //    const fullName = r.Afiliado
-  //      ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase()
-  //      : "";
-  //    const asunto = (r.asunto || "").toLowerCase();
-  //    return fullName.includes(t) || asunto.includes(t);
-  //  });
 
   if (fechaDesde)
     filtradas = filtradas.filter(
@@ -138,15 +127,6 @@ export default function SolicitudesRecetas() {
     });
   }
 
-  // === PAGINADO ===
-  const totalItems = filtradas.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = filtradas.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
   const badgeStyle = (estado) => {
     const base = {
       Recibido: { color: "#555", background: "#e5e5e5" },
@@ -167,13 +147,30 @@ export default function SolicitudesRecetas() {
   return (
     <div className="mt-4">
       <h2 className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
-          style={{ background:"#242424", display:"block", width:"90%", textAlign:"center", margin:"0 auto", lineHeight:"50px" }}>
+          style={{ background:"#242424", display:"block", width:"90%", textAlign:"center", lineHeight:"50px" }}>
         SOLICITUDES - RECETAS
       </h2>
-      <hr
+      
+
+      {esCentro && <div className="row justify-content-center align-items-center"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
+
+        <hr
         className="border-dark border-5 rounded-pill mt-4 mx-auto"
         style={{ width: "90%" }}
-      />
+        />
 
       <div
         className="d-flex justify-content-between flex-wrap"
@@ -206,21 +203,38 @@ export default function SolicitudesRecetas() {
           )}
         </div>
 
-        <input
-          type="text"
-          placeholder="Buscar afiliado o asunto..."
-          value={filtroBusqueda}
-          onChange={(e) => setFiltroBusqueda(e.target.value)}
+        <div>
+          <input
+            type="text"
+            placeholder="Buscar asunto o afiliado..."
+            value={textoBusqueda}
+            onChange={(e) => setTextoBusqueda(e.target.value)}
+            style={{
+              borderRadius: "25px",
+              border: "2px solid #242424",
+              padding: "5px 10px",
+              outline: "none",
+              width: "250px",
+              backgroundColor: "#242424",
+              color: "white",
+            }}
+          />
+          <button 
+          onClick={()=>setFiltroBusqueda(textoBusqueda)}
           style={{
-            borderRadius: "25px",
-            border: "2px solid #242424",
-            padding: "5px 10px",
-            outline: "none",
-            width: 250,
-            backgroundColor: "#242424",
-            color: "white",
-          }}
-        />
+              borderRadius: "25px",
+              border: "2px solid #242424",
+              padding: "5px 10px",
+              outline: "none",
+              width: "auto",
+              backgroundColor: "#242424",
+              color: "white",
+              marginLeft: "10px"
+            }}
+          >
+            Buscar
+          </button>
+        </div>
       </div>
 
       <div
@@ -302,7 +316,7 @@ export default function SolicitudesRecetas() {
             )}
 
             {/* FIX: se usa currentItems, no filtradas */}
-            {currentItems.map((r) => (
+            {filtradas.map((r) => (
               <tr
                 key={r.id}
                 style={{
@@ -353,7 +367,7 @@ export default function SolicitudesRecetas() {
       </div>
 
       {/* PAGINADO */}
-      {totalPages > 1 && (
+      {paginasTotales > 1 && (
         <div
           style={{
             display: "flex",
@@ -364,33 +378,33 @@ export default function SolicitudesRecetas() {
         >
           {/* Botón anterior */}
           <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(paginaActual - 1)}
             style={{
               padding: "5px 12px",
               borderRadius: "10px",
               border: "2px solid #242424",
-              background: currentPage === 1 ? "#ccc" : "#242424",
+              background: paginaActual === 1 ? "#ccc" : "#242424",
               color: "white",
-              cursor: currentPage === 1 ? "not-allowed" : "pointer",
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer",
             }}
           >
             ‹
           </button>
 
           {/* Números */}
-          {[...Array(totalPages).keys()].map((i) => {
+          {[...Array(paginasTotales).keys()].map((i) => {
             const page = i + 1;
             return (
               <button
                 key={page}
-                onClick={() => setCurrentPage(page)}
+                onClick={() => setPaginaActual(page)}
                 style={{
                   padding: "5px 12px",
                   borderRadius: "10px",
                   border: "2px solid #242424",
-                  background: currentPage === page ? "#242424" : "white",
-                  color: currentPage === page ? "white" : "#242424",
+                  background: paginaActual === page ? "#242424" : "white",
+                  color: paginaActual === page ? "white" : "#242424",
                   cursor: "pointer",
                   fontWeight: "bold",
                 }}
@@ -402,16 +416,16 @@ export default function SolicitudesRecetas() {
 
           {/* Botón siguiente */}
           <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={paginaActual === paginasTotales}
+            onClick={() => setPaginaActual(paginaActual + 1)}
             style={{
               padding: "5px 12px",
               borderRadius: "10px",
               border: "2px solid #242424",
-              background: currentPage === totalPages ? "#ccc" : "#242424",
+              background: paginaActual === paginaActual ? "#ccc" : "#242424",
               color: "white",
               cursor:
-                currentPage === totalPages ? "not-allowed" : "pointer",
+                paginaActual === paginaActual ? "not-allowed" : "pointer",
             }}
           >
             ›

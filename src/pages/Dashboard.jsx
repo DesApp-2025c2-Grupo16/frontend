@@ -23,10 +23,10 @@ export default function Dashboard() {
 
   const getCurrentWeekInterval = ()=>{
     const hoy = new Date()
-    hoy.setUTCHours(0)
-    hoy.setUTCMinutes(0)
-    hoy.setUTCSeconds(0)
-    hoy.setUTCMilliseconds(0)
+    hoy.setHours(0)
+    hoy.setMinutes(0)
+    hoy.setSeconds(0)
+    hoy.setMilliseconds(0)
     const numeroDeDia = hoy.getDay()
     const diferenciaAlLunes = numeroDeDia === 0 ? -6 : 1-numeroDeDia
     const lunes = new Date(hoy)
@@ -64,7 +64,7 @@ export default function Dashboard() {
         const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
         const data = await medicosAsociados.json()
         setPrestadores(data)
-        setPrestadorId(prestadores[0].id)
+        setPrestadorId(prestadores?.[0]?.id)
       }
     }
     handlePrestador()
@@ -111,7 +111,6 @@ export default function Dashboard() {
     registros.map((registro)=>{
       if(registro.tipo === tipo && registro.estado === estado){
         const fecha = new Date(registro.fecha)
-        fecha.setHours(fecha.getHours() - 3)
         console.log(fecha)
         const dia = mapa[fecha.getDay()]
         console.log(dia)

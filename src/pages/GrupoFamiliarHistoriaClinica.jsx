@@ -6,7 +6,6 @@ export default function GrupoFamiliarHistoriaClinica() {
   const navigate = useNavigate();
   const { id } = useParams(); // Captura el nroAfiliado desde la URL
   const [grupoFamiliar, setGrupoFamiliar] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -18,15 +17,12 @@ export default function GrupoFamiliarHistoriaClinica() {
         setGrupoFamiliar(data);
       } catch (err) {
         setError(err.message);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchGrupoFamiliar();
   }, [id]);
 
-  if (loading) return <p>Cargando...</p>;
   if (error) return <p>Error: {error}</p>;
 
   return (

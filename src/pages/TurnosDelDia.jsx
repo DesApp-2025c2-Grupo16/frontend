@@ -5,14 +5,14 @@ export default function TurnosDelDia({ username = "Prestador" }) {
   const { fecha } = useParams();
   const navigate = useNavigate();
   const [turnos, setTurnos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [descripcion, setDescripcion] = useState("");
 
-  const [user, setUser] = useState({});
+  const [esCentro, setEsCentro] = useState()
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
 
@@ -24,24 +24,27 @@ export default function TurnosDelDia({ username = "Prestador" }) {
 
   useEffect(()=>{
     const handlePrestador = async () => {
-      setUser(getUser())
+      const user = getUser()
+      setEsCentro(user.esCentro)
       if(!user.esCentro){
         setPrestadorId(user.id)
       } else {
         const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
         const data = await medicosAsociados.json()
         setPrestadores(data)
-        setPrestadorId(prestadores[0].id)
+        setPrestadorId(data[0].id)
       }
     }
     handlePrestador()
-  }, [user.esCentro, user.id])
+  }, [])
 
   const [q, setQ] = useState("");
 
   // === PAGINADO ===
+  // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
-  const itemsPerPage = 5;
+  const [paginasTotales, setPaginasTotales] = useState()
+  const itemsPorPagina = 20;
 
 
   useEffect(() => {
@@ -50,15 +53,17 @@ export default function TurnosDelDia({ username = "Prestador" }) {
         const id = parseInt(prestadorId)
         if(!isNaN(prestadorId)){
           const res = await fetch(
-            `http://localhost:3001/turnos/${prestadorId}/fecha/${fecha}`
+            `http://localhost:3001/turnos/${id}/fecha/${fecha}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`
           );
           if (!res.ok)
             throw new Error("No se pudieron cargar los turnos del día.");
   
           const data = await res.json();
+          const turnos = data.turnos
+          setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
   
           setTurnos(
-            data.sort(
+            turnos.sort(
               (a, b) => new Date(a.fecha) - new Date(b.fecha)
             )
           );
@@ -66,12 +71,10 @@ export default function TurnosDelDia({ username = "Prestador" }) {
       } catch (err) {
         console.error(err);
         setError(err.message);
-      } finally {
-        setLoading(false);
       }
     };
     fetchTurnosDelDia();
-  }, [fecha, prestadorId]);
+  }, [fecha, prestadorId, paginaActual]);
 
   const extraerHora = (fechaCompleta) => {
     if (!fechaCompleta) return "--:--";
@@ -176,19 +179,6 @@ export default function TurnosDelDia({ username = "Prestador" }) {
     setPaginaActual(1);
   }, [q]);
 
-  // === PAGINADO ===
-  const totalPaginas = Math.ceil(turnosFiltrados.length / itemsPerPage);
-  const startIndex = (paginaActual - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const turnosPagina = turnosFiltrados.slice(startIndex, endIndex);
-
-  if (loading)
-    return (
-      <div className="text-center mt-5 text-secondary">
-        <h4>Cargando turnos del día...</h4>
-      </div>
-    );
-
   if (error)
     return (
       <div className="text-center mt-5 text-danger">
@@ -213,6 +203,21 @@ export default function TurnosDelDia({ username = "Prestador" }) {
       >
         TURNOS DEL {fechaTitulo}
       </h2>
+
+      {esCentro && <div className="row justify-content-center align-items-center"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
 
       <hr className="border-dark border-5 rounded-pill mt-4" />
 
@@ -267,7 +272,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
               LISTADO DE TURNOS
             </h4>
 
-            {turnosPagina.map((t) => (
+            {turnosFiltrados.map((t) => (
               <div
                 key={t.id}
                 className="mb-3 p-3 rounded shadow-sm position-relative"
@@ -358,7 +363,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
       </div>
 
       {/* === PAGINADO === */}
-      {totalPaginas > 1 && (
+      {paginasTotales > 1 && (
         <div
           style={{
             display: "flex",
@@ -382,7 +387,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
             ‹
           </button>
 
-          {[...Array(totalPaginas).keys()].map((i) => {
+          {[...Array(paginasTotales).keys()].map((i) => {
             const page = i + 1;
             return (
               <button
@@ -406,17 +411,17 @@ export default function TurnosDelDia({ username = "Prestador" }) {
           })}
 
           <button
-            disabled={paginaActual === totalPaginas}
+            disabled={paginaActual === paginasTotales}
             onClick={() => setPaginaActual(paginaActual + 1)}
             style={{
               padding: "5px 12px",
               borderRadius: "10px",
               border: "2px solid #242424",
               background:
-                paginaActual === totalPaginas ? "#ccc" : "#242424",
+                paginaActual === paginasTotales ? "#ccc" : "#242424",
               color: "white",
               cursor:
-                paginaActual === totalPaginas ? "not-allowed" : "pointer",
+                paginaActual === paginasTotales ? "not-allowed" : "pointer",
             }}
           >
             ›

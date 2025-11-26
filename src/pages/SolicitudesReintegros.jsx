@@ -6,7 +6,6 @@ export default function SolicitudesReintegros() {
   const navigate = useNavigate();
 
   const [reintegros, setReintegros] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   // Filtros
@@ -16,7 +15,9 @@ export default function SolicitudesReintegros() {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
 
-  const [user, setUser] = useState({});
+  const [textoBusqueda, setTextoBusqueda] = useState("")
+
+  const [esCentro, setEsCentro] = useState()
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
 
@@ -28,22 +29,25 @@ export default function SolicitudesReintegros() {
 
   useEffect(()=>{
     const handlePrestador = async () => {
-      setUser(getUser())
+      const user = getUser()
+      setEsCentro(user.esCentro)
       if(!user.esCentro){
         setPrestadorId(user.id)
+        return
       } else {
         const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
         const data = await medicosAsociados.json()
         setPrestadores(data)
-        setPrestadorId(prestadores[0].id)
+        setPrestadorId(data?.[0]?.id)
       }
     }
     handlePrestador()
-  }, [user.esCentro, user.id])
+  }, [])
 
   // === PAGINADO ===
-  const itemsPerPage = 10; // Cambiá acá si querés ver más por página
   const [paginaActual, setPaginaActual] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState()
+  const itemsPorPagina = 20; 
 
   // Resetear página cuando cambia algún filtro
   useEffect(() => {
@@ -53,28 +57,26 @@ export default function SolicitudesReintegros() {
   useEffect(() => {
     const fetchReintegros = async () => {
       try {
-        setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
-          const res = await fetch(`http://localhost:3001/reintegros/prestador/${id}/${filtro}`);
+          const res = await fetch(`http://localhost:3001/reintegros/prestador/${id}/${filtro}?pagina=${paginaActual}&tamaño=${itemsPorPagina}&busqueda=${filtroBusqueda}`);
           if (!res.ok) {
             const msg = await res.json().catch(() => ({}));
             throw new Error(msg?.message || "Error al cargar los reintegros");
           }
           const data = await res.json();
-          setReintegros(data || []);
+          setReintegros(data.reintegros || []);
+          setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
         }
-      } catch (err) {
-        setError(err.message || "Fallo al cargar");
-      } finally {
-        setLoading(false);
+      } catch (err) { 
+        setReintegros([])
+        //setError(err.message || "Fallo al cargar");
       }
     };
 
     fetchReintegros();
-  }, [prestadorId, filtro]);
+  }, [prestadorId, filtro, paginaActual, filtroBusqueda]);
 
-  if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error)
     return (
       <div className="text-center mt-5 text-danger">
@@ -95,56 +97,36 @@ export default function SolicitudesReintegros() {
 
   const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
-  let reintegrosFiltrados = reintegros
-  //let reintegrosFiltrados = reintegros
-  //  .filter((r) =>
-  //    filtro === "Recibido,En análisis"
-  //      ? r.estado === "Recibido" || r.estado === "En análisis"
-  //      : r.estado.toLowerCase() === filtro.toLowerCase()
-  //  )
-  //  .filter(
-  //    (r) =>
-  //      r.asunto.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
-  //      (r.Afiliado &&
-  //        `${r.Afiliado.nombre} ${r.Afiliado.apellido}`
-  //          .toLowerCase()
-  //          .includes(filtroBusqueda.toLowerCase()))
-  //  );
+  let filtradas = reintegros
 
   if (fechaDesde) {
-    reintegrosFiltrados = reintegrosFiltrados.filter(
+    filtradas = filtradas.filter(
       (r) => new Date(r.fecha) >= new Date(fechaDesde)
     );
   }
 
   if (fechaHasta) {
-    reintegrosFiltrados = reintegrosFiltrados.filter(
+    filtradas = filtradas.filter(
       (r) => new Date(r.fecha) <= new Date(fechaHasta)
     );
   }
 
   if (ordenFecha === "desc") {
-    reintegrosFiltrados = reintegrosFiltrados.sort(
+    filtradas = filtradas.sort(
       (a, b) => new Date(b.fecha) - new Date(a.fecha)
     );
   } else if (ordenFecha === "asc") {
-    reintegrosFiltrados = reintegrosFiltrados.sort(
+    filtradas = filtradas.sort(
       (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
   } else {
-    reintegrosFiltrados = reintegrosFiltrados.sort((a, b) => {
+    filtradas = filtradas.sort((a, b) => {
       const ordenA = ordenEstados.indexOf(a.estado);
       const ordenB = ordenEstados.indexOf(b.estado);
       if (ordenA !== ordenB) return ordenA - ordenB;
       return new Date(b.fecha) - new Date(a.fecha);
     });
   }
-
-  // === PAGINADO – Cálculo final ===
-  const totalPaginas = Math.ceil(reintegrosFiltrados.length / itemsPerPage);
-  const startIndex = (paginaActual - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const reintegrosPagina = reintegrosFiltrados.slice(startIndex, endIndex);
 
   return (
     <div className="mt-4">
@@ -160,6 +142,21 @@ export default function SolicitudesReintegros() {
       >
         SOLICITUDES - REINTEGROS
       </h2>
+
+      {esCentro && <div className="row justify-content-center align-items-center"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
 
       <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
 
@@ -201,22 +198,38 @@ export default function SolicitudesReintegros() {
             </button>
           )}
         </div>
-
-        <input
-          type="text"
-          placeholder="Buscar asunto o afiliado..."
-          value={filtroBusqueda}
-          onChange={(e) => setFiltroBusqueda(e.target.value)}
+        <div>
+          <input
+            type="text"
+            placeholder="Buscar asunto o afiliado..."
+            value={textoBusqueda}
+            onChange={(e) => setTextoBusqueda(e.target.value)}
+            style={{
+              borderRadius: "25px",
+              border: "2px solid #242424",
+              padding: "5px 10px",
+              outline: "none",
+              width: "250px",
+              backgroundColor: "#242424",
+              color: "white",
+            }}
+          />
+          <button 
+          onClick={()=>setFiltroBusqueda(textoBusqueda)}
           style={{
-            borderRadius: "25px",
-            border: "2px solid #242424",
-            padding: "5px 10px",
-            outline: "none",
-            width: "250px",
-            backgroundColor: "#242424",
-            color: "white",
-          }}
-        />
+              borderRadius: "25px",
+              border: "2px solid #242424",
+              padding: "5px 10px",
+              outline: "none",
+              width: "auto",
+              backgroundColor: "#242424",
+              color: "white",
+              marginLeft: "10px"
+            }}
+          >
+            Buscar
+          </button>
+        </div>
       </div>
 
       {/* Filtro de fechas */}
@@ -263,6 +276,7 @@ export default function SolicitudesReintegros() {
             />
           </label>
         </div>
+        
       </div>
 
       {/* Tabla */}
@@ -298,7 +312,7 @@ export default function SolicitudesReintegros() {
           </thead>
 
           <tbody>
-            {reintegrosPagina.length === 0 && (
+            {filtradas.length === 0 && (
               <tr>
                 <td colSpan={5} style={{ padding: "20px", textAlign: "center", color: "#555" }}>
                   No se encuentran solicitudes con este filtro.
@@ -306,7 +320,7 @@ export default function SolicitudesReintegros() {
               </tr>
             )}
 
-            {reintegrosPagina.map((r) => (
+            {filtradas.map((r) => (
               <tr
                 key={r.id}
                 style={{
@@ -351,8 +365,8 @@ export default function SolicitudesReintegros() {
         </table>
       </div>
 
-      {/* === PAGINADO (estilo nuevo) === */}
-      {totalPaginas > 1 && (
+      {/* PAGINADO */}
+      {paginasTotales > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: "10px", margin: "20px 0" }}>
 
           {/* Botón anterior */}
@@ -372,7 +386,7 @@ export default function SolicitudesReintegros() {
           </button>
 
           {/* Números */}
-          {[...Array(totalPaginas).keys()].map((i) => {
+          {[...Array(paginasTotales).keys()].map((i) => {
             const page = i + 1;
             return (
               <button
@@ -395,15 +409,15 @@ export default function SolicitudesReintegros() {
 
           {/* Botón siguiente */}
           <button
-            disabled={paginaActual === totalPaginas}
+            disabled={paginaActual === paginasTotales}
             onClick={() => setPaginaActual(paginaActual + 1)}
             style={{
               padding: "5px 12px",
               borderRadius: "10px",
               border: "2px solid #242424",
-              background: paginaActual === totalPaginas ? "#ccc" : "#242424",
+              background: paginaActual === paginasTotales ? "#ccc" : "#242424",
               color: "white",
-              cursor: paginaActual === totalPaginas ? "not-allowed" : "pointer"
+              cursor: paginaActual === paginasTotales ? "not-allowed" : "pointer"
             }}
           >
             ›

@@ -7,17 +7,20 @@ export default function Situaciones() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { grupoNumero, filtroAnterior } = location.state || {};
 
   const [afiliado, setAfiliado] = useState(null);
   const [situaciones, setSituaciones] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  
   const [showModal, setShowModal] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
   const [soloActivas, setSoloActivas] = useState(false);
 
+  // PAGINADO
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState()
+  const itemsPorPagina = 20;
 
   const [nuevaSituacion, setNuevaSituacion] = useState({
     descripcion: "",
@@ -36,26 +39,26 @@ export default function Situaciones() {
         const dataAfi = await resAfi.json();
         setAfiliado(dataAfi);
 
-        const resSit = await fetch(`http://localhost:3001/situaciones/${id}`);
+        const resSit = await fetch(`http://localhost:3001/situaciones/${id}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
         if (resSit.status === 404) {
-          // 🔹 No hay situaciones registradas para este afiliado
+          // No hay situaciones registradas para este afiliado
           setSituaciones([]);
         } else if (!resSit.ok) {
-          // 🔹 Otro error real (500, etc.)
+          // Otro error real (500, etc.)
           throw new Error("No se pudieron cargar las situaciones");
         } else {
           const dataSit = await resSit.json();
-          setSituaciones(Array.isArray(dataSit) ? dataSit : []);
+          const situaciones  = dataSit.situaciones
+          setSituaciones(Array.isArray(situaciones) ? situaciones : []);
+          setPaginasTotales(Math.ceil(dataSit.count / itemsPorPagina))
         }
       } catch (err) {
         console.error(err);
         setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      } 
     };
     fetchData();
-  }, [id]);
+  }, [id, paginaActual]);
 
   const filtradas = situaciones
     // Primero ordenamos por estado y fecha
@@ -160,13 +163,6 @@ export default function Situaciones() {
       alert("No se pudo actualizar la situación");
     }
   };
-
-  if (loading)
-    return (
-      <div className="text-center mt-5 text-secondary">
-        <h4>Cargando situaciones...</h4>
-      </div>
-    );
 
   if (error)
     return (
@@ -465,6 +461,66 @@ export default function Situaciones() {
           )}
         </Modal.Body>
       </Modal>
+      
+      {paginasTotales > 1 && (
+        <div style={{ display:"flex", justifyContent:"center", gap:"10px", margin:"20px 0" }}>
+
+          {/* Botón anterior */}
+          <button
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(paginaActual - 1)}
+            style={{
+              padding:"5px 12px",
+              borderRadius:"10px",
+              border:"2px solid #242424",
+              background: paginaActual === 1 ? "#ccc" : "#242424",
+              color:"white",
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer"
+            }}
+          >
+            ‹
+          </button>
+
+          {/* Números */}
+          {[...Array(paginasTotales).keys()].map(i => {
+            const page = i + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => setPaginaActual(page)}
+                style={{
+                  padding:"5px 12px",
+                  borderRadius:"10px",
+                  border:"2px solid #242424",
+                  background: paginaActual === page ? "#242424" : "white",
+                  color: paginaActual === page ? "white" : "#242424",
+                  cursor:"pointer",
+                  fontWeight:"bold"
+                }}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          {/* Botón siguiente */}
+          <button
+            disabled={paginaActual === paginasTotales}
+            onClick={() => setPaginaActual(paginaActual + 1)}
+            style={{
+              padding:"5px 12px",
+              borderRadius:"10px",
+              border:"2px solid #242424",
+              background: paginaActual === paginasTotales ? "#ccc" : "#242424",
+              color:"white",
+              cursor: paginaActual === paginasTotales ? "not-allowed" : "pointer"
+            }}
+          >
+            ›
+          </button>
+
+        </div>
+      )}
 
       {/* Botón volver */}
       <div className="my-4">

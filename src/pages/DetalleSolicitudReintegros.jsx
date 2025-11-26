@@ -6,7 +6,6 @@ export default function DetalleSolicitudReintegros() {
   const navigate = useNavigate();
 
   const [solicitud, setSolicitud] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
@@ -44,17 +43,11 @@ export default function DetalleSolicitudReintegros() {
         setSolicitud(data || null);
       } catch (error) {
         console.error("Error al obtener los reintegros:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchReintegro();
   }, [id]);
-
-  if (loading) {
-    return <div className="text-center mt-5">Cargando solicitud...</div>;
-  }
 
   if (!solicitud) {
     return (
