@@ -5,14 +5,14 @@ export default function TurnosDelDia({ username = "Prestador" }) {
   const { fecha } = useParams();
   const navigate = useNavigate();
   const [turnos, setTurnos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [descripcion, setDescripcion] = useState("");
 
-  const [user, setUser] = useState({});
+  const [esCentro, setEsCentro] = useState()
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
 
@@ -24,7 +24,8 @@ export default function TurnosDelDia({ username = "Prestador" }) {
 
   useEffect(()=>{
     const handlePrestador = async () => {
-      setUser(getUser())
+      const user = getUser()
+      setEsCentro(user.esCentro)
       if(!user.esCentro){
         setPrestadorId(user.id)
       } else {
@@ -35,7 +36,7 @@ export default function TurnosDelDia({ username = "Prestador" }) {
       }
     }
     handlePrestador()
-  }, [user.esCentro, user.id])
+  }, [])
 
   const [q, setQ] = useState("");
 
@@ -70,8 +71,6 @@ export default function TurnosDelDia({ username = "Prestador" }) {
       } catch (err) {
         console.error(err);
         setError(err.message);
-      } finally {
-        setLoading(false);
       }
     };
     fetchTurnosDelDia();
@@ -180,13 +179,6 @@ export default function TurnosDelDia({ username = "Prestador" }) {
     setPaginaActual(1);
   }, [q]);
 
-  if (loading)
-    return (
-      <div className="text-center mt-5 text-secondary">
-        <h4>Cargando turnos del día...</h4>
-      </div>
-    );
-
   if (error)
     return (
       <div className="text-center mt-5 text-danger">
@@ -211,6 +203,21 @@ export default function TurnosDelDia({ username = "Prestador" }) {
       >
         TURNOS DEL {fechaTitulo}
       </h2>
+
+      {esCentro && <div className="row justify-content-center align-items-center"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
 
       <hr className="border-dark border-5 rounded-pill mt-4" />
 

@@ -35,10 +35,9 @@ function Toast({ message, type = "success", onClose }) {
 export default function Turnos() {
   const [turnosPorFecha, setTurnosPorFecha] = useState({});
   const [turnosCompletos, setTurnosCompletos] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ message: "", type: "success" });
 
-  const [user, setUser] = useState({});
+  const [esCentro, setEsCentro] = useState()
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
 
@@ -50,20 +49,21 @@ export default function Turnos() {
 
   useEffect(()=>{
     const handlePrestador = async () => {
-      setUser(getUser())
+      const user = getUser()
+      setEsCentro(user.esCentro)
       if(!user.esCentro){
         setPrestadorId(user.id)
       } else {
         const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
         const data = await medicosAsociados.json()
         setPrestadores(data)
-        setPrestadorId(data[0].id)
+        setPrestadorId(data?.[0]?.id)
       }
     }
     handlePrestador()
-  }, [user.esCentro, user.id])
+  }, [])
 
-  const [q, setQ] = useState(""); // 🔍 Buscador
+  const [q, setQ] = useState(""); // Buscador
 
   // Control del mes actual
   const [anio, setAnio] = useState(new Date().getFullYear());
@@ -74,7 +74,6 @@ export default function Turnos() {
      ============================ */
   const fetchTurnosDelMes = useCallback(async (anio, mes) => {
     try {
-      setLoading(true);
 
       const ultimoDia = new Date(anio, mes, 0).getDate();
       const resultadosConteo = {};
@@ -126,8 +125,6 @@ export default function Turnos() {
         message: "No se pudieron cargar los turnos de este mes.",
         type: "error",
       });
-    } finally {
-      setLoading(false);
     }
   }, [prestadorId]);
 
@@ -187,6 +184,21 @@ export default function Turnos() {
       </h2>
     </div>
 
+    {esCentro && <div className="row justify-content-center align-items-center"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
+
     <hr
       className="border-dark border-5 rounded-pill mx-auto"
       style={{ width: "90%" }}
@@ -219,10 +231,7 @@ export default function Turnos() {
       />
     </div>
 
-    {/* Calendario */}
-    {loading ? (
-      <div className="text-center mt-5 text-white">Cargando turnos...</div>
-    ) : (
+    (
       <div className="col-12">
         <CalendarMonth
           key={`${anio}-${mes}`}
@@ -232,7 +241,7 @@ export default function Turnos() {
           mes={mes}
         />
       </div>
-    )}
+    )
 
     {/* Toast */}
     <Toast

@@ -6,7 +6,6 @@ export default function DetalleSolicitudAutorizacion() {
   const navigate = useNavigate();
 
   const [solicitud, setSolicitud] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
@@ -44,14 +43,11 @@ export default function DetalleSolicitudAutorizacion() {
         setSolicitud(data || null);
       } catch (err) {
         console.error("Error al obtener autorización:", err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchAutorizacion();
   }, [id]);
 
-  if (loading) return <div className="text-center mt-5">Cargando solicitud...</div>;
 
   if (!solicitud) {
     return (

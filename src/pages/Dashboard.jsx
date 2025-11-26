@@ -64,7 +64,7 @@ export default function Dashboard() {
         const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
         const data = await medicosAsociados.json()
         setPrestadores(data)
-        setPrestadorId(prestadores[0].id)
+        setPrestadorId(prestadores?.[0]?.id)
       }
     }
     handlePrestador()

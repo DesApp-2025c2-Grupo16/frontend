@@ -6,7 +6,6 @@ export default function SolicitudesAutorizaciones() {
   const navigate = useNavigate();
 
   const [solicitudes, setSolicitudes] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   // Filtros
@@ -18,6 +17,7 @@ export default function SolicitudesAutorizaciones() {
 
   const [textoBusqueda, setTextoBusqueda] = useState("")
 
+  const [esCentro, setEsCentro] = useState()
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
 
@@ -30,6 +30,7 @@ export default function SolicitudesAutorizaciones() {
   useEffect(()=>{
     const handlePrestador = async () => {
       const user = getUser()
+      setEsCentro(user.esCentro)
       if(!user.esCentro){
         setPrestadorId(user.id)
         return
@@ -56,7 +57,6 @@ export default function SolicitudesAutorizaciones() {
   useEffect(() => {
     const fetchAutorizaciones = async () => {
       try {
-        setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
           const res = await fetch(`http://localhost:3001/autorizaciones/prestador/${id}/${filtro}?pagina=${paginaActual}&tamaño=${itemsPorPagina}&busqueda=${filtroBusqueda}`);
@@ -71,14 +71,11 @@ export default function SolicitudesAutorizaciones() {
       } catch (err) {
         setSolicitudes([])
         //setError(err.message || "Fallo al cargar");
-      } finally {
-        setLoading(false);
-      }
+      } 
     };
     fetchAutorizaciones();
   }, [prestadorId, filtro, paginaActual, filtroBusqueda]);
 
-  if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
     return (
       <div className="text-center mt-5 text-danger">
@@ -140,9 +137,25 @@ export default function SolicitudesAutorizaciones() {
     <div className="mt-4">
       {/* Título pill */}
       <h2 className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
-          style={{ background:"#242424", display:"block", width:"90%", textAlign:"center", margin:"0 auto", lineHeight:"50px" }}>
+          style={{ background:"#242424", display:"block", width:"90%", textAlign:"center", lineHeight:"50px" }}>
         SOLICITUDES - AUTORIZACIONES
       </h2>
+
+      {esCentro && <div className="row justify-content-center align-items-center"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
+
       <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width:"90%" }} />
 
       {/* Filtros + búsqueda */}

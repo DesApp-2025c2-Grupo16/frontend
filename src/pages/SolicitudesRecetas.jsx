@@ -7,7 +7,6 @@ export default function SolicitudesRecetas() {
   const navigate = useNavigate();
 
   const [recetas, setRecetas] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [filtro, setFiltro] = useState("Recibido,En análisis");
@@ -18,6 +17,7 @@ export default function SolicitudesRecetas() {
 
   const [textoBusqueda, setTextoBusqueda] = useState("")
 
+  const [esCentro, setEsCentro] = useState()
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
 
@@ -30,6 +30,7 @@ export default function SolicitudesRecetas() {
   useEffect(()=>{
     const handlePrestador = async () => {
       const user= getUser()
+      setEsCentro(user.esCentro)
       if(!user.esCentro){
         setPrestadorId(user.id)
         return
@@ -55,7 +56,6 @@ export default function SolicitudesRecetas() {
   useEffect(() => {
     const fetchRecetas = async () => {
       try {
-        setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
           const res = await fetch(`http://localhost:3001/recetas/prestador/${id}/${filtro}?pagina=${paginaActual}&tamaño=${itemsPorPagina}&busqueda=${filtroBusqueda}`);
@@ -70,16 +70,13 @@ export default function SolicitudesRecetas() {
       } catch (err) {
         setRecetas([])
         //setError(err.message || "Fallo al cargar");
-      } finally {
-        setLoading(false);
-      }
+      } 
     };
     fetchRecetas();
   }, [prestadorId, filtro, paginaActual, filtroBusqueda]);
 
   // Resetear paginado si cambian filtros
 
-  if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
     return (
       <div className="text-center mt-5 text-danger">
@@ -150,13 +147,30 @@ export default function SolicitudesRecetas() {
   return (
     <div className="mt-4">
       <h2 className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
-          style={{ background:"#242424", display:"block", width:"90%", textAlign:"center", margin:"0 auto", lineHeight:"50px" }}>
+          style={{ background:"#242424", display:"block", width:"90%", textAlign:"center", lineHeight:"50px" }}>
         SOLICITUDES - RECETAS
       </h2>
-      <hr
+      
+
+      {esCentro && <div className="row justify-content-center align-items-center"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
+
+        <hr
         className="border-dark border-5 rounded-pill mt-4 mx-auto"
         style={{ width: "90%" }}
-      />
+        />
 
       <div
         className="d-flex justify-content-between flex-wrap"

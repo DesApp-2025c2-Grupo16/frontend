@@ -7,7 +7,6 @@ export default function HistoriaClinica() {
   const navigate = useNavigate();
   const [afiliado, setAfiliado] = useState(null);
   const [filteredNotas, setFilteredNotas] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [q, setQ] = useState("");
 
@@ -46,20 +45,11 @@ export default function HistoriaClinica() {
       } catch (err) {
         console.error(err);
         setError(err.message);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchData();
   }, [id, q, paginaActual]);
-
-  if (loading)
-    return (
-      <div className="text-center mt-5 text-secondary">
-        <h4>Cargando historia clínica...</h4>
-      </div>
-    );
 
   if (error)
     return (

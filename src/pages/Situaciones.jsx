@@ -7,13 +7,12 @@ export default function Situaciones() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { grupoNumero, filtroAnterior } = location.state || {};
 
   const [afiliado, setAfiliado] = useState(null);
   const [situaciones, setSituaciones] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  
   const [showModal, setShowModal] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
   const [soloActivas, setSoloActivas] = useState(false);
@@ -42,10 +41,10 @@ export default function Situaciones() {
 
         const resSit = await fetch(`http://localhost:3001/situaciones/${id}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
         if (resSit.status === 404) {
-          // 🔹 No hay situaciones registradas para este afiliado
+          // No hay situaciones registradas para este afiliado
           setSituaciones([]);
         } else if (!resSit.ok) {
-          // 🔹 Otro error real (500, etc.)
+          // Otro error real (500, etc.)
           throw new Error("No se pudieron cargar las situaciones");
         } else {
           const dataSit = await resSit.json();
@@ -56,9 +55,7 @@ export default function Situaciones() {
       } catch (err) {
         console.error(err);
         setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      } 
     };
     fetchData();
   }, [id, paginaActual]);
@@ -166,13 +163,6 @@ export default function Situaciones() {
       alert("No se pudo actualizar la situación");
     }
   };
-
-  if (loading)
-    return (
-      <div className="text-center mt-5 text-secondary">
-        <h4>Cargando situaciones...</h4>
-      </div>
-    );
 
   if (error)
     return (
