@@ -6,11 +6,15 @@ export default function HistoriaClinica() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [afiliado, setAfiliado] = useState(null);
-  const [notas, setNotas] = useState([]);
   const [filteredNotas, setFilteredNotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [q, setQ] = useState("");
+
+  // PAGINADO
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState()
+  const itemsPorPagina = 20;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,14 +24,23 @@ export default function HistoriaClinica() {
         const dataAfi = await resAfi.json();
         setAfiliado(dataAfi);
 
-        const resNotas = await fetch(`http://localhost:3001/notas/${id}`);
-        if (!resNotas.ok)
-          throw new Error("No se pudieron cargar las notas clínicas");
-        const dataNotas = await resNotas.json();
+        let resNotas = {};
+        if(q === ""){
+          resNotas = await fetch(`http://localhost:3001/notas/${id}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
+        } else {
+          resNotas = await fetch(`http://localhost:3001/notas/${id}/${q}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
+        }
+        if(resNotas.status === 404){
+          return
+        }
+        //if (!resNotas.ok)
+          //throw new Error("No se pudieron cargar las notas clínicas");
+        const data = await resNotas.json();
+        const dataNotas = data.notas;
+        setPaginasTotales(Math.ceil(data.count / itemsPorPagina));
         const notasOrdenadas = [...dataNotas].sort((a, b) => {
           return new Date(b.fecha) - new Date(a.fecha);
         });
-        setNotas(notasOrdenadas);
         setFilteredNotas(notasOrdenadas);
 
       } catch (err) {
@@ -39,20 +52,7 @@ export default function HistoriaClinica() {
     };
 
     fetchData();
-  }, [id]);
-
-  // Filtro en tiempo real
-  useEffect(() => {
-    const termino = q.trim().toLowerCase();
-    if (termino === "") {
-      setFilteredNotas(notas);
-    } else {
-      const filtradas = notas.filter((nota) =>
-        nota.doctor?.toLowerCase().includes(termino)
-      );
-      setFilteredNotas(filtradas);
-    }
-  }, [q, notas]);
+  }, [id, q, paginaActual]);
 
   if (loading)
     return (
@@ -162,6 +162,65 @@ export default function HistoriaClinica() {
           Volver al grupo familiar
         </button>
       </div>
+      {paginasTotales > 1 && (
+        <div style={{ display:"flex", justifyContent:"center", gap:"10px", margin:"20px 0" }}>
+
+          {/* Botón anterior */}
+          <button
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(paginaActual - 1)}
+            style={{
+              padding:"5px 12px",
+              borderRadius:"10px",
+              border:"2px solid #242424",
+              background: paginaActual === 1 ? "#ccc" : "#242424",
+              color:"white",
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer"
+            }}
+          >
+            ‹
+          </button>
+
+          {/* Números */}
+          {[...Array(paginasTotales).keys()].map(i => {
+            const page = i + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => setPaginaActual(page)}
+                style={{
+                  padding:"5px 12px",
+                  borderRadius:"10px",
+                  border:"2px solid #242424",
+                  background: paginaActual === page ? "#242424" : "white",
+                  color: paginaActual === page ? "white" : "#242424",
+                  cursor:"pointer",
+                  fontWeight:"bold"
+                }}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          {/* Botón siguiente */}
+          <button
+            disabled={paginaActual === paginasTotales}
+            onClick={() => setPaginaActual(paginaActual + 1)}
+            style={{
+              padding:"5px 12px",
+              borderRadius:"10px",
+              border:"2px solid #242424",
+              background: paginaActual === paginasTotales ? "#ccc" : "#242424",
+              color:"white",
+              cursor: paginaActual === paginasTotales ? "not-allowed" : "pointer"
+            }}
+          >
+            ›
+          </button>
+
+        </div>
+      )}
     </div>
   );
 }
