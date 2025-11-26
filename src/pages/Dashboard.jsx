@@ -107,10 +107,14 @@ export default function Dashboard() {
 
   const generarLista = (tipo, estado)=>{
     const lista = [0,0,0,0,0,0,0]
+    const mapa = [6,0,1,2,3,4,5]
     registros.map((registro)=>{
       if(registro.tipo === tipo && registro.estado === estado){
         const fecha = new Date(registro.fecha)
-        const dia = fecha.getDay()
+        fecha.setHours(fecha.getHours() - 3)
+        console.log(fecha)
+        const dia = mapa[fecha.getDay()]
+        console.log(dia)
         lista[dia] +=1
       }
     })

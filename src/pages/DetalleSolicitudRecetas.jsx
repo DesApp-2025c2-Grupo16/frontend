@@ -132,6 +132,17 @@ export default function DetalleSolicitudRecetas() {
             PrestadorId: prestadorId
           }),
         });
+
+        await fetch('http://localhost:3001/registrosSolicitudes/', {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: "receta",
+          estado: "En análisis",
+          fecha: new Date(),
+          PrestadorId: prestadorId
+        })
+      })
       } catch (error) {
         console.error("Error al actualizar estado:", error);
       }
