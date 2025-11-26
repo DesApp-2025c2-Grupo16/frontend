@@ -54,21 +54,14 @@ export default function Header() {
 
       {/* Acciones */}
       <div className="d-flex align-items-center gap-2 position-relative">
-        {/* Tema claro/oscuro */}
-        <button
-          className="btn btn-sm btn-outline-light"
-          onClick={() => setDark(!dark)}
-        >
-          {dark ? <FaSun /> : <FaMoon />}
-        </button>
 
         {/* Ir a Mensajes */}
-        <button
+        {/*<button
           className="btn btn-sm btn-outline-light"
           onClick={() => navigate("/mensajes")}
         >
           <FaEnvelope />
-        </button>
+        </button>*/}
 
         {/* Usuario con dropdown */}
         <div className="position-relative">
