@@ -10,29 +10,60 @@ export default function SolicitudesAutorizaciones() {
   const [error, setError] = useState("");
 
   // Filtros
-  const [filtro, setFiltro] = useState("nuevos");
+  const [filtro, setFiltro] = useState("Recibido,En análisis");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
+  const [ordenFecha, setOrdenFecha] = useState(null); // null | "asc" | "desc"
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
-  const [ordenFecha, setOrdenFecha] = useState(null); // null | "asc" | "desc"
+
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
+
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
 
   // PAGINADO
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
 
-  const prestadorId = 1; // TODO: traer del auth/contexto
+  // Resetear paginado si cambian filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
 
   useEffect(() => {
     const fetchAutorizaciones = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:3001/autorizaciones/${prestadorId}`);
-        if (!res.ok) {
-          const msg = await res.json().catch(() => ({}));
-          throw new Error(msg?.message || "Error al cargar las autorizaciones");
+        const id = parseInt(prestadorId)
+        if(!isNaN(id)){
+          const res = await fetch(`http://localhost:3001/autorizaciones/prestador/${id}/${filtro}`);
+          if (!res.ok) {
+            const msg = await res.json().catch(() => ({}));
+            throw new Error(msg?.message || "Error al cargar las autorizaciones");
+          }
+          const data = await res.json();
+          setSolicitudes(data || []);
         }
-        const data = await res.json();
-        setSolicitudes(data || []);
       } catch (err) {
         setError(err.message || "Fallo al cargar");
       } finally {
@@ -40,18 +71,13 @@ export default function SolicitudesAutorizaciones() {
       }
     };
     fetchAutorizaciones();
-  }, [prestadorId]);
-
-  // Resetear paginado si cambian filtros
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filtro, filtroBusqueda, fechaDesde, fechaHasta, ordenFecha]);
+  }, [prestadorId, filtro]);
 
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
     return (
       <div className="text-center mt-5 text-danger">
-        <h5 className="text-dark">{error}</h5>
+        <h4 className="text-dark">{error}</h4>
         <button className="btn btn-dark mt-3" onClick={() => window.location.reload()}>
           Reintentar
         </button>
@@ -69,18 +95,19 @@ export default function SolicitudesAutorizaciones() {
   const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
   // Filtrado base
-  let filtradas = (solicitudes || [])
-    .filter(r =>
-      filtro === "nuevos"
-        ? (r.estado === "Recibido" || r.estado === "En análisis")
-        : (r.estado || "").toLowerCase() === filtro.toLowerCase()
-    )
-    .filter(r => {
-      const t = (filtroBusqueda || "").toLowerCase();
-      const fullName = r.Afiliado ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase() : "";
-      const asunto = (r.asunto || r.lugar || "").toLowerCase();
-      return fullName.includes(t) || asunto.includes(t);
-    });
+  let filtradas = solicitudes
+  //let filtradas = (solicitudes || [])
+  //  .filter(r =>
+  //    filtro === "Recibido,En análisis"
+  //      ? (r.estado === "Recibido" || r.estado === "En análisis")
+  //      : (r.estado || "").toLowerCase() === filtro.toLowerCase()
+  //  )
+  //  .filter(r => {
+  //    const t = (filtroBusqueda || "").toLowerCase();
+  //    const fullName = r.Afiliado ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase() : "";
+  //    const asunto = (r.asunto || r.lugar || "").toLowerCase();
+  //    return fullName.includes(t) || asunto.includes(t);
+  //  });
 
   // Fechas
   if (fechaDesde) filtradas = filtradas.filter(r => new Date(r.fecha) >= new Date(fechaDesde));
@@ -143,10 +170,10 @@ export default function SolicitudesAutorizaciones() {
               {e.label}
             </button>
           ))}
-          {filtro !== "nuevos" && (
-            <button onClick={() => setFiltro("nuevos")}
+          {filtro !== "Recibido,En análisis" && (
+            <button onClick={() => setFiltro("Recibido,En análisis")}
                     style={{ backgroundColor:"#242424", border:"none", borderRadius:"25px", padding:"5px 10px" }}
-                    title="Mostrar nuevos (Recibido / En análisis)">
+                    title="Mostrar Recibido,En análisis (Recibido / En análisis)">
               <img src={reinicio} alt="Todos" style={{ width:20, height:20 }} />
             </button>
           )}

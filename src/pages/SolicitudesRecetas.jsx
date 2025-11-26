@@ -10,29 +10,55 @@ export default function SolicitudesRecetas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [filtro, setFiltro] = useState("nuevos");
+  const [filtro, setFiltro] = useState("Recibido,En análisis");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [ordenFecha, setOrdenFecha] = useState(null);
 
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
+
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
+
   // PAGINADO
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
-
-  const prestadorId = 1;
 
   useEffect(() => {
     const fetchRecetas = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:3001/recetas/${prestadorId}`);
-        if (!res.ok) {
-          const msg = await res.json().catch(() => ({}));
-          throw new Error(msg?.message || "No se pudieron cargar las recetas");
+        const id = parseInt(prestadorId)
+        if(!isNaN(id)){
+          const res = await fetch(`http://localhost:3001/recetas/prestador/${id}/${filtro}`);
+          if (!res.ok) {
+            const msg = await res.json().catch(() => ({}));
+            throw new Error(msg?.message || "No se pudieron cargar las recetas");
+          }
+          const data = await res.json();
+          setRecetas(data || []);
         }
-        const data = await res.json();
-        setRecetas(data || []);
       } catch (err) {
         setError(err.message || "Fallo al cargar");
       } finally {
@@ -40,7 +66,7 @@ export default function SolicitudesRecetas() {
       }
     };
     fetchRecetas();
-  }, [prestadorId]);
+  }, [prestadorId, filtro]);
 
   // Resetear paginado si cambian filtros
   useEffect(() => {
@@ -50,12 +76,9 @@ export default function SolicitudesRecetas() {
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
     return (
-      <div className="text-center text-danger mt-5">
-        <h4 className="text-dark">Error: {error}</h4>
-        <button
-          className="btn btn-dark mt-3"
-          onClick={() => window.location.reload()}
-        >
+      <div className="text-center mt-5 text-danger">
+        <h4 className="text-dark">{error}</h4>
+        <button className="btn btn-dark mt-3" onClick={() => window.location.reload()}>
           Reintentar
         </button>
       </div>
@@ -77,20 +100,21 @@ export default function SolicitudesRecetas() {
     "Rechazado",
   ];
 
-  let filtradas = (recetas || [])
-    .filter((r) =>
-      filtro === "nuevos"
-        ? r.estado === "Recibido" || r.estado === "En análisis"
-        : (r.estado || "").toLowerCase() === filtro.toLowerCase()
-    )
-    .filter((r) => {
-      const t = (filtroBusqueda || "").toLowerCase();
-      const fullName = r.Afiliado
-        ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase()
-        : "";
-      const asunto = (r.asunto || "").toLowerCase();
-      return fullName.includes(t) || asunto.includes(t);
-    });
+  let filtradas = recetas
+  //let filtradas = (recetas || [])
+  //  .filter((r) =>
+  //    filtro === "Recibido,En análisis"
+  //      ? r.estado === "Recibido" || r.estado === "En análisis"
+  //      : (r.estado || "").toLowerCase() === filtro.toLowerCase()
+  //  )
+  //  .filter((r) => {
+  //    const t = (filtroBusqueda || "").toLowerCase();
+  //    const fullName = r.Afiliado
+  //      ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase()
+  //      : "";
+  //    const asunto = (r.asunto || "").toLowerCase();
+  //    return fullName.includes(t) || asunto.includes(t);
+  //  });
 
   if (fechaDesde)
     filtradas = filtradas.filter(
@@ -166,16 +190,16 @@ export default function SolicitudesRecetas() {
               {e.label}
             </button>
           ))}
-          {filtro !== "nuevos" && (
+          {filtro !== "Recibido,En análisis" && (
             <button
-              onClick={() => setFiltro("nuevos")}
+              onClick={() => setFiltro("Recibido,En análisis")}
               style={{
                 backgroundColor: "#242424",
                 border: "none",
                 borderRadius: "25px",
                 padding: "5px 10px",
               }}
-              title="Mostrar nuevos (Recibido / En análisis)"
+              title="Mostrar Recibido,En análisis (Recibido / En análisis)"
             >
               <img src={reinicio} alt="Todos" style={{ width: 20, height: 20 }} />
             </button>

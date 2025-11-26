@@ -11,13 +11,37 @@ export default function DetalleSolicitudReintegros() {
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
 
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
+
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
+
   useEffect(() => {
-    const fetchReintegros = async () => {
+    const fetchReintegro = async () => {
       try {
-        const response = await fetch("http://localhost:3001/reintegros/1"); // ID prestador logueado
+        const response = await fetch(`http://localhost:3001/reintegros/${parseInt(id)}`);
         const data = await response.json();
-        const reintegro = data.find((r) => r.id === parseInt(id));
-        setSolicitud(reintegro || null);
+        setSolicitud(data || null);
       } catch (error) {
         console.error("Error al obtener los reintegros:", error);
       } finally {
@@ -25,7 +49,7 @@ export default function DetalleSolicitudReintegros() {
       }
     };
 
-    fetchReintegros();
+    fetchReintegro();
   }, [id]);
 
   if (loading) {
@@ -87,7 +111,7 @@ export default function DetalleSolicitudReintegros() {
           tipo: "reintegro",
           estado: estado,
           fecha: new Date(),
-          PrestadorId: 1
+          PrestadorId: prestadorId
         })
       })
 
@@ -103,6 +127,35 @@ export default function DetalleSolicitudReintegros() {
 
   const requiereComentario = (accion) =>
     accion === "Observado" || accion === "Rechazado";
+
+  const handleReclamada = async () => {
+    if (solicitud.estado === "Recibido") {
+      try {
+        await fetch(`http://localhost:3001/reintegros/${solicitud.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            estado: "En análisis",
+            PrestadorId: prestadorId
+          }),
+        });
+
+        await fetch('http://localhost:3001/registrosSolicitudes/', {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: "reintegro",
+          estado: "En análisis",
+          fecha: new Date(),
+          PrestadorId: prestadorId
+        })
+      })
+      } catch (error) {
+        console.error("Error al actualizar estado:", error);
+      }
+    }
+    navigate("/solicitudes/reintegros");
+  }
 
   const solicitudFinalizada =
     solicitud.estado === "Aprobado" ||
@@ -208,22 +261,7 @@ export default function DetalleSolicitudReintegros() {
       <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
         <button
           className="btn btn-dark"
-          onClick={async () => {
-            if (solicitud.estado === "Recibido") {
-              try {
-                await fetch(`http://localhost:3001/reintegros/${solicitud.id}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    estado: "En análisis",
-                  }),
-                });
-              } catch (error) {
-                console.error("Error al actualizar estado:", error);
-              }
-            }
-            navigate("/solicitudes/reintegros");
-          }}
+          onClick={handleReclamada}
         >
           Volver a la bandeja
         </button>

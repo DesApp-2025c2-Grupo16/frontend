@@ -33,12 +33,35 @@ function Toast({ message, type = "success", onClose }) {
 }
 
 export default function Turnos() {
-  const prestadorId = 1;
-
   const [turnosPorFecha, setTurnosPorFecha] = useState({});
   const [turnosCompletos, setTurnosCompletos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ message: "", type: "success" });
+
+  const [user, setUser] = useState({});
+  const [prestadorId, setPrestadorId] = useState();
+  const [prestadores, setPrestadores] = useState([])
+
+  const getUser = ()=>{
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed
+  }
+
+  useEffect(()=>{
+    const handlePrestador = async () => {
+      setUser(getUser())
+      if(!user.esCentro){
+        setPrestadorId(user.id)
+      } else {
+        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        const data = await medicosAsociados.json()
+        setPrestadores(data)
+        setPrestadorId(prestadores[0].id)
+      }
+    }
+    handlePrestador()
+  }, [user.esCentro, user.id])
 
   const [q, setQ] = useState(""); // 🔍 Buscador
 
@@ -57,41 +80,45 @@ export default function Turnos() {
       const resultadosConteo = {};
       const resultadosTurnos = [];
 
-      for (let dia = 1; dia <= ultimoDia; dia++) {
-        const fechaISO = `${anio}-${String(mes).padStart(2, "0")}-${String(
-          dia
-        ).padStart(2, "0")}`;
-
-        try {
-          const res = await fetch(
-            `http://localhost:3001/turnos/${prestadorId}/fecha/${fechaISO}`
-          );
-
-          if (!res.ok) {
-            resultadosConteo[fechaISO] = 0;
-            continue;
-          }
-
-          const data = await res.json();
-
-          // data = array de turnos
-          resultadosConteo[fechaISO] = Array.isArray(data) ? data.length : 0;
-
-          if (Array.isArray(data)) {
-            data.forEach((t) =>
-              resultadosTurnos.push({
-                ...t,
-                fechaISO,
-              })
+      const id = parseInt(prestadorId)
+      if(!isNaN(id)){
+        for (let dia = 1; dia <= ultimoDia; dia++) {
+          const fechaISO = `${anio}-${String(mes).padStart(2, "0")}-${String(
+            dia
+          ).padStart(2, "0")}`;
+  
+          try {
+            const res = await fetch(
+              `http://localhost:3001/turnos/${id}/fecha/${fechaISO}`
             );
+  
+            if (!res.ok) {
+              resultadosConteo[fechaISO] = 0;
+              continue;
+            }
+  
+            const data = await res.json();
+  
+            // data = array de turnos
+            resultadosConteo[fechaISO] = Array.isArray(data) ? data.length : 0;
+  
+            if (Array.isArray(data)) {
+              data.forEach((t) =>
+                resultadosTurnos.push({
+                  ...t,
+                  fechaISO,
+                })
+              );
+            }
+          } catch {
+            resultadosConteo[fechaISO] = 0;
           }
-        } catch {
-          resultadosConteo[fechaISO] = 0;
         }
+  
+        setTurnosPorFecha(resultadosConteo);
+        setTurnosCompletos(resultadosTurnos);
       }
 
-      setTurnosPorFecha(resultadosConteo);
-      setTurnosCompletos(resultadosTurnos);
     } catch (error) {
       console.error("Error al cargar turnos:", error);
       setToast({
@@ -101,7 +128,7 @@ export default function Turnos() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [prestadorId]);
 
   /* Carga inicial */
   useEffect(() => {
