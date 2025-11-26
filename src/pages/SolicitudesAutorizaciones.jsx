@@ -98,18 +98,6 @@ export default function SolicitudesAutorizaciones() {
 
   // Filtrado base
   let filtradas = solicitudes
-  //let filtradas = (solicitudes || [])
-  //  .filter(r =>
-  //    filtro === "Recibido,En análisis"
-  //      ? (r.estado === "Recibido" || r.estado === "En análisis")
-  //      : (r.estado || "").toLowerCase() === filtro.toLowerCase()
-  //  )
-  //  .filter(r => {
-  //    const t = (filtroBusqueda || "").toLowerCase();
-  //    const fullName = r.Afiliado ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase() : "";
-  //    const asunto = (r.asunto || r.lugar || "").toLowerCase();
-  //    return fullName.includes(t) || asunto.includes(t);
-  //  });
 
   // Fechas
   if (fechaDesde) filtradas = filtradas.filter(r => new Date(r.fecha) >= new Date(fechaDesde));

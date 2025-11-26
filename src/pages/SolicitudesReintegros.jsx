@@ -98,20 +98,6 @@ export default function SolicitudesReintegros() {
   const ordenEstados = ["Recibido", "En análisis", "Observado", "Aprobado", "Rechazado"];
 
   let filtradas = reintegros
-  //let reintegrosFiltrados = reintegros
-  //  .filter((r) =>
-  //    filtro === "Recibido,En análisis"
-  //      ? r.estado === "Recibido" || r.estado === "En análisis"
-  //      : r.estado.toLowerCase() === filtro.toLowerCase()
-  //  )
-  //  .filter(
-  //    (r) =>
-  //      r.asunto.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
-  //      (r.Afiliado &&
-  //        `${r.Afiliado.nombre} ${r.Afiliado.apellido}`
-  //          .toLowerCase()
-  //          .includes(filtroBusqueda.toLowerCase()))
-  //  );
 
   if (fechaDesde) {
     filtradas = filtradas.filter(

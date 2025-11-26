@@ -23,10 +23,10 @@ export default function Dashboard() {
 
   const getCurrentWeekInterval = ()=>{
     const hoy = new Date()
-    hoy.setUTCHours(0)
-    hoy.setUTCMinutes(0)
-    hoy.setUTCSeconds(0)
-    hoy.setUTCMilliseconds(0)
+    hoy.setHours(0)
+    hoy.setMinutes(0)
+    hoy.setSeconds(0)
+    hoy.setMilliseconds(0)
     const numeroDeDia = hoy.getDay()
     const diferenciaAlLunes = numeroDeDia === 0 ? -6 : 1-numeroDeDia
     const lunes = new Date(hoy)

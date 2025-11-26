@@ -104,20 +104,6 @@ export default function SolicitudesRecetas() {
   ];
 
   let filtradas = recetas
-  //let filtradas = (recetas || [])
-  //  .filter((r) =>
-  //    filtro === "Recibido,En análisis"
-  //      ? r.estado === "Recibido" || r.estado === "En análisis"
-  //      : (r.estado || "").toLowerCase() === filtro.toLowerCase()
-  //  )
-  //  .filter((r) => {
-  //    const t = (filtroBusqueda || "").toLowerCase();
-  //    const fullName = r.Afiliado
-  //      ? `${r.Afiliado.nombre} ${r.Afiliado.apellido}`.toLowerCase()
-  //      : "";
-  //    const asunto = (r.asunto || "").toLowerCase();
-  //    return fullName.includes(t) || asunto.includes(t);
-  //  });
 
   if (fechaDesde)
     filtradas = filtradas.filter(
