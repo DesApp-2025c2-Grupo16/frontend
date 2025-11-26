@@ -111,7 +111,7 @@ export default function Dashboard() {
     registros.map((registro)=>{
       if(registro.tipo === tipo && registro.estado === estado){
         const fecha = new Date(registro.fecha)
-        fecha.setHours(fecha.getHours() - 3)
+        fecha.setHours(fecha.getHours() + 3)
         console.log(fecha)
         const dia = mapa[fecha.getDay()]
         console.log(dia)
