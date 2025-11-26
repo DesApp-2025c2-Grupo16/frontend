@@ -4,7 +4,6 @@ import { FaSun, FaMoon, FaEnvelope, FaUser } from "react-icons/fa";
 import logo from "../assets/logo.png";
 
 export default function Header() {
-  const [dark, setDark] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
