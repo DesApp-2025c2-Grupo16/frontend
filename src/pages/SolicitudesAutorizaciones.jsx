@@ -16,7 +16,8 @@ export default function SolicitudesAutorizaciones() {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
 
-  const [user, setUser] = useState({});
+  const [textoBusqueda, setTextoBusqueda] = useState("")
+
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
 
@@ -28,18 +29,19 @@ export default function SolicitudesAutorizaciones() {
 
   useEffect(()=>{
     const handlePrestador = async () => {
-      setUser(getUser())
+      const user = getUser()
       if(!user.esCentro){
         setPrestadorId(user.id)
+        return
       } else {
         const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
         const data = await medicosAsociados.json()
         setPrestadores(data)
-        setPrestadorId(data[0].id)
+        setPrestadorId(data?.[0]?.id)
       }
     }
     handlePrestador()
-  }, [user.esCentro, user.id])
+  }, [])
 
   // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
@@ -57,7 +59,7 @@ export default function SolicitudesAutorizaciones() {
         setLoading(true);
         const id = parseInt(prestadorId)
         if(!isNaN(id)){
-          const res = await fetch(`http://localhost:3001/autorizaciones/prestador/${id}/${filtro}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
+          const res = await fetch(`http://localhost:3001/autorizaciones/prestador/${id}/${filtro}?pagina=${paginaActual}&tamaño=${itemsPorPagina}&busqueda=${filtroBusqueda}`);
           if (!res.ok) {
             const msg = await res.json().catch(() => ({}));
             throw new Error(msg?.message || "Error al cargar las autorizaciones");
@@ -67,13 +69,14 @@ export default function SolicitudesAutorizaciones() {
           setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
         }
       } catch (err) {
-        setError(err.message || "Fallo al cargar");
+        setSolicitudes([])
+        //setError(err.message || "Fallo al cargar");
       } finally {
         setLoading(false);
       }
     };
     fetchAutorizaciones();
-  }, [prestadorId, filtro, paginaActual]);
+  }, [prestadorId, filtro, paginaActual, filtroBusqueda]);
 
   if (loading) return <p className="text-center mt-5">Cargando solicitudes...</p>;
   if (error) {
@@ -164,16 +167,38 @@ export default function SolicitudesAutorizaciones() {
           )}
         </div>
 
-        <input
-          type="text"
-          placeholder="Buscar afiliado o asunto..."
-          value={filtroBusqueda}
-          onChange={(e) => setFiltroBusqueda(e.target.value)}
+        <div>
+          <input
+            type="text"
+            placeholder="Buscar asunto o afiliado..."
+            value={textoBusqueda}
+            onChange={(e) => setTextoBusqueda(e.target.value)}
+            style={{
+              borderRadius: "25px",
+              border: "2px solid #242424",
+              padding: "5px 10px",
+              outline: "none",
+              width: "250px",
+              backgroundColor: "#242424",
+              color: "white",
+            }}
+          />
+          <button 
+          onClick={()=>setFiltroBusqueda(textoBusqueda)}
           style={{
-            borderRadius:"25px", border:"2px solid #242424", padding:"5px 10px",
-            outline:"none", width:250, backgroundColor:"#242424", color:"white",
-          }}
-        />
+              borderRadius: "25px",
+              border: "2px solid #242424",
+              padding: "5px 10px",
+              outline: "none",
+              width: "auto",
+              backgroundColor: "#242424",
+              color: "white",
+              marginLeft: "10px"
+            }}
+          >
+            Buscar
+          </button>
+        </div>
       </div>
 
       {/* Fechas */}
