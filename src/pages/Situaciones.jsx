@@ -20,7 +20,7 @@ export default function Situaciones() {
   // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
   const [paginasTotales, setPaginasTotales] = useState()
-  const itemsPorPagina = 5;
+  const itemsPorPagina = 2;
 
   const [nuevaSituacion, setNuevaSituacion] = useState({
     descripcion: "",
@@ -39,7 +39,7 @@ export default function Situaciones() {
         const dataAfi = await resAfi.json();
         setAfiliado(dataAfi);
 
-        const resSit = await fetch(`http://localhost:3001/situaciones/${id}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
+        const resSit = await fetch(`http://localhost:3001/situaciones/${id}?busqueda=${filtro}&soloActivas=${soloActivas}&pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
         if (resSit.status === 404) {
           // No hay situaciones registradas para este afiliado
           setSituaciones([]);
@@ -58,39 +58,13 @@ export default function Situaciones() {
       } 
     };
     fetchData();
-  }, [id, paginaActual]);
+  }, [id, paginaActual, filtro, soloActivas]);
 
   const filtradas = situaciones
-    // Primero ordenamos por estado y fecha
-    .sort((a, b) => {
-      const hoy = new Date();
 
-      const finA = a.fechaFin ? new Date(a.fechaFin) : null;
-      const finB = b.fechaFin ? new Date(b.fechaFin) : null;
-
-      const activaA = !finA || finA >= hoy;
-      const activaB = !finB || finB >= hoy;
-
-      // Primero van las activas (true > false)
-      if (activaA !== activaB) {
-        return activaA ? -1 : 1;
-      }
-
-      // Si ambos son del mismo tipo, ordenamos por fechaInicio (más reciente primero)
-      return new Date(b.fechaInicio) - new Date(a.fechaInicio);
-    })
-    // Luego aplicamos los filtros como antes
-    .filter((s) => {
-      const texto = filtro.toLowerCase();
-      const coincideDescripcion = s.descripcion?.toLowerCase().includes(texto);
-
-      if (!soloActivas) return coincideDescripcion;
-
-      const hoy = new Date();
-      const fin = s.fechaFin ? new Date(s.fechaFin) : null;
-      const esActiva = !fin || fin >= hoy;
-      return coincideDescripcion && esActiva;
-    });
+  useEffect(()=>{
+    setPaginaActual(1)
+  }, [filtro, soloActivas])
 
 
 // Convierte "YYYY-MM-DD" a Date LOCAL (UTC-3)
@@ -295,10 +269,6 @@ const abrirEditar = (sit) => {
             + Agregar situación
           </button>
 
-          <h6 className="mb-0 text-light">
-            Situaciones registradas:{" "}
-            <span className="fw-bold">{filtradas.length}</span>
-          </h6>
         </div>
 
         <div className="table-responsive">
