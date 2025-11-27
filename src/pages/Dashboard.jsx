@@ -265,9 +265,28 @@ export default function Dashboard() {
         }}
       >
         DASHBOARD
-      </h2>
 
-      <hr className="border-dark border-5 rounded-pill mt-4" />
+      </h2>
+        {/*Selector de medico si es centro */}
+        {user.esCentro && <div className="row justify-content-center align-items-center mt-3"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value)}>
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i}>{prestador.nombre}</option>
+              })
+              }
+            </select>
+          </div>
+        </div>}
+
+      <hr
+      className="border-dark border-5 rounded-pill mx-auto"
+      style={{ width: "90%" }}
+      />
 
       <div
         className="row"
@@ -310,21 +329,6 @@ export default function Dashboard() {
           boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
         }}
       >
-        {/*Selector de medico si es centro */}
-        {user.esCentro && <div className="row justify-content-center align-items-center"> 
-          <div className="col-3 justify-content-center align-items-center">
-            <span>Datos del prestador:</span>
-          </div>
-          <div className="col-5">
-            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value)}>
-              {
-                prestadores.map((prestador, i) => {
-                return <option value={prestador.id} key={i}>{prestador.nombre}</option>
-              })
-              }
-            </select>
-          </div>
-        </div>}
 
         <div className="row px-2">
           {/* === IZQUIERDA: LÍNEAS === */}

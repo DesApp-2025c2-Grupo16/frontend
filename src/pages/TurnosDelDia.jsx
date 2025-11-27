@@ -52,7 +52,7 @@ export default function TurnosDelDia() {
   // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
   const [paginasTotales, setPaginasTotales] = useState()
-  const itemsPorPagina = 20;
+  const itemsPorPagina = 10;
 
 
   useEffect(() => {
@@ -212,7 +212,7 @@ export default function TurnosDelDia() {
         TURNOS DEL {fechaTitulo}
       </h2>
 
-      {esCentro && <div className="row justify-content-center align-items-center"> 
+      {esCentro && <div className="row justify-content-center align-items-center mt-3"> 
           <div className="col-3 justify-content-center align-items-center">
             <span>Datos del prestador:</span>
           </div>
@@ -227,7 +227,10 @@ export default function TurnosDelDia() {
           </div>
         </div>}
 
-      <hr className="border-dark border-5 rounded-pill mt-4" />
+      <hr
+      className="border-dark border-5 rounded-pill mx-auto"
+      style={{ width: "90%" }}
+      />
 
       {/* BUSCADOR */}
       <div
@@ -371,7 +374,7 @@ export default function TurnosDelDia() {
       </div>
 
       {/* === PAGINADO === */}
-      {paginasTotales > 1 && (
+      {q === "" && paginasTotales > 1 && (
         <div
           style={{
             display: "flex",

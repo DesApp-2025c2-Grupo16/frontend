@@ -146,7 +146,7 @@ export default function SolicitudesAutorizaciones() {
         SOLICITUDES - AUTORIZACIONES
       </h2>
 
-      {esCentro && <div className="row justify-content-center align-items-center"> 
+      {esCentro && <div className="row justify-content-center align-items-center mt-3"> 
           <div className="col-3 justify-content-center align-items-center">
             <span>Datos del prestador:</span>
           </div>
@@ -161,7 +161,10 @@ export default function SolicitudesAutorizaciones() {
           </div>
         </div>}
 
-      <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width:"90%" }} />
+      <hr
+      className="border-dark border-5 rounded-pill mx-auto"
+      style={{ width: "90%" }}
+      />
 
       {/* Filtros + búsqueda */}
       <div className="d-flex justify-content-between flex-wrap" style={{ width:"90%", margin:"5px auto", alignItems:"center" }}>

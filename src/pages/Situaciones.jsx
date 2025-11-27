@@ -20,7 +20,7 @@ export default function Situaciones() {
   // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
   const [paginasTotales, setPaginasTotales] = useState()
-  const itemsPorPagina = 20;
+  const itemsPorPagina = 5;
 
   const [nuevaSituacion, setNuevaSituacion] = useState({
     descripcion: "",
@@ -93,43 +93,58 @@ export default function Situaciones() {
     });
 
 
-  // Crear nueva situación
-  const handleCrearSituacion = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`http://localhost:3001/situaciones/${id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          descripcion: nuevaSituacion.descripcion,
-          fechaInicio: nuevaSituacion.fechaInicio,
-          fechaFin: nuevaSituacion.fechaFin || null,
-        }),
-      });
-      if (!res.ok) throw new Error("Error al crear la situación");
-      const data = await res.json();
-      setSituaciones([...situaciones, data]);
-      setShowModal(false);
-      setNuevaSituacion({ descripcion: "", fechaInicio: "", fechaFin: "" });
-    } catch (err) {
-      console.error(err);
-      alert("No se pudo crear la situación");
-    }
-  };
-  // Formatear fecha a dd-mm-aaaa
-  const formatearFecha = (fecha) => {
-    if (!fecha) return "—";
-    const d = new Date(fecha);
-    const dia = String(d.getDate()).padStart(2, "0");
-    const mes = String(d.getMonth() + 1).padStart(2, "0");
-    const anio = d.getFullYear();
-    return `${dia}-${mes}-${anio}`;
-  };
-  // Editar situación
-  const abrirEditar = (sit) => {
-    setSituacionEditar(sit);
-    setShowEditar(true);
-  };
+// Convierte "YYYY-MM-DD" a Date LOCAL (UTC-3)
+const fechaToLocalDate = (yyyyMmDd) => {
+  if (!yyyyMmDd) return null;
+  const [anio, mes, dia] = yyyyMmDd.split("-");
+  return new Date(anio, mes - 1, dia); // usa horario local, igual que los seeders
+};
+
+// Crear nueva situación
+const handleCrearSituacion = async (e) => {
+  e.preventDefault();
+  try {
+    const res = await fetch(`http://localhost:3001/situaciones/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        descripcion: nuevaSituacion.descripcion,
+        fechaInicio: fechaToLocalDate(nuevaSituacion.fechaInicio),
+        fechaFin: nuevaSituacion.fechaFin
+          ? fechaToLocalDate(nuevaSituacion.fechaFin)
+          : null,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Error al crear la situación");
+
+    const data = await res.json();
+    setSituaciones([...situaciones, data]);
+    setShowModal(false);
+    setNuevaSituacion({ descripcion: "", fechaInicio: "", fechaFin: "" });
+  } catch (err) {
+    console.error(err);
+    alert("No se pudo crear la situación");
+  }
+};
+
+// Formatear fecha a dd-mm-aaaa (sin timezone)
+const formatearFecha = (fecha) => {
+  if (!fecha) return "—";
+
+  // Fecha ya viene correcta, solo la formateamos sin new Date()
+  const partes = fecha.split("T")[0].split("-");
+  const [anio, mes, dia] = partes;
+
+  return `${dia}-${mes}-${anio}`;
+};
+
+// Editar situación
+const abrirEditar = (sit) => {
+  setSituacionEditar(sit);
+  setShowEditar(true);
+};
+
 
   const handleGuardarEdicion = async (e) => {
     e.preventDefault();
@@ -470,9 +485,9 @@ export default function Situaciones() {
         </Modal.Body>
       </Modal>
       
+      {/* Paginado */}
       {paginasTotales > 1 && (
         <div style={{ display:"flex", justifyContent:"center", gap:"10px", margin:"20px 0" }}>
-
           {/* Botón anterior */}
           <button
             disabled={paginaActual === 1}

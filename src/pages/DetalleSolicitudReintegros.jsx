@@ -88,7 +88,8 @@ export default function DetalleSolicitudReintegros() {
         }
         body.motivoEstado = comentarioOpcional.trim();
       }
-
+      body.PrestadorId = prestadorId;
+      
       const response = await fetch(`http://localhost:3001/reintegros/${solicitud.id}`, {
         method: "PATCH",
         headers: {

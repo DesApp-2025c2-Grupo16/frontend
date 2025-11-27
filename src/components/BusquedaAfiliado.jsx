@@ -10,7 +10,7 @@ export default function BusquedaAfiliado() {
   const [error, setError] = useState("");
   const [filtro, setFiltro] = useState(location.state?.filtroAnterior || "");
 
-  // 🔹 Buscar grupo familiar
+  // Buscar grupo familiar
   const buscar = async (e) => {
     if (e) e.preventDefault();
     setError("");
@@ -39,7 +39,7 @@ export default function BusquedaAfiliado() {
     }
   }, []);
 
-  // 🔹 Filtro
+  // Filtro
   const grupoFiltrado = grupoFamiliar.filter((miembro) => {
     const texto = filtro.toLowerCase();
     const nroAfiliado = `${miembro.numeroIntegrante}`;
@@ -62,7 +62,11 @@ export default function BusquedaAfiliado() {
       >
         BÚSQUEDA DE AFILIADO
       </h2>
-      <hr className="border-dark border-5 rounded-pill mt-4" />
+
+      <hr
+      className="border-dark border-5 rounded-pill mx-auto"
+      style={{ width: "90%" }}
+      />
 
       {/* BUSCADOR */}
       <form

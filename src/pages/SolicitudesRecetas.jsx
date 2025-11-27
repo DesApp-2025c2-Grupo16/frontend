@@ -157,7 +157,7 @@ export default function SolicitudesRecetas() {
       </h2>
       
 
-      {esCentro && <div className="row justify-content-center align-items-center"> 
+      {esCentro && <div className="row justify-content-center align-items-center mt-3"> 
           <div className="col-3 justify-content-center align-items-center">
             <span>Datos del prestador:</span>
           </div>

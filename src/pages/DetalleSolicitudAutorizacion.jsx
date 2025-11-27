@@ -90,7 +90,8 @@ export default function DetalleSolicitudAutorizacion() {
         }
         body.motivoEstado = comentarioOpcional.trim();
       }
-
+      body.PrestadorId = prestadorId;
+      
       const res = await fetch(`http://localhost:3001/autorizaciones/${solicitud.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

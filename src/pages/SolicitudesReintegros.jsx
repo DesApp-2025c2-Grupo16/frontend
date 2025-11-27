@@ -148,7 +148,7 @@ export default function SolicitudesReintegros() {
         SOLICITUDES - REINTEGROS
       </h2>
 
-      {esCentro && <div className="row justify-content-center align-items-center"> 
+      {esCentro && <div className="row justify-content-center align-items-center mt-3"> 
           <div className="col-3 justify-content-center align-items-center">
             <span>Datos del prestador:</span>
           </div>
@@ -163,7 +163,10 @@ export default function SolicitudesReintegros() {
           </div>
         </div>}
 
-      <hr className="border-dark border-5 rounded-pill mt-4 mx-auto" style={{ width: "90%" }} />
+      <hr
+      className="border-dark border-5 rounded-pill mx-auto"
+      style={{ width: "90%" }}
+      />
 
       {/* Filtros principales */}
       <div
