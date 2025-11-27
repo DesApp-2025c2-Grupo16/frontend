@@ -61,6 +61,14 @@ export default function HistoriaClinica() {
       </div>
     );
 
+  if (!afiliado) {
+    return (
+      <div className="text-center mt-5">
+        <h4>Cargando datos del afiliado...</h4>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-4 text-center" style={{ fontFamily: "sans-serif" }}>
       <h2

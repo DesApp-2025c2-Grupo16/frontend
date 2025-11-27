@@ -231,17 +231,15 @@ export default function Turnos() {
       />
     </div>
 
-    (
-      <div className="col-12">
-        <CalendarMonth
-          key={`${anio}-${mes}`}
-          turnos={turnosParaCalendario}
-          onChangeMes={handleChangeMes}
-          anio={anio}
-          mes={mes}
-        />
-      </div>
-    )
+    <div className="col-12">
+      <CalendarMonth
+        key={`${anio}-${mes}`}
+        turnos={turnosParaCalendario}
+        onChangeMes={handleChangeMes}
+        anio={anio}
+        mes={mes}
+      />
+    </div>
 
     {/* Toast */}
     <Toast

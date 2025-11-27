@@ -120,7 +120,7 @@ export default function Situaciones() {
   const formatearFecha = (fecha) => {
     if (!fecha) return "—";
     const d = new Date(fecha);
-    const dia = String(d.getDate() + 1).padStart(2, "0");
+    const dia = String(d.getDate()).padStart(2, "0");
     const mes = String(d.getMonth() + 1).padStart(2, "0");
     const anio = d.getFullYear();
     return `${dia}-${mes}-${anio}`;
@@ -173,6 +173,14 @@ export default function Situaciones() {
         </button>
       </div>
     );
+
+  if (!afiliado) {
+    return (
+      <div className="text-center mt-5">
+        <h4>Cargando datos del afiliado...</h4>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4 text-center" style={{ fontFamily: "sans-serif" }}>
