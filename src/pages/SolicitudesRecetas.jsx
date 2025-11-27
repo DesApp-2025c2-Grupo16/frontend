@@ -333,11 +333,7 @@ export default function SolicitudesRecetas() {
                     r.estado === "Recibido" || r.estado === "En análisis" ? 1 : 0.6,
                   borderBottom: "1px solid #ddd",
                 }}
-                onClick={() => {
-                  if (r.estado === "Recibido" || r.estado === "En análisis") {
-                    navigate(`/solicitudes/recetas/${r.id}`);
-                  }
-                }}
+                onClick={() => navigate(`/solicitudes/recetas/${r.id}`)}
               >
                 <td style={{ padding: "10px 15px" }}>
                   {r.solicitud || `#${r.id}`}
