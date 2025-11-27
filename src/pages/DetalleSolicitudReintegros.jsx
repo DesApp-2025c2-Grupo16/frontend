@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import ToastMessage from "../components/ToastMessage";
 
 export default function DetalleSolicitudReintegros() {
   const { id } = useParams();
@@ -9,11 +10,11 @@ export default function DetalleSolicitudReintegros() {
   const [showModal, setShowModal] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
-
+  const [toast, setToast] = useState({ message: "", type: "success" });
   const [user, setUser] = useState({});
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
-
+  
   const getUser = ()=>{
     const stored = localStorage.getItem("auth_user");
     const parsed = JSON.parse(stored);
@@ -113,9 +114,14 @@ export default function DetalleSolicitudReintegros() {
         })
       })
 
-      alert(`Solicitud marcada como ${estado}`);
+      setToast({
+      message: `Solicitud marcada como ${estado}`,
+      type: "success",
+    });
       cerrarModal();
-      navigate("/solicitudes/reintegros");
+      setTimeout(() => {
+        navigate("/solicitudes/reintegros");
+        }, 800);
 
     } catch (error) {
       console.error(error);
@@ -331,6 +337,11 @@ export default function DetalleSolicitudReintegros() {
           </div>
         </div>
       )}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
+      />
     </div>
   );
 }

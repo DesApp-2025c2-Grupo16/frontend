@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import ToastMessage from "../components/ToastMessage";
 
 export default function DetalleSolicitudRecetas() {
   const { id } = useParams();
@@ -9,7 +10,7 @@ export default function DetalleSolicitudRecetas() {
   const [showModal, setShowModal] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
-
+  const [toast, setToast] = useState({ message: "", type: "success" });
   const [user, setUser] = useState({});
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])

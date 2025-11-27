@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import ToastMessage from "../components/ToastMessage";
 
 export default function DetalleSolicitudAutorizacion() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ export default function DetalleSolicitudAutorizacion() {
   const [user, setUser] = useState({});
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([])
+  const [toast, setToast] = useState({ message: "", type: "success" });
 
   const getUser = ()=>{
     const stored = localStorage.getItem("auth_user");
@@ -112,10 +114,18 @@ export default function DetalleSolicitudAutorizacion() {
           PrestadorId: prestadorId
         })
       })
-
-      alert(`Solicitud marcada como ${estado}`);
+      let toastType = "success";
+      if (estado === "Observado") toastType = "warning";
+      else if (estado === "Rechazado") toastType = "error";
+      
+      setToast({
+        message: `Solicitud marcada como ${estado}`,
+        type: "toastType",
+      });
       cerrarModal();
-      navigate("/solicitudes/autorizaciones");
+      setTimeout(() => {
+        navigate("/solicitudes/autorizaciones");
+      }, 800);
     } catch (err) {
       console.error(err);
       alert("Hubo un error al actualizar el estado");
@@ -144,6 +154,18 @@ export default function DetalleSolicitudAutorizacion() {
           PrestadorId: prestadorId
         })
       })
+        let toastType = "success";
+        if (estado === "Observado") toastType = "warning";
+        else if (estado === "Rechazado") toastType = "error";
+
+       setToast({
+          message: "Solicitud marcada como En análisis",
+          type: "toastType",
+        });
+
+        setTimeout(() => {
+          navigate("/solicitudes/autorizaciones");
+        }, 800);
       } catch (error) {
         console.error("Error al actualizar estado:", error);
       }
@@ -275,6 +297,11 @@ export default function DetalleSolicitudAutorizacion() {
           </div>
         </div>
       )}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
+      />
     </div>
   );
 }

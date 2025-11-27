@@ -2,13 +2,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import reinicio from "../assets/reinicio.png";
+import ToastMessage from "../components/ToastMessage";
 
 export default function SolicitudesRecetas() {
   const navigate = useNavigate();
 
   const [recetas, setRecetas] = useState([]);
   const [error, setError] = useState("");
-
+  const [toast, setToast] = useState({ message: "", type: "success" });
   const [filtro, setFiltro] = useState("Recibido,En análisis");
   const [filtroBusqueda, setFiltroBusqueda] = useState("");
   const [fechaDesde, setFechaDesde] = useState("");
@@ -73,7 +74,11 @@ export default function SolicitudesRecetas() {
           setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
         }
       } catch (err) {
-        setRecetas([])
+        setRecetas([]);
+        setToast({
+          message: mensaje,
+          type: "error",
+        });
         //setError(err.message || "Fallo al cargar");
       } 
     };
@@ -433,6 +438,11 @@ export default function SolicitudesRecetas() {
           </button>
         </div>
       )}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
+      />
     </div>
   );
 }
