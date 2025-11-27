@@ -35,10 +35,15 @@ export default function SolicitudesReintegros() {
         setPrestadorId(user.id)
         return
       } else {
-        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-        const data = await medicosAsociados.json()
-        setPrestadores(data)
-        setPrestadorId(data?.[0]?.id)
+        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        .then(r => r.json())
+        .then(medicos => {
+          setPrestadores(medicos)
+          setPrestadorId(medicos[0]?.id) 
+      })
+        // const data = await medicosAsociados.json()
+        // setPrestadores(data)
+        // setPrestadorId(data?.[0]?.id)
       }
     }
     handlePrestador()

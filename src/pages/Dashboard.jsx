@@ -61,10 +61,15 @@ export default function Dashboard() {
       if(!user.esCentro){
         setPrestadorId(user.id)
       } else {
-        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-        const data = await medicosAsociados.json()
-        setPrestadores(data)
-        setPrestadorId(prestadores?.[0]?.id)
+        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        .then(r => r.json())
+        .then(medicos => {
+          setPrestadores(medicos)
+          setPrestadorId(medicos[0]?.id) 
+      })
+        //const data = await medicosAsociados.json()
+        //setPrestadores(data)
+        //setPrestadorId(prestadores?.[0]?.id)
       }
     }
     handlePrestador()
@@ -74,6 +79,7 @@ export default function Dashboard() {
     const fetchData = async () =>{
       try {
         const id = parseInt(prestadorId)
+        console.log(id)
         if(!isNaN(id)){
           const resRegistros = await fetch(`http://localhost:3001/registrosSolicitudes/${id}?minFecha=${currentWeekInterval.lunes}&maxFecha=${currentWeekInterval.domingo}`)
           if(resRegistros.status === 404){

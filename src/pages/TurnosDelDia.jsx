@@ -5,7 +5,6 @@ export default function TurnosDelDia() {
   const { fecha } = useParams();
   const navigate = useNavigate();
   const [turnos, setTurnos] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -31,11 +30,17 @@ export default function TurnosDelDia() {
         setPrestadorId(user.id)
         setUsername(user.nombre)
       } else {
-        const medicosAsociados = await fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-        const data = await medicosAsociados.json()
-        setPrestadores(data)
-        setUsername(data[0].nombre)
-        setPrestadorId(data[0].id)
+        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+        .then(r => r.json())
+        .then(medicos => {
+          setPrestadores(medicos)
+          setUsername(medicos[0]?.nombre)
+          setPrestadorId(medicos[0]?.id)
+      })
+        // const data = await medicosAsociados.json()
+        // setPrestadores(data)
+        // setUsername(data[0].nombre)
+        // setPrestadorId(data[0].id)
       }
     }
     handlePrestador()
