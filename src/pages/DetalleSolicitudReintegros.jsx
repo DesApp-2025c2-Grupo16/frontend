@@ -210,6 +210,12 @@ export default function DetalleSolicitudReintegros() {
         <h5 style={{ color: "#000" }}>Observaciones</h5>
         <p>{solicitud.observacion || "Sin observaciones"}</p>
 
+        {solicitud.motivoEstado && <div>
+          <hr />
+          <h5 style={{ color: "#000" }}>Observacion del prestador</h5>
+          <p>{solicitud.motivoEstado}</p>
+        </div>}
+
         {/* Solo se muestran botones si no está finalizada */}
         {!solicitudFinalizada && (
           <div className="mt-5 d-flex justify-content-around">
