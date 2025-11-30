@@ -37,36 +37,18 @@ export default function Turnos() {
   const [turnosCompletos, setTurnosCompletos] = useState([]);
   const [toast, setToast] = useState({ message: "", type: "success" });
 
-  const [esCentro, setEsCentro] = useState()
-  const [prestadorId, setPrestadorId] = useState();
-  const [prestadores, setPrestadores] = useState([])
-
-  const getUser = ()=>{
-    const stored = localStorage.getItem("auth_user");
+  const getFromLS = (item)=>{
+    const stored = localStorage.getItem(item);
     const parsed = JSON.parse(stored);
     return parsed
   }
 
-  useEffect(()=>{
-    const handlePrestador = async () => {
-      const user = getUser()
-      setEsCentro(user.esCentro)
-      if(!user.esCentro){
-        setPrestadorId(user.id)
-      } else {
-        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-        .then(r => r.json())
-        .then(medicos => {
-          setPrestadores(medicos)
-          setPrestadorId(medicos[0]?.id) 
-      })
-        // const data = await medicosAsociados.json()
-        // setPrestadores(data)
-        // setPrestadorId(data?.[0]?.id)
-      }
-    }
-    handlePrestador()
-  }, [])
+  const [prestadorId, setPrestadorId] = useState( parseInt(localStorage.getItem("prestadorId")) );
+  const [prestadores, setPrestadores] = useState( getFromLS("prestadores") )
+  const [esCentro, setEsCentro] = useState(() => {
+    const user = getFromLS("auth_user");
+    return user?.esCentro ?? false;
+  });
 
   const [q, setQ] = useState(""); // Buscador
 
@@ -194,11 +176,18 @@ export default function Turnos() {
             <span>Datos del prestador:</span>
           </div>
           <div className="col-5">
-            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
+            <select 
+              className="col-9 form-select" 
+              value={prestadorId} 
+              onChange={(e) => {
+                setPrestadorId(e.target.value)
+                localStorage.setItem("prestadorId", e.target.value)
+              }}
+            >
               {
                 prestadores.map((prestador, i) => {
-                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
-              })
+                return <option value={prestador.id} key={i}>{prestador.nombre}</option>
+                })
               }
             </select>
           </div>

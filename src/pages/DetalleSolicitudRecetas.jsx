@@ -10,35 +10,7 @@ export default function DetalleSolicitudRecetas() {
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
 
-  const [user, setUser] = useState({});
-  const [prestadorId, setPrestadorId] = useState();
-  const [prestadores, setPrestadores] = useState([])
-
-  const getUser = ()=>{
-    const stored = localStorage.getItem("auth_user");
-    const parsed = JSON.parse(stored);
-    return parsed
-  }
-
-  useEffect(()=>{
-    const handlePrestador = async () => {
-      setUser(getUser())
-      if(!user.esCentro){
-        setPrestadorId(user.id)
-      } else {
-        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-        .then(r => r.json())
-        .then(medicos => {
-          setPrestadores(medicos)
-          setPrestadorId(medicos[0]?.id) 
-      })
-        // const data = await medicosAsociados.json()
-        // setPrestadores(data)
-        // setPrestadorId(prestadores[0].id)
-      }
-    }
-    handlePrestador()
-  }, [user.esCentro, user.id])
+  const [prestadorId, setPrestadorId] = useState( parseInt(localStorage.getItem("prestadorId")) );
 
   useEffect(() => {
     const fetchReceta = async () => {
