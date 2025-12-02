@@ -24,9 +24,20 @@ export default function Login() {
         setInvalid(true)
       } else if(res.ok){
         setInvalid(false)
-        const data = await res.json()
-        localStorage.setItem("auth_user", JSON.stringify(data))
-        navigate("/dashboard");
+        const user = await res.json()
+        localStorage.setItem("auth_user", JSON.stringify(user))
+        
+        if(!user.esCentro){
+          localStorage.setItem("prestadorId", user.id)
+        } else {
+          fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+          .then(r => r.json())
+          .then(medicos => {
+            localStorage.setItem("prestadores", JSON.stringify(medicos))
+            localStorage.setItem("prestadorId", medicos[0].id)
+            navigate("/dashboard");
+          })
+        }
       }
     } catch (error) {
       console.error(error)

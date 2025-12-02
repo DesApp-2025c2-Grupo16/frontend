@@ -42,9 +42,7 @@ export default function Situaciones() {
         const dataAfi = await resAfi.json();
         setAfiliado(dataAfi);
 
-        const resSit = await fetch(
-          `http://localhost:3001/situaciones/${id}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`
-        );
+        const resSit = await fetch(`http://localhost:3001/situaciones/${id}?busqueda=${filtro}&soloActivas=${soloActivas}&pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
         if (resSit.status === 404) {
           // No hay situaciones registradas para este afiliado
           setSituaciones([]);
@@ -64,23 +62,49 @@ export default function Situaciones() {
       }
     };
     fetchData();
-  }, [id, paginaActual]);
+  }, [id, paginaActual, filtro, soloActivas]);
 
   const filtradas = situaciones
-    // Primero ordenamos por estado y fecha
-    .sort((a, b) => {
-      const hoy = new Date();
 
-      const finA = a.fechaFin ? new Date(a.fechaFin) : null;
-      const finB = b.fechaFin ? new Date(b.fechaFin) : null;
+  useEffect(()=>{
+    setPaginaActual(1)
+  }, [filtro, soloActivas])
 
-      const activaA = !finA || finA >= hoy;
-      const activaB = !finB || finB >= hoy;
 
-      // Primero van las activas (true > false)
-      if (activaA !== activaB) {
-        return activaA ? -1 : 1;
-      }
+// Convierte "YYYY-MM-DD" a Date LOCAL (UTC-3)
+const fechaToLocalDate = (yyyyMmDd) => {
+  if (!yyyyMmDd) return null;
+  const [anio, mes, dia] = yyyyMmDd.split("-");
+  return new Date(anio, mes - 1, dia); // usa horario local, igual que los seeders
+};
+
+// Crear nueva situación
+const handleCrearSituacion = async (e) => {
+  e.preventDefault();
+  try {
+    const res = await fetch(`http://localhost:3001/situaciones/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        descripcion: nuevaSituacion.descripcion,
+        fechaInicio: fechaToLocalDate(nuevaSituacion.fechaInicio),
+        fechaFin: nuevaSituacion.fechaFin
+          ? fechaToLocalDate(nuevaSituacion.fechaFin)
+          : null,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Error al crear la situación");
+
+    const data = await res.json();
+    setSituaciones([...situaciones, data]);
+    setShowModal(false);
+    setNuevaSituacion({ descripcion: "", fechaInicio: "", fechaFin: "" });
+  } catch (err) {
+    console.error(err);
+    alert("No se pudo crear la situación");
+  }
+};
 
       // Si ambos son del mismo tipo, ordenamos por fechaInicio (más reciente primero)
       return new Date(b.fechaInicio) - new Date(a.fechaInicio);
@@ -91,13 +115,12 @@ export default function Situaciones() {
       const coincideDescripcion =
         s.descripcion?.toLowerCase().includes(texto);
 
-      if (!soloActivas) return coincideDescripcion;
+  // Fecha ya viene correcta, solo la formateamos sin new Date()
+  const partes = fecha.split("T")[0].split("-");
+  const [anio, mes, dia] = partes;
 
-      const hoy = new Date();
-      const fin = s.fechaFin ? new Date(s.fechaFin) : null;
-      const esActiva = !fin || fin >= hoy;
-      return coincideDescripcion && esActiva;
-    });
+  return `${dia}-${mes}-${anio}`;
+};
 
   // Crear nueva situación (con validación de fechas)
   const handleCrearSituacion = async (e) => {
@@ -370,10 +393,6 @@ export default function Situaciones() {
             + Agregar situación
           </button>
 
-          <h6 className="mb-0 text-light">
-            Situaciones registradas:{" "}
-            <span className="fw-bold">{filtradas.length}</span>
-          </h6>
         </div>
 
         <div className="table-responsive">

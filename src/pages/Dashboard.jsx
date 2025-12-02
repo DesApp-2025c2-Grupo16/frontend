@@ -17,9 +17,7 @@ export default function Dashboard() {
   const tipos = ["REINTEGROS", "AUTORIZACIONES", "RECETAS"];
   const [currentPage, setCurrentPage] = useState(0);
   const [registros, setRegistros] = useState([]);
-  const [user, setUser] = useState({});
-  const [prestadorId, setPrestadorId] = useState();
-  const [prestadores, setPrestadores] = useState([])
+  
 
   const getCurrentWeekInterval = ()=>{
     const hoy = new Date()
@@ -49,37 +47,24 @@ export default function Dashboard() {
   const nextWeek = () => {changeCurrentWeek(1)};
   const previousWeek = () => {changeCurrentWeek(-1)};
 
-  const getUser = ()=>{
-    const stored = localStorage.getItem("auth_user");
+  const getFromLS = (item)=>{
+    const stored = localStorage.getItem(item);
     const parsed = JSON.parse(stored);
     return parsed
   }
 
-  useEffect(()=>{
-    const handlePrestador = async () => {
-      setUser(getUser())
-      if(!user.esCentro){
-        setPrestadorId(user.id)
-      } else {
-        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-        .then(r => r.json())
-        .then(medicos => {
-          setPrestadores(medicos)
-          setPrestadorId(medicos[0]?.id) 
-      })
-        //const data = await medicosAsociados.json()
-        //setPrestadores(data)
-        //setPrestadorId(prestadores?.[0]?.id)
-      }
-    }
-    handlePrestador()
-  }, [user.esCentro, user.id])
-
+  const [prestadorId, setPrestadorId] = useState( parseInt(localStorage.getItem("prestadorId")) );
+  const [prestadores, setPrestadores] = useState( getFromLS("prestadores") )
+  const [esCentro, setEsCentro] = useState(() => {
+    const user = getFromLS("auth_user");
+    return user?.esCentro ?? false;
+  });
+  
   useEffect(()=>{
     const fetchData = async () =>{
       try {
         const id = parseInt(prestadorId)
-        console.log(id)
+        //console.log(id)
         if(!isNaN(id)){
           const resRegistros = await fetch(`http://localhost:3001/registrosSolicitudes/${id}?minFecha=${currentWeekInterval.lunes}&maxFecha=${currentWeekInterval.domingo}`)
           if(resRegistros.status === 404){
@@ -117,9 +102,9 @@ export default function Dashboard() {
     registros.map((registro)=>{
       if(registro.tipo === tipo && registro.estado === estado){
         const fecha = new Date(registro.fecha)
-        console.log(fecha)
+        //console.log(fecha)
         const dia = mapa[fecha.getDay()]
-        console.log(dia)
+        //console.log(dia)
         lista[dia] +=1
       }
     })
@@ -265,9 +250,35 @@ export default function Dashboard() {
         }}
       >
         DASHBOARD
-      </h2>
 
-      <hr className="border-dark border-5 rounded-pill mt-4" />
+      </h2>
+        {/*Selector de medico si es centro */}
+        {esCentro && <div className="row justify-content-center align-items-center mt-3"> 
+          <div className="col-3 justify-content-center align-items-center">
+            <span>Datos del prestador:</span>
+          </div>
+          <div className="col-5">
+            <select 
+              className="col-9 form-select" 
+              value={prestadorId} 
+              onChange={(e) => {
+                setPrestadorId(e.target.value)
+                localStorage.setItem("prestadorId", e.target.value)
+              }}
+            >
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i}>{prestador.nombre}</option>
+                })
+              }
+            </select>
+          </div>
+        </div>}
+
+      <hr
+      className="border-dark border-5 rounded-pill mx-auto"
+      style={{ width: "90%" }}
+      />
 
       <div
         className="row"
@@ -310,21 +321,6 @@ export default function Dashboard() {
           boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
         }}
       >
-        {/*Selector de medico si es centro */}
-        {user.esCentro && <div className="row justify-content-center align-items-center"> 
-          <div className="col-3 justify-content-center align-items-center">
-            <span>Datos del prestador:</span>
-          </div>
-          <div className="col-5">
-            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value)}>
-              {
-                prestadores.map((prestador, i) => {
-                return <option value={prestador.id} key={i}>{prestador.nombre}</option>
-              })
-              }
-            </select>
-          </div>
-        </div>}
 
         <div className="row px-2">
           {/* === IZQUIERDA: LÍNEAS === */}

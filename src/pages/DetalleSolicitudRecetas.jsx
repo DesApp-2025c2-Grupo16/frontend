@@ -10,36 +10,10 @@ export default function DetalleSolicitudRecetas() {
   const [showModal, setShowModal] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
+  
   const [toast, setToast] = useState({ message: "", type: "success" });
-  const [user, setUser] = useState({});
-  const [prestadorId, setPrestadorId] = useState();
-  const [prestadores, setPrestadores] = useState([])
 
-  const getUser = ()=>{
-    const stored = localStorage.getItem("auth_user");
-    const parsed = JSON.parse(stored);
-    return parsed
-  }
-
-  useEffect(()=>{
-    const handlePrestador = async () => {
-      setUser(getUser())
-      if(!user.esCentro){
-        setPrestadorId(user.id)
-      } else {
-        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-        .then(r => r.json())
-        .then(medicos => {
-          setPrestadores(medicos)
-          setPrestadorId(medicos[0]?.id) 
-      })
-        // const data = await medicosAsociados.json()
-        // setPrestadores(data)
-        // setPrestadorId(prestadores[0].id)
-      }
-    }
-    handlePrestador()
-  }, [user.esCentro, user.id])
+  const [prestadorId, setPrestadorId] = useState( parseInt(localStorage.getItem("prestadorId")) );
 
   useEffect(() => {
     const fetchReceta = async () => {
@@ -91,7 +65,8 @@ export default function DetalleSolicitudRecetas() {
         }
         body.motivoEstado = comentarioOpcional.trim();
       }
-
+      body.PrestadorId = prestadorId;
+      
       const res = await fetch(`http://localhost:3001/recetas/${solicitud.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -209,6 +184,12 @@ export default function DetalleSolicitudRecetas() {
 
         <h5 style={{ color: "#000" }}>Observaciones</h5>
         <p>{solicitud.observacion || "Sin observaciones"}</p>
+
+        {solicitud.motivoEstado && <div>
+          <hr />
+          <h5 style={{ color: "#000" }}>Observacion del prestador</h5>
+          <p>{solicitud.motivoEstado}</p>
+        </div>}
 
         {/* Solo se muestran botones si no está finalizada */}
         {!solicitudFinalizada && (

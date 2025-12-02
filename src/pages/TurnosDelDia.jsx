@@ -11,41 +11,28 @@ export default function TurnosDelDia() {
   const [modalVisible, setModalVisible] = useState(false);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [descripcion, setDescripcion] = useState("");
-
-  const [esCentro, setEsCentro] = useState();
-  const [prestadorId, setPrestadorId] = useState();
-  const [prestadores, setPrestadores] = useState([]);
-  const [username, setUsername] = useState();
-
-  const [q, setQ] = useState("");
-
+  
   const [toast, setToast] = useState({ message: "", type: "success" });
 
-  const getUser = () => {
-    const stored = localStorage.getItem("auth_user");
+  
+  const getFromLS = (item)=>{
+    const stored = localStorage.getItem(item);
     const parsed = JSON.parse(stored);
     return parsed;
   };
 
-  useEffect(() => {
-    const handlePrestador = async () => {
-      const user = getUser();
-      setEsCentro(user.esCentro);
-      if (!user.esCentro) {
-        setPrestadorId(user.id);
-        setUsername(user.nombre);
-      } else {
-        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-          .then((r) => r.json())
-          .then((medicos) => {
-            setPrestadores(medicos);
-            setUsername(medicos[0]?.nombre);
-            setPrestadorId(medicos[0]?.id);
-          });
-      }
-    };
-    handlePrestador();
-  }, []);
+  const [prestadorId, setPrestadorId] = useState( parseInt(localStorage.getItem("prestadorId")) );
+  const [prestadores, setPrestadores] = useState( getFromLS("prestadores") )
+  const [esCentro, setEsCentro] = useState(() => {
+    const user = getFromLS("auth_user");
+    return user?.esCentro ?? false;
+  });
+  const user = getFromLS("auth_user");
+  const username = esCentro ? 
+    prestadores?.find(p => p.id === prestadorId)?.nombre ?? "Sin prestador"
+    : user?.nombre ?? "Sin nombre";
+
+  const [q, setQ] = useState("");
 
   // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
@@ -225,29 +212,33 @@ export default function TurnosDelDia() {
         TURNOS DEL {fechaTitulo}
       </h2>
 
-      {esCentro && (
-        <div className="row justify-content-center align-items-center">
+      {esCentro && <div className="row justify-content-center align-items-center mt-3"> 
           <div className="col-3 justify-content-center align-items-center">
             <span>Datos del prestador:</span>
           </div>
           <div className="col-5">
-            <select
-              className="col-9 form-select"
-              onChange={(e) => setPrestadorId(e.target.value)}
+            <select 
+              className="col-9 form-select" 
+              value={prestadorId} 
+              onChange={(e) => {
+                setPrestadorId(e.target.value)
+                localStorage.setItem("prestadorId", e.target.value)
+              }}
             >
-              {prestadores.map((prestador, i) => {
-                return (
-                  <option value={prestador.id} key={i}>
-                    {prestador.nombre}
-                  </option>
-                );
-              })}
+              {
+                prestadores.map((prestador, i) => {
+                return <option value={prestador.id} key={i}>{prestador.nombre}</option>
+                })
+              }
             </select>
           </div>
         </div>
       )}
 
-      <hr className="border-dark border-5 rounded-pill mt-4" />
+      <hr
+      className="border-dark border-5 rounded-pill mx-auto"
+      style={{ width: "90%" }}
+      />
 
       {/* BUSCADOR */}
       <div
@@ -403,8 +394,8 @@ export default function TurnosDelDia() {
         )}
       </div>
 
-      {/* PAGINADO */}
-      {paginasTotales > 1 && (
+      {/* === PAGINADO === */}
+      {q === "" && paginasTotales > 1 && (
         <div
           style={{
             display: "flex",

@@ -22,6 +22,8 @@ export default function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem("auth_user");
+    localStorage.removeItem("prestadorId")
+    localStorage.removeItem("prestadores")
     navigate("/login", { replace: true });
   };
 
@@ -53,14 +55,6 @@ export default function Header() {
 
       {/* Acciones */}
       <div className="d-flex align-items-center gap-2 position-relative">
-
-        {/* Ir a Mensajes */}
-        {/*<button
-          className="btn btn-sm btn-outline-light"
-          onClick={() => navigate("/mensajes")}
-        >
-          <FaEnvelope />
-        </button>*/}
 
         {/* Usuario con dropdown */}
         <div className="position-relative">
