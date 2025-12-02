@@ -1,72 +1,39 @@
 import { useState, useEffect, useCallback } from "react";
 import CalendarMonth from "../components/CalendarMonth.jsx";
-
-/* Toast visual */
-function Toast({ message, type = "success", onClose }) {
-  if (!message) return null;
-
-  const bgClass = type === "error" ? "text-bg-danger" : "text-bg-success";
-
-  return (
-    <div
-      className="position-fixed bottom-0 end-0 p-3"
-      style={{ zIndex: 2000 }}
-    >
-      <div
-        className={`toast show align-items-center ${bgClass} border-0 shadow`}
-        role="alert"
-        aria-live="assertive"
-        aria-atomic="true"
-      >
-        <div className="d-flex">
-          <div className="toast-body fw-semibold">{message}</div>
-          <button
-            type="button"
-            className="btn-close btn-close-white me-2 m-auto"
-            aria-label="Close"
-            onClick={onClose}
-          ></button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import ToastMessage from "../components/ToastMessage";
 
 export default function Turnos() {
   const [turnosPorFecha, setTurnosPorFecha] = useState({});
   const [turnosCompletos, setTurnosCompletos] = useState([]);
   const [toast, setToast] = useState({ message: "", type: "success" });
 
-  const [esCentro, setEsCentro] = useState()
+  const [esCentro, setEsCentro] = useState();
   const [prestadorId, setPrestadorId] = useState();
-  const [prestadores, setPrestadores] = useState([])
+  const [prestadores, setPrestadores] = useState([]);
 
-  const getUser = ()=>{
+  const getUser = () => {
     const stored = localStorage.getItem("auth_user");
     const parsed = JSON.parse(stored);
-    return parsed
-  }
+    return parsed;
+  };
 
-  useEffect(()=>{
+  useEffect(() => {
     const handlePrestador = async () => {
-      const user = getUser()
-      setEsCentro(user.esCentro)
-      if(!user.esCentro){
-        setPrestadorId(user.id)
+      const user = getUser();
+      setEsCentro(user.esCentro);
+      if (!user.esCentro) {
+        setPrestadorId(user.id);
       } else {
         fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-        .then(r => r.json())
-        .then(medicos => {
-          setPrestadores(medicos)
-          setPrestadorId(medicos[0]?.id) 
-      })
-        // const data = await medicosAsociados.json()
-        // setPrestadores(data)
-        // setPrestadorId(data?.[0]?.id)
+          .then((r) => r.json())
+          .then((medicos) => {
+            setPrestadores(medicos);
+            setPrestadorId(medicos[0]?.id);
+          });
       }
-    }
-    handlePrestador()
-  }, [])
+    };
+    handlePrestador();
+  }, []);
 
   const [q, setQ] = useState(""); // Buscador
 
@@ -77,61 +44,63 @@ export default function Turnos() {
   /* ============================
      Cargar turnos del mes visible
      ============================ */
-  const fetchTurnosDelMes = useCallback(async (anio, mes) => {
-    try {
+  const fetchTurnosDelMes = useCallback(
+    async (anio, mes) => {
+      try {
+        const ultimoDia = new Date(anio, mes, 0).getDate();
+        const resultadosConteo = {};
+        const resultadosTurnos = [];
 
-      const ultimoDia = new Date(anio, mes, 0).getDate();
-      const resultadosConteo = {};
-      const resultadosTurnos = [];
+        const id = parseInt(prestadorId);
+        if (!isNaN(id)) {
+          for (let dia = 1; dia <= ultimoDia; dia++) {
+            const fechaISO = `${anio}-${String(mes).padStart(2, "0")}-${String(
+              dia
+            ).padStart(2, "0")}`;
 
-      const id = parseInt(prestadorId)
-      if(!isNaN(id)){
-        for (let dia = 1; dia <= ultimoDia; dia++) {
-          const fechaISO = `${anio}-${String(mes).padStart(2, "0")}-${String(
-            dia
-          ).padStart(2, "0")}`;
-  
-          try {
-            const res = await fetch(
-              `http://localhost:3001/turnos/${id}/fecha/${fechaISO}`
-            );
-  
-            if (!res.ok) {
-              resultadosConteo[fechaISO] = 0;
-              continue;
-            }
-  
-            const resData = await res.json();
-            const data = resData.turnos
-  
-            // data = array de turnos
-            resultadosConteo[fechaISO] = Array.isArray(data) ? data.length : 0;
-  
-            if (Array.isArray(data)) {
-              data.forEach((t) =>
-                resultadosTurnos.push({
-                  ...t,
-                  fechaISO,
-                })
+            try {
+              const res = await fetch(
+                `http://localhost:3001/turnos/${id}/fecha/${fechaISO}`
               );
-            }
-          } catch {
-            resultadosConteo[fechaISO] = 0;
-          }
-        }
-  
-        setTurnosPorFecha(resultadosConteo);
-        setTurnosCompletos(resultadosTurnos);
-      }
 
-    } catch (error) {
-      console.error("Error al cargar turnos:", error);
-      setToast({
-        message: "No se pudieron cargar los turnos de este mes.",
-        type: "error",
-      });
-    }
-  }, [prestadorId]);
+              if (!res.ok) {
+                resultadosConteo[fechaISO] = 0;
+                continue;
+              }
+
+              const resData = await res.json();
+              const data = resData.turnos;
+
+              resultadosConteo[fechaISO] = Array.isArray(data)
+                ? data.length
+                : 0;
+
+              if (Array.isArray(data)) {
+                data.forEach((t) =>
+                  resultadosTurnos.push({
+                    ...t,
+                    fechaISO,
+                  })
+                );
+              }
+            } catch {
+              resultadosConteo[fechaISO] = 0;
+            }
+          }
+
+          setTurnosPorFecha(resultadosConteo);
+          setTurnosCompletos(resultadosTurnos);
+        }
+      } catch (error) {
+        console.error("Error al cargar turnos:", error);
+        setToast({
+          message: "No se pudieron cargar los turnos de este mes.",
+          type: "error",
+        });
+      }
+    },
+    [prestadorId]
+  );
 
   /* Carga inicial */
   useEffect(() => {
@@ -170,89 +139,94 @@ export default function Turnos() {
   const turnosParaCalendario = q ? conteoFiltrado : turnosPorFecha;
 
   return (
-  <div className="mt-4 position-relative">
+    <div className="mt-4 position-relative">
+      {/* Encabezado */}
+      <div className="d-flex align-items-center gap-3 mb-3 px-3 mt-4">
+        <h2
+          className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
+          style={{
+            background: "#242424",
+            display: "block",
+            width: "90%",
+            textAlign: "center",
+            margin: "0 auto",
+            lineHeight: "50px",
+          }}
+        >
+          TURNOS DEL PRESTADOR
+        </h2>
+      </div>
 
-    {/* Encabezado */}
-    <div className="d-flex align-items-center gap-3 mb-3 px-3 mt-4">
-      <h2
-        className="text-white fw-bold py-2 px-5 mx-auto rounded-pill"
-        style={{
-          background: "#242424",
-          display: "block",
-          width: "90%",
-          textAlign: "center",
-          margin: "0 auto",
-          lineHeight: "50px",
-        }}
-      >
-        TURNOS DEL PRESTADOR
-      </h2>
-    </div>
-
-    {esCentro && <div className="row justify-content-center align-items-center"> 
+      {esCentro && (
+        <div className="row justify-content-center align-items-center">
           <div className="col-3 justify-content-center align-items-center">
             <span>Datos del prestador:</span>
           </div>
           <div className="col-5">
-            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
-              {
-                prestadores.map((prestador, i) => {
-                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
-              })
-              }
+            <select
+              className="col-9 form-select"
+              onChange={(e) => setPrestadorId(e.target.value)}
+            >
+              {prestadores.map((prestador, i) => {
+                return (
+                  <option value={prestador.id} key={i}>
+                    {prestador.nombre}
+                  </option>
+                );
+              })}
             </select>
           </div>
-        </div>}
+        </div>
+      )}
 
-    <hr
-      className="border-dark border-5 rounded-pill mx-auto"
-      style={{ width: "90%" }}
-    />
+      <hr
+        className="border-dark border-5 rounded-pill mx-auto"
+        style={{ width: "90%" }}
+      />
 
-    {/* BUSCADOR debajo del título */}
-    <div
-      className="d-flex justify-content-center align-items-center mb-4"
-      style={{
-        border: "3px solid #1e1e1e",
-        borderRadius: "50px",
-        padding: "5px 10px",
-        width: "500px",
-        margin: "0 auto",
-        background: "#242424",
-      }}
-    >
-      <input
-        type="text"
-        className="form-control"
-        placeholder="Buscar turnos del afiliado..."
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
+      {/* BUSCADOR debajo del título */}
+      <div
+        className="d-flex justify-content-center align-items-center mb-4"
         style={{
+          border: "3px solid #1e1e1e",
           borderRadius: "50px",
-          marginRight: "10px",
+          padding: "5px 10px",
+          width: "500px",
+          margin: "0 auto",
           background: "#242424",
-          color: "white",
         }}
+      >
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Buscar turnos del afiliado..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          style={{
+            borderRadius: "50px",
+            marginRight: "10px",
+            background: "#242424",
+            color: "white",
+          }}
+        />
+      </div>
+
+      <div className="col-12">
+        <CalendarMonth
+          key={`${anio}-${mes}`}
+          turnos={turnosParaCalendario}
+          onChangeMes={handleChangeMes}
+          anio={anio}
+          mes={mes}
+        />
+      </div>
+
+      {/* Toast global de Turnos */}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
       />
     </div>
-
-    <div className="col-12">
-      <CalendarMonth
-        key={`${anio}-${mes}`}
-        turnos={turnosParaCalendario}
-        onChangeMes={handleChangeMes}
-        anio={anio}
-        mes={mes}
-      />
-    </div>
-
-    {/* Toast */}
-    <Toast
-      message={toast.message}
-      type={toast.type}
-      onClose={() => setToast({ message: "", type: "success" })}
-    />
-  </div>
-);
-
+  );
 }

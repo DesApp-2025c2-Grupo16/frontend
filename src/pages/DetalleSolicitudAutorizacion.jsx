@@ -120,12 +120,12 @@ export default function DetalleSolicitudAutorizacion() {
       
       setToast({
         message: `Solicitud marcada como ${estado}`,
-        type: "toastType",
+        type: toastType,
       });
       cerrarModal();
       setTimeout(() => {
         navigate("/solicitudes/autorizaciones");
-      }, 800);
+      }, 1700);
     } catch (err) {
       console.error(err);
       alert("Hubo un error al actualizar el estado");
@@ -154,18 +154,6 @@ export default function DetalleSolicitudAutorizacion() {
           PrestadorId: prestadorId
         })
       })
-        let toastType = "success";
-        if (estado === "Observado") toastType = "warning";
-        else if (estado === "Rechazado") toastType = "error";
-
-       setToast({
-          message: "Solicitud marcada como En análisis",
-          type: "toastType",
-        });
-
-        setTimeout(() => {
-          navigate("/solicitudes/autorizaciones");
-        }, 800);
       } catch (error) {
         console.error("Error al actualizar estado:", error);
       }

@@ -16,16 +16,33 @@ export default function ToastMessage({
 
   if (!message) return null;
 
+  // Configuración base de tamaño
+  const BASE_WIDTH = 380;    // ancho de referencia
+  const TARGET_WIDTH = 480;  // ajustá este valor para agrandar/achicar todo
+  const SCALE = TARGET_WIDTH / BASE_WIDTH;
+
+  // Limitar un poco la escala
+  const clampedScale = Math.max(0.8, Math.min(1.4, SCALE));
+
+  // Tamaños derivados
+  const minWidth = TARGET_WIDTH;
+  const maxWidth = TARGET_WIDTH + 120 * clampedScale;
+  const paddingY = 10 * clampedScale;
+  const paddingX = 16 * clampedScale;
+  const borderRadius = 10 * clampedScale;
+  const fontSize = 14 * clampedScale;
+  const closeSize = 18 * clampedScale;
+
   let bgColor;
   switch ((type || "").toLowerCase()) {
     case "success":
       bgColor = "green";
       break;
     case "warning":
-      bgColor = "orange";      // Observado
+      bgColor = "orange";
       break;
     case "error":
-      bgColor = "crimson";     // Rechazado / errores
+      bgColor = "crimson";
       break;
     case "info":
       bgColor = "royalblue";
@@ -38,35 +55,44 @@ export default function ToastMessage({
     <div
       style={{
         position: "fixed",
-        bottom: 16,
-        right: 16,
+        bottom: 24,
+        right: 24,
         zIndex: 2000,
       }}
     >
       <div
         style={{
-          minWidth: 260,
-          maxWidth: 400,
+          minWidth,
+          maxWidth,
           backgroundColor: bgColor,
           color: "white",
-          padding: "10px 14px",
-          borderRadius: 8,
-          boxShadow: "0 2px 6px rgba(0,0,0,0.35)",
+          padding: `${paddingY}px ${paddingX}px`,
+          borderRadius,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.45)",
           display: "flex",
-          justifyContent: "space-between",
           alignItems: "center",
-          gap: 8,
+          justifyContent: "flex-start",
+          gap: 12 * clampedScale,
           fontWeight: 500,
+          fontSize,
         }}
       >
-        <span>{message}</span>
+        <span
+          style={{
+            lineHeight: 1.4,
+            flex: 1,            // ocupa todo el ancho disponible
+            textAlign: "center" // texto centrado
+          }}
+        >
+          {message}
+        </span>
         <button
           onClick={onClose}
           style={{
             border: "none",
             background: "transparent",
             color: "white",
-            fontSize: 18,
+            fontSize: closeSize,
             cursor: "pointer",
             lineHeight: 1,
           }}

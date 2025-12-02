@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Modal, Button, Form } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
+import ToastMessage from "../components/ToastMessage";
 
 export default function Situaciones() {
   const { id } = useParams();
@@ -12,14 +13,14 @@ export default function Situaciones() {
   const [situaciones, setSituaciones] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [error, setError] = useState(null);
-  
+
   const [showModal, setShowModal] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
   const [soloActivas, setSoloActivas] = useState(false);
 
   // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
-  const [paginasTotales, setPaginasTotales] = useState()
+  const [paginasTotales, setPaginasTotales] = useState();
   const itemsPorPagina = 20;
 
   const [nuevaSituacion, setNuevaSituacion] = useState({
@@ -30,6 +31,9 @@ export default function Situaciones() {
 
   const [situacionEditar, setSituacionEditar] = useState(null);
 
+  // TOAST
+  const [toast, setToast] = useState({ message: "", type: "success" });
+
   // Cargar afiliado y situaciones
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +43,9 @@ export default function Situaciones() {
         const dataAfi = await resAfi.json();
         setAfiliado(dataAfi);
 
-        const resSit = await fetch(`http://localhost:3001/situaciones/${id}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
+        const resSit = await fetch(
+          `http://localhost:3001/situaciones/${id}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`
+        );
         if (resSit.status === 404) {
           // No hay situaciones registradas para este afiliado
           setSituaciones([]);
@@ -48,14 +54,14 @@ export default function Situaciones() {
           throw new Error("No se pudieron cargar las situaciones");
         } else {
           const dataSit = await resSit.json();
-          const situaciones  = dataSit.situaciones
+          const situaciones = dataSit.situaciones;
           setSituaciones(Array.isArray(situaciones) ? situaciones : []);
-          setPaginasTotales(Math.ceil(dataSit.count / itemsPorPagina))
+          setPaginasTotales(Math.ceil(dataSit.count / itemsPorPagina));
         }
       } catch (err) {
         console.error(err);
         setError(err.message);
-      } 
+      }
     };
     fetchData();
   }, [id, paginaActual]);
@@ -82,7 +88,8 @@ export default function Situaciones() {
     // Luego aplicamos los filtros como antes
     .filter((s) => {
       const texto = filtro.toLowerCase();
-      const coincideDescripcion = s.descripcion?.toLowerCase().includes(texto);
+      const coincideDescripcion =
+        s.descripcion?.toLowerCase().includes(texto);
 
       if (!soloActivas) return coincideDescripcion;
 
@@ -91,7 +98,6 @@ export default function Situaciones() {
       const esActiva = !fin || fin >= hoy;
       return coincideDescripcion && esActiva;
     });
-
 
   // Crear nueva situación
   const handleCrearSituacion = async (e) => {
@@ -111,11 +117,20 @@ export default function Situaciones() {
       setSituaciones([...situaciones, data]);
       setShowModal(false);
       setNuevaSituacion({ descripcion: "", fechaInicio: "", fechaFin: "" });
+
+      setToast({
+        message: "Situación terapéutica creada correctamente",
+        type: "success",
+      });
     } catch (err) {
       console.error(err);
-      alert("No se pudo crear la situación");
+      setToast({
+        message: "No se pudo crear la situación",
+        type: "error",
+      });
     }
   };
+
   // Formatear fecha a dd-mm-aaaa
   const formatearFecha = (fecha) => {
     if (!fecha) return "—";
@@ -125,6 +140,7 @@ export default function Situaciones() {
     const anio = d.getFullYear();
     return `${dia}-${mes}-${anio}`;
   };
+
   // Editar situación
   const abrirEditar = (sit) => {
     setSituacionEditar(sit);
@@ -133,13 +149,19 @@ export default function Situaciones() {
 
   const handleGuardarEdicion = async (e) => {
     e.preventDefault();
-      const inicio = new Date(situacionEditar.fechaInicio);
-      const fin = situacionEditar.fechaFin ? new Date(situacionEditar.fechaFin) : null;
+    const inicio = new Date(situacionEditar.fechaInicio);
+    const fin = situacionEditar.fechaFin
+      ? new Date(situacionEditar.fechaFin)
+      : null;
 
-      if (fin && fin < inicio) {
-        alert("La fecha fin no puede ser anterior a la fecha de inicio.");
-        return;
-      }
+    if (fin && fin < inicio) {
+      setToast({
+        message: "La fecha fin no puede ser anterior a la fecha de inicio.",
+        type: "error",
+      });
+      return;
+    }
+
     try {
       const res = await fetch(
         `http://localhost:3001/situaciones/${situacionEditar.id}`,
@@ -158,9 +180,17 @@ export default function Situaciones() {
         situaciones.map((s) => (s.id === data.id ? data : s))
       );
       setShowEditar(false);
+
+      setToast({
+        message: "Situación terapéutica actualizada",
+        type: "success",
+      });
     } catch (err) {
       console.error(err);
-      alert("No se pudo actualizar la situación");
+      setToast({
+        message: "No se pudo actualizar la situación",
+        type: "error",
+      });
     }
   };
 
@@ -239,7 +269,10 @@ export default function Situaciones() {
           color: "white",
         }}
       >
-        <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap" style={{ gap: "10px" }}>
+        <div
+          className="d-flex justify-content-between align-items-center mb-3 flex-wrap"
+          style={{ gap: "10px" }}
+        >
           <input
             type="text"
             placeholder="Buscar por descripción"
@@ -311,7 +344,9 @@ export default function Situaciones() {
                   <tr key={s.id}>
                     <td>{s.descripcion}</td>
                     <td>{formatearFecha(s.fechaInicio)}</td>
-                    <td>{s.fechaFin ? formatearFecha(s.fechaFin) : "Indefinido"}</td>
+                    <td>
+                      {s.fechaFin ? formatearFecha(s.fechaFin) : "Indefinido"}
+                    </td>
                     <td>
                       {(() => {
                         if (!s.fechaFin) return "Activa";
@@ -329,12 +364,21 @@ export default function Situaciones() {
                         return (
                           <button
                             className={`btn btn-sm ${
-                              esActiva ? "btn-outline-dark" : "btn-outline-secondary"
+                              esActiva
+                                ? "btn-outline-dark"
+                                : "btn-outline-secondary"
                             }`}
-                            style={{ width: "70px", opacity: esActiva ? 1 : 0.6 }}
+                            style={{
+                              width: "70px",
+                              opacity: esActiva ? 1 : 0.6,
+                            }}
                             onClick={() => esActiva && abrirEditar(s)}
                             disabled={!esActiva}
-                            title={esActiva ? "Editar situación" : "Solo disponible para situaciones activas"}
+                            title={
+                              esActiva
+                                ? "Editar situación"
+                                : "Solo disponible para situaciones activas"
+                            }
                           >
                             Editar
                           </button>
@@ -436,7 +480,10 @@ export default function Situaciones() {
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Fecha fin</Form.Label>
-                <div className="d-flex align-items-center" style={{ gap: "10px" }}>
+                <div
+                  className="d-flex align-items-center"
+                  style={{ gap: "10px" }}
+                >
                   <Form.Control
                     type="date"
                     value={situacionEditar.fechaFin?.slice(0, 10) || ""}
@@ -469,41 +516,49 @@ export default function Situaciones() {
           )}
         </Modal.Body>
       </Modal>
-      
-      {paginasTotales > 1 && (
-        <div style={{ display:"flex", justifyContent:"center", gap:"10px", margin:"20px 0" }}>
 
+      {paginasTotales > 1 && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "10px",
+            margin: "20px 0",
+          }}
+        >
           {/* Botón anterior */}
           <button
             disabled={paginaActual === 1}
             onClick={() => setPaginaActual(paginaActual - 1)}
             style={{
-              padding:"5px 12px",
-              borderRadius:"10px",
-              border:"2px solid #242424",
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
               background: paginaActual === 1 ? "#ccc" : "#242424",
-              color:"white",
-              cursor: paginaActual === 1 ? "not-allowed" : "pointer"
+              color: "white",
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer",
             }}
           >
             ‹
           </button>
 
           {/* Números */}
-          {[...Array(paginasTotales).keys()].map(i => {
+          {[...Array(paginasTotales).keys()].map((i) => {
             const page = i + 1;
             return (
               <button
                 key={page}
                 onClick={() => setPaginaActual(page)}
                 style={{
-                  padding:"5px 12px",
-                  borderRadius:"10px",
-                  border:"2px solid #242424",
-                  background: paginaActual === page ? "#242424" : "white",
-                  color: paginaActual === page ? "white" : "#242424",
-                  cursor:"pointer",
-                  fontWeight:"bold"
+                  padding: "5px 12px",
+                  borderRadius: "10px",
+                  border: "2px solid #242424",
+                  background:
+                    paginaActual === page ? "#242424" : "white",
+                  color:
+                    paginaActual === page ? "white" : "#242424",
+                  cursor: "pointer",
+                  fontWeight: "bold",
                 }}
               >
                 {page}
@@ -516,17 +571,20 @@ export default function Situaciones() {
             disabled={paginaActual === paginasTotales}
             onClick={() => setPaginaActual(paginaActual + 1)}
             style={{
-              padding:"5px 12px",
-              borderRadius:"10px",
-              border:"2px solid #242424",
-              background: paginaActual === paginasTotales ? "#ccc" : "#242424",
-              color:"white",
-              cursor: paginaActual === paginasTotales ? "not-allowed" : "pointer"
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
+              background:
+                paginaActual === paginasTotales ? "#ccc" : "#242424",
+              color: "white",
+              cursor:
+                paginaActual === paginasTotales
+                  ? "not-allowed"
+                  : "pointer",
             }}
           >
             ›
           </button>
-
         </div>
       )}
 
@@ -534,11 +592,25 @@ export default function Situaciones() {
       <div className="my-4">
         <button
           className="btn btn-dark px-4 py-2 rounded-pill fw-bold"
-          onClick={() => navigate('/afiliados', {state: { grupoNumero: afiliado.numeroGrupoFamiliar, filtroAnterior: "" },})}
+          onClick={() =>
+            navigate("/afiliados", {
+              state: {
+                grupoNumero: afiliado.numeroGrupoFamiliar,
+                filtroAnterior: "",
+              },
+            })
+          }
         >
           Volver al grupo familiar
         </button>
       </div>
+
+      {/* TOAST */}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
+      />
     </div>
   );
 }

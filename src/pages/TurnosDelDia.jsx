@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import ToastMessage from "../components/ToastMessage";
 
 export default function TurnosDelDia() {
   const { fecha } = useParams();
@@ -11,65 +12,61 @@ export default function TurnosDelDia() {
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [descripcion, setDescripcion] = useState("");
 
-  const [esCentro, setEsCentro] = useState()
+  const [esCentro, setEsCentro] = useState();
   const [prestadorId, setPrestadorId] = useState();
   const [prestadores, setPrestadores] = useState([]);
-  const [username, setUsername] = useState()
-
-  const getUser = ()=>{
-    const stored = localStorage.getItem("auth_user");
-    const parsed = JSON.parse(stored);
-    return parsed
-  }
-
-  useEffect(()=>{
-    const handlePrestador = async () => {
-      const user = getUser()
-      setEsCentro(user.esCentro)
-      if(!user.esCentro){
-        setPrestadorId(user.id)
-        setUsername(user.nombre)
-      } else {
-        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
-        .then(r => r.json())
-        .then(medicos => {
-          setPrestadores(medicos)
-          setUsername(medicos[0]?.nombre)
-          setPrestadorId(medicos[0]?.id)
-      })
-        // const data = await medicosAsociados.json()
-        // setPrestadores(data)
-        // setUsername(data[0].nombre)
-        // setPrestadorId(data[0].id)
-      }
-    }
-    handlePrestador()
-  }, [])
+  const [username, setUsername] = useState();
 
   const [q, setQ] = useState("");
 
-  // === PAGINADO ===
+  const [toast, setToast] = useState({ message: "", type: "success" });
+
+  const getUser = () => {
+    const stored = localStorage.getItem("auth_user");
+    const parsed = JSON.parse(stored);
+    return parsed;
+  };
+
+  useEffect(() => {
+    const handlePrestador = async () => {
+      const user = getUser();
+      setEsCentro(user.esCentro);
+      if (!user.esCentro) {
+        setPrestadorId(user.id);
+        setUsername(user.nombre);
+      } else {
+        fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
+          .then((r) => r.json())
+          .then((medicos) => {
+            setPrestadores(medicos);
+            setUsername(medicos[0]?.nombre);
+            setPrestadorId(medicos[0]?.id);
+          });
+      }
+    };
+    handlePrestador();
+  }, []);
+
   // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
-  const [paginasTotales, setPaginasTotales] = useState()
+  const [paginasTotales, setPaginasTotales] = useState();
   const itemsPorPagina = 20;
-
 
   useEffect(() => {
     const fetchTurnosDelDia = async () => {
       try {
-        const id = parseInt(prestadorId)
-        if(!isNaN(prestadorId)){
+        const id = parseInt(prestadorId);
+        if (!isNaN(prestadorId)) {
           const res = await fetch(
             `http://localhost:3001/turnos/${id}/fecha/${fecha}?pagina=${paginaActual}&tamaño=${itemsPorPagina}`
           );
           if (!res.ok)
             throw new Error("No se pudieron cargar los turnos del día.");
-  
+
           const data = await res.json();
-          const turnos = data.turnos
-          setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
-  
+          const turnos = data.turnos;
+          setPaginasTotales(Math.ceil(data.count / itemsPorPagina));
+
           setTurnos(
             turnos.sort(
               (a, b) => new Date(a.fecha) - new Date(b.fecha)
@@ -120,7 +117,10 @@ export default function TurnosDelDia() {
 
   const handleGuardarRegistro = async () => {
     if (!turnoSeleccionado || !descripcion.trim()) {
-      alert("La descripción no puede estar vacía");
+      setToast({
+        message: "La descripción no puede estar vacía",
+        type: "error",
+      });
       return;
     }
 
@@ -142,9 +142,12 @@ export default function TurnosDelDia() {
       );
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         console.error("ERROR DEL BACK:", errData);
-        alert("No se pudo guardar la nota");
+        setToast({
+          message: "No se pudo guardar la nota",
+          type: "error",
+        });
         return;
       }
 
@@ -165,16 +168,23 @@ export default function TurnosDelDia() {
         )
       );
 
-      alert("Consulta registrada");
+      setToast({
+        message: "Consulta registrada",
+        type: "success",
+      });
 
       setDescripcion("");
       setModalVisible(false);
     } catch (error) {
       console.error("Error guardando nota:", error);
+      setToast({
+        message: "Ocurrió un error al guardar la consulta",
+        type: "error",
+      });
     }
   };
 
-  // === FILTRO DE BÚSQUEDA ===
+  // FILTRO DE BÚSQUEDA
   const turnosFiltrados = turnos.filter((t) => {
     const nombre = t.afiliado
       ? `${t.afiliado.nombre} ${t.afiliado.apellido}`.toLowerCase()
@@ -191,7 +201,10 @@ export default function TurnosDelDia() {
     return (
       <div className="text-center mt-5 text-danger">
         <h3>Error: {error}</h3>
-        <button className="btn btn-dark mt-3" onClick={() => navigate(-1)}>
+        <button
+          className="btn btn-dark mt-3"
+          onClick={() => navigate(-1)}
+        >
           Volver atrás
         </button>
       </div>
@@ -212,20 +225,27 @@ export default function TurnosDelDia() {
         TURNOS DEL {fechaTitulo}
       </h2>
 
-      {esCentro && <div className="row justify-content-center align-items-center"> 
+      {esCentro && (
+        <div className="row justify-content-center align-items-center">
           <div className="col-3 justify-content-center align-items-center">
             <span>Datos del prestador:</span>
           </div>
           <div className="col-5">
-            <select className="col-9 form-select" onChange={(e) => setPrestadorId(e.target.value) }>
-              {
-                prestadores.map((prestador, i) => {
-                return <option value={prestador.id} key={i} >{prestador.nombre}</option>
-              })
-              }
+            <select
+              className="col-9 form-select"
+              onChange={(e) => setPrestadorId(e.target.value)}
+            >
+              {prestadores.map((prestador, i) => {
+                return (
+                  <option value={prestador.id} key={i}>
+                    {prestador.nombre}
+                  </option>
+                );
+              })}
             </select>
           </div>
-        </div>}
+        </div>
+      )}
 
       <hr className="border-dark border-5 rounded-pill mt-4" />
 
@@ -276,7 +296,10 @@ export default function TurnosDelDia() {
           </p>
         ) : (
           <div className="px-2">
-            <h4 className="fw-bold mb-4 text-uppercase" style={{ color: "#1e1e1e" }}>
+            <h4
+              className="fw-bold mb-4 text-uppercase"
+              style={{ color: "#1e1e1e" }}
+            >
               LISTADO DE TURNOS
             </h4>
 
@@ -285,8 +308,12 @@ export default function TurnosDelDia() {
                 key={t.id}
                 className="mb-3 p-3 rounded shadow-sm position-relative"
                 style={{
-                  background: t.estado === "Atendido" ? "#d4f8d4" : "white",
-                  border: t.estado === "Atendido" ? "2px solid #9ddf9d" : "2px solid #ddd",
+                  background:
+                    t.estado === "Atendido" ? "#d4f8d4" : "white",
+                  border:
+                    t.estado === "Atendido"
+                      ? "2px solid #9ddf9d"
+                      : "2px solid #ddd",
                   borderRadius: "15px",
                 }}
               >
@@ -303,7 +330,8 @@ export default function TurnosDelDia() {
                 </div>
 
                 <p className="mb-1">
-                  <strong>Motivo:</strong> {t.descripcion || "No indicada"}
+                  <strong>Motivo:</strong>{" "}
+                  {t.descripcion || "No indicada"}
                 </p>
                 <p className="mb-1">
                   <strong>Afiliado:</strong>{" "}
@@ -321,8 +349,12 @@ export default function TurnosDelDia() {
                     onClick={() => abrirModal(t)}
                     disabled={t.estado === "Atendido"}
                     style={{
-                      opacity: t.estado === "Atendido" ? 0.5 : 1,
-                      pointerEvents: t.estado === "Atendido" ? "none" : "auto",
+                      opacity:
+                        t.estado === "Atendido" ? 0.5 : 1,
+                      pointerEvents:
+                        t.estado === "Atendido"
+                          ? "none"
+                          : "auto",
                     }}
                   >
                     {t.estado === "Atendido"
@@ -339,7 +371,8 @@ export default function TurnosDelDia() {
                       borderRadius: "6px",
                       padding: "5px 10px",
                       minWidth: "120px",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                      boxShadow:
+                        "0 1px 2px rgba(0,0,0,0.2)",
                     }}
                     onClick={() =>
                       navigate(`/historia-clinica/${t.AfiliadoId}`)
@@ -370,7 +403,7 @@ export default function TurnosDelDia() {
         )}
       </div>
 
-      {/* === PAGINADO === */}
+      {/* PAGINADO */}
       {paginasTotales > 1 && (
         <div
           style={{
@@ -387,9 +420,13 @@ export default function TurnosDelDia() {
               padding: "5px 12px",
               borderRadius: "10px",
               border: "2px solid #242424",
-              background: paginaActual === 1 ? "#ccc" : "#242424",
+              background:
+                paginaActual === 1 ? "#ccc" : "#242424",
               color: "white",
-              cursor: paginaActual === 1 ? "not-allowed" : "pointer",
+              cursor:
+                paginaActual === 1
+                  ? "not-allowed"
+                  : "pointer",
             }}
           >
             ‹
@@ -406,9 +443,13 @@ export default function TurnosDelDia() {
                   borderRadius: "10px",
                   border: "2px solid #242424",
                   background:
-                    paginaActual === page ? "#242424" : "white",
+                    paginaActual === page
+                      ? "#242424"
+                      : "white",
                   color:
-                    paginaActual === page ? "white" : "#242424",
+                    paginaActual === page
+                      ? "white"
+                      : "#242424",
                   cursor: "pointer",
                   fontWeight: "bold",
                 }}
@@ -426,10 +467,14 @@ export default function TurnosDelDia() {
               borderRadius: "10px",
               border: "2px solid #242424",
               background:
-                paginaActual === paginasTotales ? "#ccc" : "#242424",
+                paginaActual === paginasTotales
+                  ? "#ccc"
+                  : "#242424",
               color: "white",
               cursor:
-                paginaActual === paginasTotales ? "not-allowed" : "pointer",
+                paginaActual === paginasTotales
+                  ? "not-allowed"
+                  : "pointer",
             }}
           >
             ›
@@ -446,6 +491,7 @@ export default function TurnosDelDia() {
         </button>
       </div>
 
+      {/* Modal de historia clínica */}
       {modalVisible && turnoSeleccionado && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
@@ -460,32 +506,42 @@ export default function TurnosDelDia() {
             </h5>
 
             <p className="mb-1">
-              <strong>Paciente:</strong> {turnoSeleccionado.paciente}
+              <strong>Paciente:</strong>{" "}
+              {turnoSeleccionado.paciente}
             </p>
             <p className="mb-1">
-              <strong>Profesional:</strong> {turnoSeleccionado.profesional}
+              <strong>Profesional:</strong>{" "}
+              {turnoSeleccionado.profesional}
             </p>
             <p className="mb-1">
-              <strong>Fecha:</strong> {turnoSeleccionado.fecha}
+              <strong>Fecha:</strong>{" "}
+              {turnoSeleccionado.fecha}
             </p>
             <p className="mb-1">
-              <strong>Hora:</strong> {turnoSeleccionado.hora}
+              <strong>Hora:</strong>{" "}
+              {turnoSeleccionado.hora}
             </p>
             <p className="mb-1">
-              <strong>Especialidad:</strong> {turnoSeleccionado.especialidad}
+              <strong>Especialidad:</strong>{" "}
+              {turnoSeleccionado.especialidad}
             </p>
             <p className="mb-1">
-              <strong>Motivo:</strong> {turnoSeleccionado.motivo}
+              <strong>Motivo:</strong>{" "}
+              {turnoSeleccionado.motivo}
             </p>
 
             <hr />
 
-            <label className="form-label fw-bold text-dark">Descripción</label>
+            <label className="form-label fw-bold text-dark">
+              Descripción
+            </label>
             <textarea
               className="form-control mb-3"
               rows="4"
               value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
+              onChange={(e) =>
+                setDescripcion(e.target.value)
+              }
               placeholder="Escriba aquí las observaciones del médico..."
             />
 
@@ -507,6 +563,14 @@ export default function TurnosDelDia() {
           </div>
         </div>
       )}
+
+      {/* Toast global de TurnosDelDia */}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
+      />
     </div>
   );
 }
+

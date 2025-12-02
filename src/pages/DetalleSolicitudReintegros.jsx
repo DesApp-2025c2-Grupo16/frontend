@@ -113,15 +113,19 @@ export default function DetalleSolicitudReintegros() {
           PrestadorId: prestadorId
         })
       })
+         const estadoNorm = (estado || "").toLowerCase();
+          let toastType = "success";
+          if (estadoNorm === "observado") toastType = "warning";
+          else if (estadoNorm === "rechazado") toastType = "error";
 
       setToast({
       message: `Solicitud marcada como ${estado}`,
-      type: "success",
+      type: toastType,
     });
       cerrarModal();
       setTimeout(() => {
         navigate("/solicitudes/reintegros");
-        }, 800);
+        }, 1200);
 
     } catch (error) {
       console.error(error);
