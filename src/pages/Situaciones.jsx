@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Modal, Button, Form } from "react-bootstrap";
-import { useLocation } from "react-router-dom";
 import ToastMessage from "../components/ToastMessage";
 
 export default function Situaciones() {
@@ -49,6 +48,7 @@ export default function Situaciones() {
         if (resSit.status === 404) {
           // No hay situaciones registradas para este afiliado
           setSituaciones([]);
+          setPaginasTotales(1);
         } else if (!resSit.ok) {
           // Otro error real (500, etc.)
           throw new Error("No se pudieron cargar las situaciones");
@@ -99,9 +99,42 @@ export default function Situaciones() {
       return coincideDescripcion && esActiva;
     });
 
-  // Crear nueva situación
+  // Crear nueva situación (con validación de fechas)
   const handleCrearSituacion = async (e) => {
     e.preventDefault();
+
+    const inicio = nuevaSituacion.fechaInicio;
+    const fin = nuevaSituacion.fechaFin || "";
+
+    if (!inicio) {
+      setToast({
+        message: "La fecha de inicio es obligatoria.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (fin) {
+      // fin antes que inicio
+      if (fin < inicio) {
+        setToast({
+          message: "La fecha fin no puede ser anterior a la fecha de inicio.",
+          type: "error",
+        });
+        return;
+      }
+
+      // fin el mismo día que inicio
+      if (fin === inicio) {
+        setToast({
+          message:
+            "No se puede finalizar una situación terapéutica el mismo día de inicio.",
+          type: "error",
+        });
+        return;
+      }
+    }
+
     try {
       const res = await fetch(`http://localhost:3001/situaciones/${id}`, {
         method: "POST",
@@ -109,7 +142,7 @@ export default function Situaciones() {
         body: JSON.stringify({
           descripcion: nuevaSituacion.descripcion,
           fechaInicio: nuevaSituacion.fechaInicio,
-          fechaFin: nuevaSituacion.fechaFin || null,
+          fechaFin: fin || null,
         }),
       });
       if (!res.ok) throw new Error("Error al crear la situación");
@@ -149,17 +182,41 @@ export default function Situaciones() {
 
   const handleGuardarEdicion = async (e) => {
     e.preventDefault();
-    const inicio = new Date(situacionEditar.fechaInicio);
-    const fin = situacionEditar.fechaFin
-      ? new Date(situacionEditar.fechaFin)
-      : null;
 
-    if (fin && fin < inicio) {
+    const inicioStr = situacionEditar.fechaInicio
+      ? situacionEditar.fechaInicio.slice(0, 10)
+      : "";
+    const finStr = situacionEditar.fechaFin
+      ? situacionEditar.fechaFin.slice(0, 10)
+      : "";
+
+    if (!inicioStr) {
       setToast({
-        message: "La fecha fin no puede ser anterior a la fecha de inicio.",
+        message: "La fecha de inicio es inválida.",
         type: "error",
       });
       return;
+    }
+
+    if (finStr) {
+      // fin antes que inicio
+      if (finStr < inicioStr) {
+        setToast({
+          message: "La fecha fin no puede ser anterior a la fecha de inicio.",
+          type: "error",
+        });
+        return;
+      }
+
+      // fin el mismo día que inicio
+      if (finStr === inicioStr) {
+        setToast({
+          message:
+            "No se puede finalizar una situación terapéutica el mismo día de inicio.",
+          type: "error",
+        });
+        return;
+      }
     }
 
     try {
