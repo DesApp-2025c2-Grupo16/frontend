@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import reinicio from "../assets/reinicio.png";
+import ToastMessage from "../components/ToastMessage";
+
 
 export default function SolicitudesReintegros() {
   const navigate = useNavigate();
@@ -16,6 +18,8 @@ export default function SolicitudesReintegros() {
   const [fechaHasta, setFechaHasta] = useState("");
 
   const [textoBusqueda, setTextoBusqueda] = useState("")
+  
+  const [toast, setToast] = useState({ message: "", type: "success" });
 
   const getFromLS = (item)=>{
     const stored = localStorage.getItem(item);
@@ -55,11 +59,15 @@ export default function SolicitudesReintegros() {
           setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
         }
       } catch (err) { 
-        setReintegros([])
+        setReintegros([]);
         //setError(err.message || "Fallo al cargar");
+        setToast({
+          message: msg,
+          type: "error",
+        });
       }
     };
-
+    
     fetchReintegros();
   }, [prestadorId, filtro, paginaActual, filtroBusqueda]);
 
@@ -420,6 +428,11 @@ export default function SolicitudesReintegros() {
           </button>
         </div>
       )}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
+      />
     </div>
   );
 }

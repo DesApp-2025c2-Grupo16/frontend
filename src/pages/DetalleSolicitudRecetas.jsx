@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import ToastMessage from "../components/ToastMessage";
 
 export default function DetalleSolicitudRecetas() {
   const { id } = useParams();
@@ -9,6 +10,8 @@ export default function DetalleSolicitudRecetas() {
   const [showModal, setShowModal] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
+  
+  const [toast, setToast] = useState({ message: "", type: "success" });
 
   const [prestadorId, setPrestadorId] = useState( parseInt(localStorage.getItem("prestadorId")) );
 
@@ -86,9 +89,20 @@ export default function DetalleSolicitudRecetas() {
         })
       })
 
-      alert(`Solicitud marcada como ${estado}`);
+      const estadoNorm = (estado || "").toLowerCase();
+      let toastType = "success";
+      if (estadoNorm === "observado") toastType = "warning";
+      else if (estadoNorm === "rechazado") toastType = "error";
+
+       setToast({
+        message: `Solicitud marcada como ${estado}`,
+        type: toastType,
+      });
+
       cerrarModal();
-      navigate("/solicitudes/recetas");
+      setTimeout(() => {
+        navigate("/solicitudes/recetas");
+      }, 1700);
     } catch (err) {
       console.error(err);
       alert("Hubo un error al actualizar el estado");
@@ -256,6 +270,13 @@ export default function DetalleSolicitudRecetas() {
           </div>
         </div>
       )}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() =>
+          setToast({ message: "", type: "success" })
+        }
+      />
     </div>
   );
 }

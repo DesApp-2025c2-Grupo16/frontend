@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import ToastMessage from "../components/ToastMessage";
 
 export default function DetalleSolicitudAutorizacion() {
   const { id } = useParams();
@@ -9,6 +10,8 @@ export default function DetalleSolicitudAutorizacion() {
   const [showModal, setShowModal] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState("");
   const [comentario, setComentario] = useState("");
+  
+  const [toast, setToast] = useState({ message: "", type: "success" });
 
   const [prestadorId, setPrestadorId] = useState( parseInt(localStorage.getItem("prestadorId")) );
 
@@ -85,10 +88,18 @@ export default function DetalleSolicitudAutorizacion() {
           PrestadorId: prestadorId
         })
       })
-
-      alert(`Solicitud marcada como ${estado}`);
+      let toastType = "success";
+      if (estado === "Observado") toastType = "warning";
+      else if (estado === "Rechazado") toastType = "error";
+      
+      setToast({
+        message: `Solicitud marcada como ${estado}`,
+        type: toastType,
+      });
       cerrarModal();
-      navigate("/solicitudes/autorizaciones");
+      setTimeout(() => {
+        navigate("/solicitudes/autorizaciones");
+      }, 1700);
     } catch (err) {
       console.error(err);
       alert("Hubo un error al actualizar el estado");
@@ -254,6 +265,11 @@ export default function DetalleSolicitudAutorizacion() {
           </div>
         </div>
       )}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
+      />
     </div>
   );
 }

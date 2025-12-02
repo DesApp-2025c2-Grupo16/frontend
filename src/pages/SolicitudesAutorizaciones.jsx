@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import reinicio from "../assets/reinicio.png";
+import ToastMessage from "../components/ToastMessage";
 
 export default function SolicitudesAutorizaciones() {
   const navigate = useNavigate();
 
   const [solicitudes, setSolicitudes] = useState([]);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState({ message: "", type: "success" });
 
   // Filtros
   const [filtro, setFiltro] = useState("Recibido,En análisis");
@@ -55,8 +57,12 @@ export default function SolicitudesAutorizaciones() {
           setPaginasTotales(Math.ceil(data.count / itemsPorPagina))
         }
       } catch (err) {
-        setSolicitudes([])
+        setSolicitudes([]);
         //setError(err.message || "Fallo al cargar");
+        setToast({
+          message: mensaje,
+          type: "error",
+        });
       } 
     };
     fetchAutorizaciones();
@@ -335,6 +341,11 @@ export default function SolicitudesAutorizaciones() {
 
         </div>
       )}
+          <ToastMessage
+            message={toast.message}
+             type={toast.type}
+             onClose={() => setToast({ message: "", type: "success" })}
+          />
     </div>
   );
 }

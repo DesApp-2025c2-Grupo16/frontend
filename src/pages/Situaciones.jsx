@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Modal, Button, Form } from "react-bootstrap";
-import { useLocation } from "react-router-dom";
+import ToastMessage from "../components/ToastMessage";
 
 export default function Situaciones() {
   const { id } = useParams();
@@ -12,15 +12,15 @@ export default function Situaciones() {
   const [situaciones, setSituaciones] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [error, setError] = useState(null);
-  
+
   const [showModal, setShowModal] = useState(false);
   const [showEditar, setShowEditar] = useState(false);
   const [soloActivas, setSoloActivas] = useState(false);
 
   // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
-  const [paginasTotales, setPaginasTotales] = useState()
-  const itemsPorPagina = 2;
+  const [paginasTotales, setPaginasTotales] = useState();
+  const itemsPorPagina = 20;
 
   const [nuevaSituacion, setNuevaSituacion] = useState({
     descripcion: "",
@@ -29,6 +29,9 @@ export default function Situaciones() {
   });
 
   const [situacionEditar, setSituacionEditar] = useState(null);
+
+  // TOAST
+  const [toast, setToast] = useState({ message: "", type: "success" });
 
   // Cargar afiliado y situaciones
   useEffect(() => {
@@ -43,19 +46,20 @@ export default function Situaciones() {
         if (resSit.status === 404) {
           // No hay situaciones registradas para este afiliado
           setSituaciones([]);
+          setPaginasTotales(1);
         } else if (!resSit.ok) {
           // Otro error real (500, etc.)
           throw new Error("No se pudieron cargar las situaciones");
         } else {
           const dataSit = await resSit.json();
-          const situaciones  = dataSit.situaciones
+          const situaciones = dataSit.situaciones;
           setSituaciones(Array.isArray(situaciones) ? situaciones : []);
-          setPaginasTotales(Math.ceil(dataSit.count / itemsPorPagina))
+          setPaginasTotales(Math.ceil(dataSit.count / itemsPorPagina));
         }
       } catch (err) {
         console.error(err);
         setError(err.message);
-      } 
+      }
     };
     fetchData();
   }, [id, paginaActual, filtro, soloActivas]);
@@ -102,9 +106,14 @@ const handleCrearSituacion = async (e) => {
   }
 };
 
-// Formatear fecha a dd-mm-aaaa (sin timezone)
-const formatearFecha = (fecha) => {
-  if (!fecha) return "—";
+      // Si ambos son del mismo tipo, ordenamos por fechaInicio (más reciente primero)
+      return new Date(b.fechaInicio) - new Date(a.fechaInicio);
+    })
+    // Luego aplicamos los filtros como antes
+    .filter((s) => {
+      const texto = filtro.toLowerCase();
+      const coincideDescripcion =
+        s.descripcion?.toLowerCase().includes(texto);
 
   // Fecha ya viene correcta, solo la formateamos sin new Date()
   const partes = fecha.split("T")[0].split("-");
@@ -113,22 +122,126 @@ const formatearFecha = (fecha) => {
   return `${dia}-${mes}-${anio}`;
 };
 
-// Editar situación
-const abrirEditar = (sit) => {
-  setSituacionEditar(sit);
-  setShowEditar(true);
-};
+  // Crear nueva situación (con validación de fechas)
+  const handleCrearSituacion = async (e) => {
+    e.preventDefault();
 
+    const inicio = nuevaSituacion.fechaInicio;
+    const fin = nuevaSituacion.fechaFin || "";
+
+    if (!inicio) {
+      setToast({
+        message: "La fecha de inicio es obligatoria.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (fin) {
+      // fin antes que inicio
+      if (fin < inicio) {
+        setToast({
+          message: "La fecha fin no puede ser anterior a la fecha de inicio.",
+          type: "error",
+        });
+        return;
+      }
+
+      // fin el mismo día que inicio
+      if (fin === inicio) {
+        setToast({
+          message:
+            "No se puede finalizar una situación terapéutica el mismo día de inicio.",
+          type: "error",
+        });
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch(`http://localhost:3001/situaciones/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          descripcion: nuevaSituacion.descripcion,
+          fechaInicio: nuevaSituacion.fechaInicio,
+          fechaFin: fin || null,
+        }),
+      });
+      if (!res.ok) throw new Error("Error al crear la situación");
+      const data = await res.json();
+      setSituaciones([...situaciones, data]);
+      setShowModal(false);
+      setNuevaSituacion({ descripcion: "", fechaInicio: "", fechaFin: "" });
+
+      setToast({
+        message: "Situación terapéutica creada correctamente",
+        type: "success",
+      });
+    } catch (err) {
+      console.error(err);
+      setToast({
+        message: "No se pudo crear la situación",
+        type: "error",
+      });
+    }
+  };
+
+  // Formatear fecha a dd-mm-aaaa
+  const formatearFecha = (fecha) => {
+    if (!fecha) return "—";
+    const d = new Date(fecha);
+    const dia = String(d.getDate()).padStart(2, "0");
+    const mes = String(d.getMonth() + 1).padStart(2, "0");
+    const anio = d.getFullYear();
+    return `${dia}-${mes}-${anio}`;
+  };
+
+  // Editar situación
+  const abrirEditar = (sit) => {
+    setSituacionEditar(sit);
+    setShowEditar(true);
+  };
 
   const handleGuardarEdicion = async (e) => {
     e.preventDefault();
-      const inicio = new Date(situacionEditar.fechaInicio);
-      const fin = situacionEditar.fechaFin ? new Date(situacionEditar.fechaFin) : null;
 
-      if (fin && fin < inicio) {
-        alert("La fecha fin no puede ser anterior a la fecha de inicio.");
+    const inicioStr = situacionEditar.fechaInicio
+      ? situacionEditar.fechaInicio.slice(0, 10)
+      : "";
+    const finStr = situacionEditar.fechaFin
+      ? situacionEditar.fechaFin.slice(0, 10)
+      : "";
+
+    if (!inicioStr) {
+      setToast({
+        message: "La fecha de inicio es inválida.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (finStr) {
+      // fin antes que inicio
+      if (finStr < inicioStr) {
+        setToast({
+          message: "La fecha fin no puede ser anterior a la fecha de inicio.",
+          type: "error",
+        });
         return;
       }
+
+      // fin el mismo día que inicio
+      if (finStr === inicioStr) {
+        setToast({
+          message:
+            "No se puede finalizar una situación terapéutica el mismo día de inicio.",
+          type: "error",
+        });
+        return;
+      }
+    }
+
     try {
       const res = await fetch(
         `http://localhost:3001/situaciones/${situacionEditar.id}`,
@@ -147,9 +260,17 @@ const abrirEditar = (sit) => {
         situaciones.map((s) => (s.id === data.id ? data : s))
       );
       setShowEditar(false);
+
+      setToast({
+        message: "Situación terapéutica actualizada",
+        type: "success",
+      });
     } catch (err) {
       console.error(err);
-      alert("No se pudo actualizar la situación");
+      setToast({
+        message: "No se pudo actualizar la situación",
+        type: "error",
+      });
     }
   };
 
@@ -228,7 +349,10 @@ const abrirEditar = (sit) => {
           color: "white",
         }}
       >
-        <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap" style={{ gap: "10px" }}>
+        <div
+          className="d-flex justify-content-between align-items-center mb-3 flex-wrap"
+          style={{ gap: "10px" }}
+        >
           <input
             type="text"
             placeholder="Buscar por descripción"
@@ -296,7 +420,9 @@ const abrirEditar = (sit) => {
                   <tr key={s.id}>
                     <td>{s.descripcion}</td>
                     <td>{formatearFecha(s.fechaInicio)}</td>
-                    <td>{s.fechaFin ? formatearFecha(s.fechaFin) : "Indefinido"}</td>
+                    <td>
+                      {s.fechaFin ? formatearFecha(s.fechaFin) : "Indefinido"}
+                    </td>
                     <td>
                       {(() => {
                         if (!s.fechaFin) return "Activa";
@@ -314,12 +440,21 @@ const abrirEditar = (sit) => {
                         return (
                           <button
                             className={`btn btn-sm ${
-                              esActiva ? "btn-outline-dark" : "btn-outline-secondary"
+                              esActiva
+                                ? "btn-outline-dark"
+                                : "btn-outline-secondary"
                             }`}
-                            style={{ width: "70px", opacity: esActiva ? 1 : 0.6 }}
+                            style={{
+                              width: "70px",
+                              opacity: esActiva ? 1 : 0.6,
+                            }}
                             onClick={() => esActiva && abrirEditar(s)}
                             disabled={!esActiva}
-                            title={esActiva ? "Editar situación" : "Solo disponible para situaciones activas"}
+                            title={
+                              esActiva
+                                ? "Editar situación"
+                                : "Solo disponible para situaciones activas"
+                            }
                           >
                             Editar
                           </button>
@@ -421,7 +556,10 @@ const abrirEditar = (sit) => {
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Fecha fin</Form.Label>
-                <div className="d-flex align-items-center" style={{ gap: "10px" }}>
+                <div
+                  className="d-flex align-items-center"
+                  style={{ gap: "10px" }}
+                >
                   <Form.Control
                     type="date"
                     value={situacionEditar.fechaFin?.slice(0, 10) || ""}
@@ -454,41 +592,49 @@ const abrirEditar = (sit) => {
           )}
         </Modal.Body>
       </Modal>
-      
-      {/* Paginado */}
+
       {paginasTotales > 1 && (
-        <div style={{ display:"flex", justifyContent:"center", gap:"10px", margin:"20px 0" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "10px",
+            margin: "20px 0",
+          }}
+        >
           {/* Botón anterior */}
           <button
             disabled={paginaActual === 1}
             onClick={() => setPaginaActual(paginaActual - 1)}
             style={{
-              padding:"5px 12px",
-              borderRadius:"10px",
-              border:"2px solid #242424",
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
               background: paginaActual === 1 ? "#ccc" : "#242424",
-              color:"white",
-              cursor: paginaActual === 1 ? "not-allowed" : "pointer"
+              color: "white",
+              cursor: paginaActual === 1 ? "not-allowed" : "pointer",
             }}
           >
             ‹
           </button>
 
           {/* Números */}
-          {[...Array(paginasTotales).keys()].map(i => {
+          {[...Array(paginasTotales).keys()].map((i) => {
             const page = i + 1;
             return (
               <button
                 key={page}
                 onClick={() => setPaginaActual(page)}
                 style={{
-                  padding:"5px 12px",
-                  borderRadius:"10px",
-                  border:"2px solid #242424",
-                  background: paginaActual === page ? "#242424" : "white",
-                  color: paginaActual === page ? "white" : "#242424",
-                  cursor:"pointer",
-                  fontWeight:"bold"
+                  padding: "5px 12px",
+                  borderRadius: "10px",
+                  border: "2px solid #242424",
+                  background:
+                    paginaActual === page ? "#242424" : "white",
+                  color:
+                    paginaActual === page ? "white" : "#242424",
+                  cursor: "pointer",
+                  fontWeight: "bold",
                 }}
               >
                 {page}
@@ -501,17 +647,20 @@ const abrirEditar = (sit) => {
             disabled={paginaActual === paginasTotales}
             onClick={() => setPaginaActual(paginaActual + 1)}
             style={{
-              padding:"5px 12px",
-              borderRadius:"10px",
-              border:"2px solid #242424",
-              background: paginaActual === paginasTotales ? "#ccc" : "#242424",
-              color:"white",
-              cursor: paginaActual === paginasTotales ? "not-allowed" : "pointer"
+              padding: "5px 12px",
+              borderRadius: "10px",
+              border: "2px solid #242424",
+              background:
+                paginaActual === paginasTotales ? "#ccc" : "#242424",
+              color: "white",
+              cursor:
+                paginaActual === paginasTotales
+                  ? "not-allowed"
+                  : "pointer",
             }}
           >
             ›
           </button>
-
         </div>
       )}
 
@@ -519,11 +668,25 @@ const abrirEditar = (sit) => {
       <div className="my-4">
         <button
           className="btn btn-dark px-4 py-2 rounded-pill fw-bold"
-          onClick={() => navigate('/afiliados', {state: { grupoNumero: afiliado.numeroGrupoFamiliar, filtroAnterior: "" },})}
+          onClick={() =>
+            navigate("/afiliados", {
+              state: {
+                grupoNumero: afiliado.numeroGrupoFamiliar,
+                filtroAnterior: "",
+              },
+            })
+          }
         >
           Volver al grupo familiar
         </button>
       </div>
+
+      {/* TOAST */}
+      <ToastMessage
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
+      />
     </div>
   );
 }
