@@ -34,6 +34,27 @@ export default function Situaciones() {
   // TOAST
   const [toast, setToast] = useState({ message: "", type: "success" });
 
+  const getSituaciones = async () => {
+    try {
+      const resSit = await fetch(
+        `http://localhost:3001/situaciones/${id}?busqueda=${filtro}&soloActivas=${soloActivas}&pagina=${paginaActual}&tamaÃ±o=${itemsPorPagina}`
+      );
+
+      if (!resSit.ok) {
+        setSituaciones([]);
+        return;
+      }
+
+      const dataSit = await resSit.json();
+      setSituaciones(Array.isArray(dataSit.situaciones) ? dataSit.situaciones : []);
+      setPaginasTotales(Math.ceil(dataSit.count / itemsPorPagina));
+
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    }
+  };
+
   // Cargar afiliado y situaciones
   useEffect(() => {
     const fetchData = async () => {
@@ -43,19 +64,7 @@ export default function Situaciones() {
         const dataAfi = await resAfi.json();
         setAfiliado(dataAfi);
 
-        const resSit = await fetch(`http://localhost:3001/situaciones/${id}?busqueda=${filtro}&soloActivas=${soloActivas}&pagina=${paginaActual}&tamaño=${itemsPorPagina}`);
-        if (resSit.status === 404) {
-          // No hay situaciones registradas para este afiliado
-          setSituaciones([]);
-        } else if (!resSit.ok) {
-          // Otro error real (500, etc.)
-          throw new Error("No se pudieron cargar las situaciones");
-        } else {
-          const dataSit = await resSit.json();
-          const situaciones  = dataSit.situaciones
-          setSituaciones(Array.isArray(situaciones) ? situaciones : []);
-          setPaginasTotales(Math.ceil(dataSit.count / itemsPorPagina))
-        }
+        await getSituaciones();
       } catch (err) {
         console.error(err);
         setError(err.message);
@@ -125,7 +134,7 @@ const handleCrearSituacion = async (e) => {
     if (!res.ok) throw new Error("Error al crear la situación");
 
     const data = await res.json();
-    setSituaciones([...situaciones, data]);
+    await getSituaciones();
     setShowModal(false);
     setNuevaSituacion({ descripcion: "", fechaInicio: "", fechaFin: "" });
 

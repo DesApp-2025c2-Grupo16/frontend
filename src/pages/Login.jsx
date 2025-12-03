@@ -29,6 +29,7 @@ export default function Login() {
         
         if(!user.esCentro){
           localStorage.setItem("prestadorId", user.id)
+          navigate("/dashboard");
         } else {
           fetch(`http://localhost:3001/prestadores/medicos/${user.id}`)
           .then(r => r.json())
