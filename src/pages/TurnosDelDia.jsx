@@ -233,7 +233,7 @@ export default function TurnosDelDia() {
             </select>
           </div>
         </div>
-      )}
+      }
 
       <hr
       className="border-dark border-5 rounded-pill mx-auto"
