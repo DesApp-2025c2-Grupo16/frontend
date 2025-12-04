@@ -111,11 +111,14 @@ export default function TurnosDelDia() {
       return;
     }
 
+    const fechaActual = new Date();
+    fechaActual.setHours(fechaActual.getHours() - 3);
+
     const nuevaNota = {
       descripcion,
       motivo: turnoSeleccionado.motivo || "Sin motivo registrado",
       doctor: turnoSeleccionado.profesional || "Profesional no indicado",
-      fecha: turnoSeleccionado.fecha,
+      fecha: fechaActual.toISOString(), // FECHA ACTUAL CORRECTA
     };
 
     try {
