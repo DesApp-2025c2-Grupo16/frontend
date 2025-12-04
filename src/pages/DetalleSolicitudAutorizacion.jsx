@@ -15,6 +15,34 @@ export default function DetalleSolicitudAutorizacion() {
 
   const [prestadorId, setPrestadorId] = useState( parseInt(localStorage.getItem("prestadorId")) );
 
+  const handleReclamada = async () => {
+    if (solicitud.estado === "Recibido") {
+      try {
+        await fetch(`http://localhost:3001/autorizaciones/${solicitud.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            estado: "En análisis",
+            PrestadorId: prestadorId
+          }),
+        });
+
+        await fetch('http://localhost:3001/registrosSolicitudes/', {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: "autorizacion",
+          estado: "En análisis",
+          fecha: new Date(),
+          PrestadorId: prestadorId
+        })
+      })
+      } catch (error) {
+        console.error("Error al actualizar estado:", error);
+      }
+    }
+  }
+
   useEffect(() => {
     const fetchAutorizacion = async () => {
       try {
@@ -25,8 +53,14 @@ export default function DetalleSolicitudAutorizacion() {
         console.error("Error al obtener autorización:", err);
       }
     };
-    fetchAutorizacion();
+    fetchAutorizacion()
   }, [id]);
+
+  useEffect(() => {
+  if (solicitud) {
+    handleReclamada();
+  }
+}, [solicitud]);
 
 
   if (!solicitud) {
@@ -106,35 +140,6 @@ export default function DetalleSolicitudAutorizacion() {
     }
   };
 
-  const handleReclamada = async () => {
-    if (solicitud.estado === "Recibido") {
-      try {
-        await fetch(`http://localhost:3001/autorizaciones/${solicitud.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            estado: "En análisis",
-            PrestadorId: prestadorId
-          }),
-        });
-
-        await fetch('http://localhost:3001/registrosSolicitudes/', {
-        method: "POST", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tipo: "autorizacion",
-          estado: "En análisis",
-          fecha: new Date(),
-          PrestadorId: prestadorId
-        })
-      })
-      } catch (error) {
-        console.error("Error al actualizar estado:", error);
-      }
-    }
-    navigate("/solicitudes/autorizaciones");
-  }
-
   const solicitudFinalizada =
     solicitud.estado === "Aprobado" ||
     solicitud.estado === "Observado" ||
@@ -209,7 +214,7 @@ export default function DetalleSolicitudAutorizacion() {
       <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
         <button
           className="btn btn-dark"
-          onClick={handleReclamada}
+          onClick={()=>navigate("/solicitudes/autorizaciones")}
         >
           Volver a la bandeja
         </button>

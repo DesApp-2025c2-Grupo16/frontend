@@ -15,6 +15,34 @@ export default function DetalleSolicitudRecetas() {
 
   const [prestadorId, setPrestadorId] = useState( parseInt(localStorage.getItem("prestadorId")) );
 
+  const handleReclamada = async () => {
+    if (solicitud.estado === "Recibido") {
+      try {
+        await fetch(`http://localhost:3001/recetas/${solicitud.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            estado: "En análisis",
+            PrestadorId: prestadorId
+          }),
+        });
+
+        await fetch('http://localhost:3001/registrosSolicitudes/', {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: "receta",
+          estado: "En análisis",
+          fecha: new Date(),
+          PrestadorId: prestadorId
+        })
+      })
+      } catch (error) {
+        console.error("Error al actualizar estado:", error);
+      }
+    }
+  }
+
   useEffect(() => {
     const fetchReceta = async () => {
       try {
@@ -27,6 +55,12 @@ export default function DetalleSolicitudRecetas() {
     };
     fetchReceta();
   }, [id]);
+
+  useEffect(() => {
+  if (solicitud) {
+    handleReclamada();
+  }
+}, [solicitud]);
 
 
   if (!solicitud) {
@@ -109,34 +143,7 @@ export default function DetalleSolicitudRecetas() {
     }
   };
 
-  const handleReclamada = async () => {
-    if (solicitud.estado === "Recibido") {
-      try {
-        await fetch(`http://localhost:3001/recetas/${solicitud.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            estado: "En análisis",
-            PrestadorId: prestadorId
-          }),
-        });
-
-        await fetch('http://localhost:3001/registrosSolicitudes/', {
-        method: "POST", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tipo: "receta",
-          estado: "En análisis",
-          fecha: new Date(),
-          PrestadorId: prestadorId
-        })
-      })
-      } catch (error) {
-        console.error("Error al actualizar estado:", error);
-      }
-    }
-    navigate("/solicitudes/recetas");
-  }
+  
   
   const solicitudFinalizada =
     solicitud.estado === "Aprobado" ||
@@ -213,7 +220,7 @@ export default function DetalleSolicitudRecetas() {
       <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
         <button
           className="btn btn-dark"
-          onClick={handleReclamada}
+          onClick={navigate("/solicitudes/recetas")}
         >
           Volver a la bandeja
         </button>
