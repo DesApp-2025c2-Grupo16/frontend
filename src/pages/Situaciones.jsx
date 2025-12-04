@@ -37,7 +37,7 @@ export default function Situaciones() {
   const getSituaciones = async () => {
     try {
       const resSit = await fetch(
-        `http://localhost:3001/situaciones/${id}?busqueda=${filtro}&soloActivas=${soloActivas}&pagina=${paginaActual}&tamaÃ±o=${itemsPorPagina}`
+        `http://localhost:3001/situaciones/${id}?busqueda=${filtro}&soloActivas=${soloActivas}&pagina=${paginaActual}&tamaño=${itemsPorPagina}`
       );
 
       if (!resSit.ok) {
