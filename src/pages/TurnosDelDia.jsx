@@ -321,8 +321,8 @@ export default function TurnosDelDia() {
                 </div>
 
                 <p className="mb-1">
-                  <strong>Motivo:</strong>{" "}
-                  {t.descripcion || "No indicada"}
+                  <strong>Especialidad:</strong>{" "}
+                  {t.especialidad || "No indicada"}
                 </p>
                 <p className="mb-1">
                   <strong>Afiliado:</strong>{" "}

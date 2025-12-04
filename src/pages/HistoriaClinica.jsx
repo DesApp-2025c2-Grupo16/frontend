@@ -112,9 +112,9 @@ export default function HistoriaClinica() {
         />
       </div>
 
-      {filteredNotas.length === 0 && (
+      {/* {filteredNotas.length === 0 && (
         <p className="text-muted mt-3">No se encontraron notas de ese doctor.</p>
-      )}
+      )} */}
 
       {/* Datos del paciente */}
       <div

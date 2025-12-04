@@ -94,7 +94,10 @@ export default function DetalleSolicitudRecetas() {
 
       if (requiereComentario(estado)) {
         if (!comentarioOpcional || comentarioOpcional.trim() === "") {
-          alert("Debes escribir una observación antes de continuar.");
+          setToast({
+            message: "Debes escribir una observación antes de continuar.",
+            type: "error",
+          });
           return;
         }
         body.motivoEstado = comentarioOpcional.trim();
@@ -239,7 +242,7 @@ export default function DetalleSolicitudRecetas() {
                 {requiereComentario(accionConfirmar) ? (
                   <>
                     <p>
-                      Escribí un comentario para{" "}
+                      Escribí un comentario para dejar en{" "}
                       <strong>{accionConfirmar.toLowerCase()}</strong> esta solicitud:
                     </p>
                     <textarea

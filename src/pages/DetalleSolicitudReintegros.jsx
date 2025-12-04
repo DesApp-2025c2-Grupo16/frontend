@@ -91,7 +91,10 @@ export default function DetalleSolicitudReintegros() {
 
       if (estado !== "Aprobado") {
         if (!comentarioOpcional || comentarioOpcional.trim() === "") {
-          alert("Debes escribir una observación antes de continuar.");
+          setToast({
+            message: "Debes escribir una observación antes de continuar.",
+            type: "error",
+          });
           return;
         }
         body.motivoEstado = comentarioOpcional.trim();
@@ -283,8 +286,8 @@ export default function DetalleSolicitudReintegros() {
                 {requiereComentario(accionConfirmar) ? (
                   <>
                     <p>
-                      Escribe el comentario para dejar en{" "}
-                      <strong>{accionConfirmar.toLowerCase()}</strong> la solicitud:
+                      Escribí un comentario para dejar en{" "}
+                      <strong>{accionConfirmar.toLowerCase()}</strong> esta solicitud:
                     </p>
                     <textarea
                       className="form-control bg-white"

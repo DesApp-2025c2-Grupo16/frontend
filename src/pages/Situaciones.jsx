@@ -21,7 +21,7 @@ export default function Situaciones() {
   // PAGINADO
   const [paginaActual, setPaginaActual] = useState(1);
   const [paginasTotales, setPaginasTotales] = useState()
-  const itemsPorPagina = 10;
+  const itemsPorPagina = 5;
 
   const [nuevaSituacion, setNuevaSituacion] = useState({
     descripcion: "",
