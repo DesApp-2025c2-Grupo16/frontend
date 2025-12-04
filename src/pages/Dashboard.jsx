@@ -115,7 +115,7 @@ export default function Dashboard() {
     REINTEGROS: dias.map((dia, i) => ({
       dia,
       Recibido:   generarLista('reintegro','Recibido')[i],
-      Análisis:   generarLista('reintegro','En análisis')[i],
+      Analizado:   generarLista('reintegro','En análisis')[i],
       Observado:  generarLista('reintegro','Observado')[i],
       Aprobado:   generarLista('reintegro','Aprobado')[i],
       Rechazado:  generarLista('reintegro','Rechazado')[i],
@@ -123,7 +123,7 @@ export default function Dashboard() {
     AUTORIZACIONES: dias.map((dia, i) => ({
       dia,
       Recibido:   generarLista('autorizacion','Recibido')[i],
-      Análisis:   generarLista('autorizacion','En análisis')[i],
+      Analizado:   generarLista('autorizacion','En análisis')[i],
       Observado:  generarLista('autorizacion','Observado')[i],
       Aprobado:   generarLista('autorizacion','Aprobado')[i],
       Rechazado:  generarLista('autorizacion','Rechazado')[i],
@@ -131,7 +131,7 @@ export default function Dashboard() {
     RECETAS: dias.map((dia, i) => ({
       dia,
       Recibido:   generarLista('receta','Recibido')[i],
-      Análisis:   generarLista('receta','En análisis')[i],
+      Analizado:   generarLista('receta','En análisis')[i],
       Observado:  generarLista('receta','Observado')[i],
       Aprobado:   generarLista('receta','Aprobado')[i],
       Rechazado:  generarLista('receta','Rechazado')[i],
@@ -144,7 +144,7 @@ export default function Dashboard() {
     0
   );
   const totalPendientes = data.reduce(
-    (acc, d) => acc + d.Recibido + d.Análisis + d.Observado,
+    (acc, d) => acc + d.Recibido + d.Observado,
     0
   );
   const total = totalResueltas + totalPendientes;
@@ -367,7 +367,7 @@ export default function Dashboard() {
                     />
                     <Tooltip />
                     <Line type="monotone" dataKey="Recibido" stroke={COLORS.Recibido} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 7 }} />
-                    <Line type="monotone" dataKey="Análisis" stroke={COLORS.Análisis} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 7 }} />
+                    <Line type="monotone" dataKey="Analizado" stroke={COLORS.Análisis} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 7 }} />
                     <Line type="monotone" dataKey="Observado" stroke={COLORS.Observado} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 7 }} />
                     <Line type="monotone" dataKey="Aprobado" stroke={COLORS.Aprobado} strokeWidth={2.5} dot={{ r: 4 }} activeDot={{ r: 7 }} />
                     <Line type="monotone" dataKey="Rechazado" stroke={COLORS.Rechazado} strokeWidth={2.5} dot={{ r: 4 }} activeDot={{ r: 7 }} />
@@ -378,7 +378,7 @@ export default function Dashboard() {
               <div className="d-flex justify-content-center gap-4 mb-5 flex-wrap">
                 {[
                   { label: "Recibido", color: COLORS.Recibido },
-                  { label: "Análisis", color: COLORS.Análisis },
+                  { label: "Analizado", color: COLORS.Análisis },
                   { label: "Observado", color: COLORS.Observado },
                   { label: "Aprobado", color: COLORS.Aprobado },
                   { label: "Rechazado", color: COLORS.Rechazado },
