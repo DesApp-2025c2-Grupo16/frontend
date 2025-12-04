@@ -220,7 +220,7 @@ export default function DetalleSolicitudRecetas() {
       <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
         <button
           className="btn btn-dark"
-          onClick={navigate("/solicitudes/recetas")}
+          onClick={()=>navigate("/solicitudes/recetas")}
         >
           Volver a la bandeja
         </button>

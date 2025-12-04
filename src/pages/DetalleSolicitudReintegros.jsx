@@ -254,7 +254,7 @@ export default function DetalleSolicitudReintegros() {
       <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
         <button
           className="btn btn-dark"
-          onClick={navigate("/solicitudes/reintegros")}
+          onClick={()=>navigate("/solicitudes/reintegros")}
         >
           Volver a la bandeja
         </button>
